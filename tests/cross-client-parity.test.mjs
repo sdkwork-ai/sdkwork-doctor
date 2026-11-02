@@ -41,7 +41,7 @@ test('red-flag tokens match across the four triage implementations', () => {
   const sources = {
     shared: read('apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor/src/index.ts'),
     flutter: read('apps/sdkwork-doctor-flutter-mobile/lib/triage.dart'),
-    miniProgram: read('apps/sdkwork-doctor-mini-program/src/pages/conversation/index.js'),
+    miniProgram: read('apps/sdkwork-doctor-mini-program/src/lib/triage.js'),
   };
   for (const flag of rules.redFlags) {
     const literal = flag.pattern;
