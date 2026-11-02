@@ -6,5 +6,6 @@
   "appApiBaseUrl": "/",
   "backendApiBaseUrl": "/",
   "openApiBaseUrl": "/",
-  "cloudApiBaseUrl": "https://api-test.sdkwork.com"
+  "cloudApiBaseUrl": "https://api-test.sdkwork.com",
+  "agentsApiBaseUrl": ""
 }

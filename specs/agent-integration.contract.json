@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "kind": "sdkwork.doctor.agent-integration",
+  "transport": "@sdkwork/agents-app-sdk",
+  "decision": "docs/architecture/decisions/ADR-20261102-agent-transport-binding.md",
+  "requiredInputs": {
+    "agentsApiBaseUrl": "runtime-env.<deployment-profile>.<environment>.json#agentsApiBaseUrl",
+    "accessToken": "IAM/appbase session token through the shared TokenManager; never a VITE_* variable"
+  },
+  "modeSelection": {
+    "rule": "hosted only when agentsApiBaseUrl is non-empty and an access token is present; never a silent offline fallback",
+    "module": "@sdkwork/doctor-common-agent#resolveCareAgentMode"
+  },
+  "acceptance": [
+    "A real hosted conversation transcript is recorded for at least one non-emergency symptom.",
+    "An emergency red flag returned by the hosted agent still yields TriageLevel.emergency and is never softened.",
+    "The Me tab shows the active mode and never claims hosted when the offline adapter is running."
+  ],
+  "blockedUntil": "An agents API base URL and an IAM access token are provisioned in the target deployment profile."
+}
