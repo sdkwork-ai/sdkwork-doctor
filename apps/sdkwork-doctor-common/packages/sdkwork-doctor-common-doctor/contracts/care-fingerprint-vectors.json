@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "kind": "sdkwork.doctor.care-fingerprint-vectors",
+  "algorithm": "four salted 32-bit FNV-1a folds over a unit-separator canonical string, joined as 128-bit hex",
+  "prefix": "care.v1:",
+  "note": "Frozen cross-runtime vectors. TypeScript, Dart, and the mini program must reproduce every hash exactly; a mismatch means the idempotency fingerprint drifted between clients.",
+  "turns": [
+    {
+      "content": "chest pain since 10 minutes",
+      "contentType": "text/plain",
+      "entrySurface": "pc",
+      "turnPayloadHash": "care.v1:adeeb1b133ed80829a6bc7dc9bbf6d2e"
+    },
+    {
+      "content": "mild headache",
+      "contentType": "text/plain",
+      "entrySurface": "h5",
+      "turnPayloadHash": "care.v1:e8ea3f4d4d8147eeff4e12a0662e7cf2"
+    },
+    {
+      "content": "child fever",
+      "contentType": "text/plain",
+      "entrySurface": "flutter",
+      "turnPayloadHash": "care.v1:7fea29bb3d0412c0f91310ee329a60ec"
+    },
+    {
+      "content": "孩子昨晚开始发烧39℃",
+      "contentType": "text/plain",
+      "entrySurface": "mini_program",
+      "turnPayloadHash": "care.v1:74d6670462e1753fa12e0699b07cc83b"
+    }
+  ],
+  "sessions": [
+    {
+      "title": "Family doctor conversation",
+      "entrySurface": "pc",
+      "sessionPayloadHash": "care.v1:91af515f4ad3aba4a74b423a44a1c138"
+    },
+    {
+      "title": "Family doctor conversation",
+      "entrySurface": "h5",
+      "sessionPayloadHash": "care.v1:523d503160f6f02ad79dc7344b71ae36"
+    }
+  ]
+}

@@ -4,6 +4,7 @@
   "locales": ["en-US", "zh-CN"],
   "messages": [
     { "key": "platform.care.chat.title", "en-US": "Family doctor chat", "zh-CN": "家庭医生对话" },
+    { "key": "platform.care.nav.chat", "en-US": "Chat", "zh-CN": "对话" },
     { "key": "platform.care.chat.subtitle", "en-US": "Talking about {{member}}. Emergency red flags are escalated before any reply.", "zh-CN": "正在咨询 {{member}}。急症红旗优先于任何回复处理。" },
     { "key": "platform.care.chat.panel", "en-US": "Conversation", "zh-CN": "对话" },
     { "key": "platform.care.chat.empty", "en-US": "No messages yet.", "zh-CN": "还没有消息。" },
