@@ -1,4 +1,5 @@
 import type { AgentConversationPort } from '@sdkwork/doctor-common-agent';
+import { applyThemeToStyle, resolveAppBlocks, resolveAppTheme, type ResolvedAppBlock } from '@sdkwork/doctor-common-blocks';
 import { createDoctorRuntimeContext, type DoctorRuntimeContext } from '@sdkwork/doctor-common-diagnostics';
 import type { VisitRecordStore } from '@sdkwork/doctor-common-doctor';
 import { createAnonymousSessionPort, createDoctorH5CareAgent, createDoctorH5VisitRecordStore } from '@sdkwork/doctor-h5-core';
@@ -16,6 +17,8 @@ export interface DoctorH5Runtime {
   readonly agent: AgentConversationPort;
   /** Device-local consultation history shared by the chat and records tabs. */
   readonly records: VisitRecordStore;
+  /** Blocks resolved for the H5 surface, including deployment overrides. */
+  readonly blocks: readonly ResolvedAppBlock[];
 }
 
 let runtimePromise: Promise<DoctorH5Runtime> | null = null;
@@ -28,6 +31,8 @@ export function bootstrapDoctorH5(): Promise<DoctorH5Runtime> {
         agentsApiBaseUrl: environment.agentsApiBaseUrl,
         accessToken: session.current().accessToken,
       });
+      const blocks = resolveAppBlocks('h5', environment.appBlocks);
+      applyThemeToStyle(document.documentElement.style, resolveAppTheme(environment.theme));
       return {
         environment,
         context: createDoctorRuntimeContext({
@@ -40,6 +45,7 @@ export function bootstrapDoctorH5(): Promise<DoctorH5Runtime> {
         }),
         agent: careAgent.port,
         records: createDoctorH5VisitRecordStore(),
+        blocks,
       };
     });
   }

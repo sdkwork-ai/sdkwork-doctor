@@ -74,10 +74,14 @@
       {
         "name": "doctorPcPrimitives",
         "export": "."
+      },
+      {
+        "name": "doctorPcBlocks",
+        "export": "."
       }
     ],
     "requiredPorts": [],
-    "runtimeEntrypoints": [],
+    "runtimeEntrypoints": ["StatTile", "BlockTile", "BlockGrid", "EmptyState"],
     "routeManifest": null,
     "sdkClients": [],
     "sdkDependencies": [],

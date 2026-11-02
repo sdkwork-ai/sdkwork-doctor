@@ -3,7 +3,12 @@
  *
  * The runtime profile id is injected by Vite from `--mode`; values arrive from
  * the same-origin runtime document served at /runtime-env.json.
+ *
+ * The optional `app` and `theme` sections customize the composition and palette
+ * per deployment; validation lives in `@sdkwork/doctor-common-blocks`.
  */
+import type { AppBlockOverrides } from '@sdkwork/doctor-common-blocks';
+
 export interface DoctorH5Environment {
   readonly deploymentProfile: 'standalone' | 'cloud';
   readonly environment: string;
@@ -11,6 +16,8 @@ export interface DoctorH5Environment {
   readonly apiBaseUrl: string;
   readonly backendApiBaseUrl: string;
   readonly agentsApiBaseUrl: string;
+  readonly appBlocks: AppBlockOverrides;
+  readonly theme: Readonly<Record<string, unknown>>;
 }
 
 interface RuntimeDocument {
@@ -20,6 +27,8 @@ interface RuntimeDocument {
   appApiBaseUrl?: string;
   backendApiBaseUrl?: string;
   agentsApiBaseUrl?: string;
+  app?: { blocks?: AppBlockOverrides };
+  theme?: Record<string, unknown>;
 }
 
 const KNOWN_ENVIRONMENTS = ['development', 'test', 'staging', 'demo', 'production'];
@@ -33,6 +42,7 @@ export function resolveEnvironmentFromDocument(document: RuntimeDocument | null)
   const [profileFromId = 'standalone', environmentFromId = 'development'] = resolveProfileId().split('.');
   const deploymentProfile = document?.deploymentProfile === 'cloud' || profileFromId === 'cloud' ? 'cloud' : 'standalone';
   const environment = document?.environment && KNOWN_ENVIRONMENTS.includes(document.environment) ? document.environment : environmentFromId;
+  const appBlocks = document?.app?.blocks;
   return Object.freeze({
     deploymentProfile,
     environment,
@@ -40,6 +50,12 @@ export function resolveEnvironmentFromDocument(document: RuntimeDocument | null)
     apiBaseUrl: document?.appApiBaseUrl ?? '/',
     backendApiBaseUrl: document?.backendApiBaseUrl ?? '/',
     agentsApiBaseUrl: document?.agentsApiBaseUrl ?? '',
+    appBlocks: Object.freeze({
+      hidden: Array.isArray(appBlocks?.hidden) ? [...appBlocks.hidden] : [],
+      order: Array.isArray(appBlocks?.order) ? [...appBlocks.order] : [],
+      labels: appBlocks?.labels && typeof appBlocks.labels === 'object' ? { ...appBlocks.labels } : {},
+    }),
+    theme: Object.freeze({ ...(document?.theme ?? {}) }),
   });
 }
 

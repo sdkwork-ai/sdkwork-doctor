@@ -1,30 +1,52 @@
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { ReactNode } from 'react';
+import type { AppBlockIcon, ResolvedAppBlock } from '@sdkwork/doctor-common-blocks';
 
-import { doctorPcNavigation } from './navigation';
 import { LanguageToggle } from './LanguageToggle';
 
-export function AppShell({ children, profileId, appVersion }: { children: ReactNode; profileId: string; appVersion: string }) {
+const ICON_PATHS: Readonly<Record<AppBlockIcon, string>> = Object.freeze({
+  home: 'M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z',
+  chat: 'M4 5h16v11H8l-4 4z',
+  doctor: 'M12 4v16M4 12h16',
+  records: 'M6 3h12v18H6zM9 8h6M9 12h6M9 16h4',
+  user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c0-4 4-6 8-6s8 2 8 6',
+});
+
+function RailIcon({ icon }: { icon: AppBlockIcon }) {
+  return (
+    <svg aria-hidden="true" className="doctor-rail-icon" fill="none" height="20" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="20">
+      <path d={ICON_PATHS[icon]} />
+    </svg>
+  );
+}
+
+export interface AppShellProps {
+  readonly children: ReactNode;
+  readonly profileId: string;
+  readonly appVersion: string;
+  /** Blocks resolved from the composition contract; the rail is a projection of them. */
+  readonly blocks: readonly ResolvedAppBlock[];
+}
+
+export function AppShell({ children, profileId, appVersion, blocks }: AppShellProps) {
   const { t } = useTranslation();
   return (
     <div className="doctor-layout">
-      <aside className="doctor-sidebar">
-        <div className="doctor-brand">
-          <span className="doctor-brand-mark" aria-hidden="true">D</span>
-          <span className="doctor-brand-name">{t('platform.diagnostics.brand.name')}</span>
-        </div>
-        <nav className="doctor-nav" aria-label={t('platform.diagnostics.nav.label')}>
-          {doctorPcNavigation.map((item) => (
-            <NavLink className="doctor-nav-link" end={item.end} key={item.to} to={item.to}>
-              {t(item.labelKey)}
+      <aside className="doctor-rail">
+        <div aria-hidden="true" className="doctor-rail-brand">D</div>
+        <nav aria-label={t('platform.diagnostics.nav.label')} className="doctor-rail-nav">
+          {blocks.map((block) => (
+            <NavLink className="doctor-rail-item" end={block.id === 'home'} key={block.id} to={block.route}>
+              <RailIcon icon={block.icon} />
+              <span className="doctor-rail-label">{t(block.label)}</span>
             </NavLink>
           ))}
         </nav>
-        <div className="doctor-sidebar-footer">
+        <div className="doctor-rail-footer">
           <LanguageToggle />
-          <div>{profileId}</div>
-          <div>v{appVersion}</div>
+          <div className="doctor-rail-meta">{profileId}</div>
+          <div className="doctor-rail-meta">v{appVersion}</div>
         </div>
       </aside>
       <main className="doctor-main">{children}</main>

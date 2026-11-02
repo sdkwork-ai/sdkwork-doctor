@@ -64,6 +64,7 @@ test('both app shells pass the composed port into the tab pages', () => {
     const app = fs.readFileSync(appFile, 'utf8');
     assert.match(app, /agent=\{runtime\.agent\}/u, appFile);
     assert.match(app, /records=\{runtime\.records\}/u, appFile);
+    assert.match(app, /blocks=\{runtime\.blocks\}/u, appFile);
     const routes = fs.readFileSync(routesFile, 'utf8');
     assert.match(routes, /<ChatPage[^>]*agent=\{agent\}/u, routesFile);
     assert.match(routes, /<MePage[^>]*agent=\{agent\}/u, routesFile);

@@ -1,3 +1,4 @@
+export * from './home';
 import { useMemo, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AgentConversationPort, ChatMessage } from '@sdkwork/doctor-common-agent';

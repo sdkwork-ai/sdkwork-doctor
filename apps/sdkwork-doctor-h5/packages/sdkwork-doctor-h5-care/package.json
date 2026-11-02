@@ -18,14 +18,17 @@
   },
   "dependencies": {
     "@sdkwork/doctor-common-agent": "workspace:*",
+    "@sdkwork/doctor-common-blocks": "workspace:*",
     "@sdkwork/doctor-common-diagnostics": "workspace:*",
     "@sdkwork/doctor-common-doctor": "workspace:*",
     "@sdkwork/doctor-h5-commons": "workspace:*",
     "@sdkwork/doctor-h5-diagnostics": "workspace:*",
-    "react-i18next": "^17.0.11"
+    "react-i18next": "^17.0.11",
+    "react-router-dom": "^7.17.0"
   },
   "peerDependencies": {
-    "react": "^19.0.0"
+    "react": "^19.0.0",
+    "react-router-dom": "^7.0.0"
   },
   "devDependencies": {
     "@types/react": "^19.2.0",

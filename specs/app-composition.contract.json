@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "kind": "sdkwork.doctor.app-composition",
+  "purpose": "The building-block catalogue for the family-doctor app. Each block is one independently composable unit with a stable id, a canonical cross-client page id, a route, an i18n label key, and a surface presentation. Clients compose these blocks instead of hard-coding navigation, and a deployment can reorder, hide, or relabel them.",
+  "pageIdFormat": "<surface>.<domain>.<capability>.<screen>",
+  "blocks": [
+    {
+      "id": "home",
+      "kind": "navigation",
+      "pageId": "app.doctor.home.index",
+      "route": "/doctor/home",
+      "labelKey": "platform.care.nav.home",
+      "icon": "home",
+      "order": 0,
+      "surfaces": ["pc", "h5"],
+      "optional": true,
+      "description": "Workbench landing: conversation entry, active mode, recent visit records."
+    },
+    {
+      "id": "chat",
+      "kind": "navigation",
+      "pageId": "app.doctor.conversation.chat",
+      "route": "/doctor/chat",
+      "labelKey": "platform.care.nav.chat",
+      "icon": "chat",
+      "order": 10,
+      "surfaces": ["pc", "h5", "flutter", "mini_program"],
+      "optional": false,
+      "description": "Family-doctor conversation with triage per exchange."
+    },
+    {
+      "id": "doctor",
+      "kind": "navigation",
+      "pageId": "app.doctor.record.summary",
+      "route": "/doctor/doctor",
+      "labelKey": "platform.care.nav.doctor",
+      "icon": "doctor",
+      "order": 20,
+      "surfaces": ["pc", "h5", "flutter", "mini_program"],
+      "optional": false,
+      "description": "Household health record and care rules."
+    },
+    {
+      "id": "records",
+      "kind": "navigation",
+      "pageId": "app.doctor.record.list",
+      "route": "/doctor/records",
+      "labelKey": "platform.care.nav.records",
+      "icon": "records",
+      "order": 30,
+      "surfaces": ["pc", "h5", "flutter", "mini_program"],
+      "optional": false,
+      "description": "Visit records recorded on this device."
+    },
+    {
+      "id": "me",
+      "kind": "navigation",
+      "pageId": "app.doctor.profile.index",
+      "route": "/doctor/me",
+      "labelKey": "platform.care.nav.me",
+      "icon": "user",
+      "order": 40,
+      "surfaces": ["pc", "h5", "flutter", "mini_program"],
+      "optional": false,
+      "description": "Family members, active conversation mode, device checks."
+    }
+  ],
+  "home": {
+    "sections": [
+      {
+        "id": "status",
+        "kind": "insight",
+        "titleKey": "platform.care.home.status",
+        "tiles": ["conversationMode", "recentRecords", "familyMembers", "profileCompleteness"]
+      },
+      {
+        "id": "blocks",
+        "kind": "navigation",
+        "titleKey": "platform.care.home.sections"
+      },
+      {
+        "id": "recent",
+        "kind": "record",
+        "titleKey": "platform.care.home.recent",
+        "limit": 3
+      }
+    ]
+  },
+  "customization": {
+    "blockOverrides": {
+      "hidden": "hide a block without removing it from the catalogue",
+      "order": "reorder visible blocks; unknown ids are ignored",
+      "labels": "replace a block label with a deployment-specific key"
+    },
+    "themeOverrides": ["primary", "primaryStrong", "nav", "canvas", "surface", "surfaceAlt"],
+    "rules": [
+      "block ids and routes come from this contract; a client never invents one",
+      "overrides are validated and invalid values fall back to the default",
+      "optional blocks may be hidden; required blocks may not"
+    ]
+  },
+  "surfaces": {
+    "pc": { "presentation": "icon-rail + block grid", "homeBlock": true },
+    "h5": { "presentation": "bottom tabs + block list", "homeBlock": true },
+    "flutter": { "presentation": "bottom tabs", "homeBlock": false },
+    "mini_program": { "presentation": "native tab bar", "homeBlock": false }
+  }
+}

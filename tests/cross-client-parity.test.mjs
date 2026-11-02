@@ -11,18 +11,29 @@ const DOCTOR = '\u533b\u751f';
 const RECORDS = '\u8bb0\u5f55';
 const ME = '\u6211\u7684';
 const RULES = 'apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor/contracts/triage-rules.json';
+const COMPOSITION = 'specs/app-composition.contract.json';
 
-test('every client exposes the same four care tabs', () => {
-  const pc = read('apps/sdkwork-doctor-pc/packages/sdkwork-doctor-pc-shell/src/navigation.ts');
-  const h5 = read('apps/sdkwork-doctor-h5/packages/sdkwork-doctor-h5-shell/src/navigation.ts');
-  const mp = JSON.parse(read('apps/sdkwork-doctor-mini-program/src/app.json'));
-  const flutter = read('apps/sdkwork-doctor-flutter-mobile/lib/main.dart');
-
-  for (const [label, text] of [['pc', pc], ['h5', h5]]) {
-    for (const target of ['/doctor/chat', '/doctor/doctor', '/doctor/records', '/doctor/me']) {
-      assert.match(text, new RegExp(target.replaceAll('/', '\\/'), 'u'), label + ' must route ' + target);
+test('every client exposes the same care blocks', () => {
+  const contract = JSON.parse(read(COMPOSITION));
+  const required = ['chat', 'doctor', 'records', 'me'];
+  for (const id of required) {
+    const block = contract.blocks.find((entry) => entry.id === id);
+    assert.ok(block, 'the composition contract must declare the ' + id + ' block');
+    for (const surface of ['pc', 'h5', 'flutter', 'mini_program']) {
+      assert.ok(block.surfaces.includes(surface), id + ' must be available on ' + surface);
     }
   }
+
+  const pcRoutes = read('apps/sdkwork-doctor-pc/packages/sdkwork-doctor-pc-shell/src/DoctorPcRoutes.tsx');
+  const h5Routes = read('apps/sdkwork-doctor-h5/packages/sdkwork-doctor-h5-shell/src/DoctorH5Routes.tsx');
+  for (const routes of [pcRoutes, h5Routes]) {
+    for (const id of required) {
+      const segment = contract.blocks.find((entry) => entry.id === id).route.split('/').pop();
+      assert.match(routes, new RegExp('path="' + segment + '"', 'u'), 'browser routes must implement ' + id);
+    }
+  }
+
+  const mp = JSON.parse(read('apps/sdkwork-doctor-mini-program/src/app.json'));
   assert.deepEqual(mp.pages, [
     'pages/conversation/index',
     'pages/doctor/index',
@@ -30,7 +41,10 @@ test('every client exposes the same four care tabs', () => {
     'pages/profile/index',
   ]);
   assert.deepEqual(mp.tabBar.list.map((tab) => tab.text), [CHAT, DOCTOR, RECORDS, ME]);
-  assert.equal(flutter.split('NavigationDestination(').length - 1, 4);
+  assert.equal(mp.tabBar.list.length, required.length);
+
+  const flutter = read('apps/sdkwork-doctor-flutter-mobile/lib/main.dart');
+  assert.equal(flutter.split('NavigationDestination(').length - 1, required.length);
 });
 
 test('the shared triage rule contract is the single source of the red-flag vocabulary', () => {

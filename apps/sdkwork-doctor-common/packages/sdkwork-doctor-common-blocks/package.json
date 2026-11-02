@@ -1,0 +1,17 @@
+{
+  "name": "@sdkwork/doctor-common-blocks",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Building-block composition model: block catalogue, resolution, and theme customization shared by every Doctor surface.",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  }
+}

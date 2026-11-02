@@ -1,4 +1,5 @@
 import type { AgentConversationPort } from '@sdkwork/doctor-common-agent';
+import { applyThemeToStyle, resolveAppBlocks, resolveAppTheme, type ResolvedAppBlock } from '@sdkwork/doctor-common-blocks';
 import { createDoctorRuntimeContext, type DoctorRuntimeContext } from '@sdkwork/doctor-common-diagnostics';
 import type { VisitRecordStore } from '@sdkwork/doctor-common-doctor';
 import { createAnonymousSessionPort, createDoctorPcCareAgent, createDoctorPcVisitRecordStore } from '@sdkwork/doctor-pc-core';
@@ -16,13 +17,15 @@ export interface DoctorPcRuntime {
   readonly agent: AgentConversationPort;
   /** Device-local consultation history shared by the chat and records tabs. */
   readonly records: VisitRecordStore;
+  /** Blocks resolved for the PC surface, including deployment overrides. */
+  readonly blocks: readonly ResolvedAppBlock[];
 }
 
 let runtimePromise: Promise<DoctorPcRuntime> | null = null;
 
 /**
- * Compose the PC runtime once per page load. SDK clients are constructed in the
- * core package; UI packages receive the ports.
+ * Compose the PC runtime once per page load. SDK clients and the block
+ * composition are built here; UI packages receive the resolved ports.
  */
 export function bootstrapDoctorPc(): Promise<DoctorPcRuntime> {
   if (!runtimePromise) {
@@ -32,6 +35,10 @@ export function bootstrapDoctorPc(): Promise<DoctorPcRuntime> {
         agentsApiBaseUrl: environment.agentsApiBaseUrl,
         accessToken: session.current().accessToken,
       });
+      const blocks = resolveAppBlocks('pc', environment.appBlocks);
+      // Personalization: deployment theme tokens become CSS variables before the
+      // first paint, so no component needs to know about runtime configuration.
+      applyThemeToStyle(document.documentElement.style, resolveAppTheme(environment.theme));
       return {
         environment,
         context: createDoctorRuntimeContext({
@@ -44,6 +51,7 @@ export function bootstrapDoctorPc(): Promise<DoctorPcRuntime> {
         }),
         agent: careAgent.port,
         records: createDoctorPcVisitRecordStore(),
+        blocks,
       };
     });
   }

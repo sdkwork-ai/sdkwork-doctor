@@ -67,6 +67,34 @@ white cards on the canvas, and tonal rows/inputs inside cards. Emergency and
 urgent keep the warm semantic tone so triage colour is never lost to the brand
 blue.
 
+## 2.3 App Composition And Blocks
+
+`specs/app-composition.contract.json` is the building-block catalogue. Every
+navigation unit — and the browser home landing — is a block with a stable id, a
+canonical page id (`app.doctor.<domain>.<capability>`), a route, an i18n label
+key, an icon, and the surfaces that render it. A client projects its navigation
+from the resolved block list; it never hard-codes a second list.
+
+`@sdkwork/doctor-common-blocks` owns the resolution rules:
+
+- filter by surface (`home` is a browser-only block);
+- hide optional blocks, never required ones;
+- float deployment-preferred ids to the front, ignore unknown ids;
+- relabel a block with a deployment i18n key;
+- resolve theme overrides against the design tokens, dropping invalid values one
+  by one.
+
+The PC rail (`AppShell`) and the H5 tab bar (`MobileShell`) are projections of
+the same resolved list, and the browser `HomePage` renders the same blocks as a
+grid plus status tiles and recent records. Adding, hiding, or reordering a block
+therefore changes navigation and home together without editing a page.
+
+Customization is runtime data, not code: `runtime-env.json#app.blocks` and
+`#theme` are validated at boot and applied as CSS variables before the first
+paint. The app root stays a thin composition root; blocks, tokens, and page
+identities are the cross-client reuse surface (`COMPOSABLE_ARCHITECTURE_SPEC.md`
+section 4).
+
 ## 2. Technology Choices
 
 - **React 19 + Vite 6 + TypeScript 5.8 (strict)** for PC and H5.

@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@sdkwork/doctor-common-agent": "workspace:*",
+    "@sdkwork/doctor-common-blocks": "workspace:*",
     "@sdkwork/doctor-common-diagnostics": "workspace:*",
     "@sdkwork/doctor-common-doctor": "workspace:*",
     "@sdkwork/doctor-h5-care": "workspace:*",

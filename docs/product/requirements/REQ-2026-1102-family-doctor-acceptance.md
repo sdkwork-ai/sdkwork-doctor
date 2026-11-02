@@ -182,3 +182,38 @@ advice text (see "Not delivered").
 - **Two defects fixed on the way**: the H5 chat row overflowed horizontally
   because the global button rule forced `width: 100%`; the app bar title wrapped
   on narrow screens until the meta line was hidden below 480px.
+
+## Addendum (rounds 33-34): building-block composition
+
+- **One block catalogue**: `specs/app-composition.contract.json` declares five
+  blocks (`home`, `chat`, `doctor`, `records`, `me`) with a stable id, a canonical
+  page id (`app.doctor.<domain>.<capability>`), a route, an i18n label key, an
+  icon, and the surfaces that render each one. `home` is browser-only; the four
+  care tabs are required on every client.
+- **One resolver**: `@sdkwork/doctor-common-blocks` filters by surface, hides only
+  optional blocks, floats deployment-preferred ids first while ignoring unknown
+  ids, relabels blocks with deployment keys, and resolves validated theme
+  overrides. `tests/app-composition.test.mjs` checks the TypeScript catalogue
+  against the JSON contract field by field, plus the resolution rules and the
+  theme fallbacks.
+- **Navigation is a projection**: the PC `AppShell` renders an 88px icon rail
+  (logo, icon + label per block, active blue pill with a white edge bar, footer
+  with locale and profile) and the H5 `MobileShell` renders the same resolved
+  list as a tab bar. Neither keeps a second hard-coded list.
+- **Home composes the same blocks**: `/doctor/home` is the browser landing. It
+  shows status tiles (mode, consultations, members), a block grid built from the
+  resolved list, and the last three consultations. Hiding a block removes it from
+  the rail, the tab bar, and the home grid in one change.
+- **Customization is runtime data**: `runtime-env.json#app.blocks` (`hidden`,
+  `order`, `labels`) and `#theme` (six tokens) are validated at boot and applied
+  as CSS variables before the first paint. Invalid values fall back one by one.
+- **Reuse boundary per spec**: `COMPOSABLE_ARCHITECTURE_SPEC.md` section 4 requires
+  cross-architecture reuse through tokens, i18n keys, page identity, and ports
+  rather than UI/runtime imports — which is exactly what the earlier
+  `design-tokens.contract.json` plus this block catalogue provide. Mobile surfaces
+  keep their native tab bars and satisfy the contract through the same block ids
+  and label keys.
+- **Evidence**: `pnpm test` 103 passed (12 new composition assertions), `pnpm
+  build` both surfaces, `pnpm check:specs` all validators, Flutter 36 tests and
+  `flutter analyze` clean, and visual checks of the PC rail/home at 1440×900 and
+  the H5 home/tabs at 390×844.

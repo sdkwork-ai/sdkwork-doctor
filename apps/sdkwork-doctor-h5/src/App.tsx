@@ -35,7 +35,7 @@ export default function App() {
       <AuthGate>
         <Routes>
           <Route path="/" element={<Navigate replace to={DOCTOR_H5_HOME_PATH} />} />
-          <Route path="/doctor/*" element={<DoctorH5Routes runtime={runtime.context} hostPlatform={runtime.environment.deploymentProfile} agent={runtime.agent} records={runtime.records} />} />
+          <Route path="/doctor/*" element={<DoctorH5Routes runtime={runtime.context} hostPlatform={runtime.environment.deploymentProfile} agent={runtime.agent} records={runtime.records} blocks={runtime.blocks} />} />
           <Route path="*" element={<Navigate replace to={DOCTOR_H5_HOME_PATH} />} />
         </Routes>
       </AuthGate>

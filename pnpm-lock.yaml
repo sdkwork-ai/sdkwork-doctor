@@ -18,6 +18,8 @@ importers:
         specifier: workspace:*
         version: link:../sdkwork-doctor-common-doctor
 
+  apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-blocks: {}
+
   apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-diagnostics: {}
 
   apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor: {}
@@ -27,6 +29,9 @@ importers:
       '@sdkwork/doctor-common-agent':
         specifier: workspace:*
         version: link:../sdkwork-doctor-common/packages/sdkwork-doctor-common-agent
+      '@sdkwork/doctor-common-blocks':
+        specifier: workspace:*
+        version: link:../sdkwork-doctor-common/packages/sdkwork-doctor-common-blocks
       '@sdkwork/doctor-common-diagnostics':
         specifier: workspace:*
         version: link:../sdkwork-doctor-common/packages/sdkwork-doctor-common-diagnostics
@@ -85,6 +90,9 @@ importers:
       '@sdkwork/doctor-common-agent':
         specifier: workspace:*
         version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-agent
+      '@sdkwork/doctor-common-blocks':
+        specifier: workspace:*
+        version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-blocks
       '@sdkwork/doctor-common-diagnostics':
         specifier: workspace:*
         version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-diagnostics
@@ -103,6 +111,9 @@ importers:
       react-i18next:
         specifier: ^17.0.11
         version: 17.1.11(i18next@26.7.1(typescript@5.9.3))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@5.9.3)
+      react-router-dom:
+        specifier: ^7.17.0
+        version: 7.18.5(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
     devDependencies:
       '@types/react':
         specifier: ^19.2.0
@@ -166,6 +177,9 @@ importers:
       '@sdkwork/doctor-common-agent':
         specifier: workspace:*
         version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-agent
+      '@sdkwork/doctor-common-blocks':
+        specifier: workspace:*
+        version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-blocks
       '@sdkwork/doctor-common-diagnostics':
         specifier: workspace:*
         version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-diagnostics
@@ -203,6 +217,9 @@ importers:
       '@sdkwork/doctor-common-agent':
         specifier: workspace:*
         version: link:../sdkwork-doctor-common/packages/sdkwork-doctor-common-agent
+      '@sdkwork/doctor-common-blocks':
+        specifier: workspace:*
+        version: link:../sdkwork-doctor-common/packages/sdkwork-doctor-common-blocks
       '@sdkwork/doctor-common-diagnostics':
         specifier: workspace:*
         version: link:../sdkwork-doctor-common/packages/sdkwork-doctor-common-diagnostics
@@ -261,6 +278,9 @@ importers:
       '@sdkwork/doctor-common-agent':
         specifier: workspace:*
         version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-agent
+      '@sdkwork/doctor-common-blocks':
+        specifier: workspace:*
+        version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-blocks
       '@sdkwork/doctor-common-diagnostics':
         specifier: workspace:*
         version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-diagnostics
@@ -279,6 +299,9 @@ importers:
       react-i18next:
         specifier: ^17.0.11
         version: 17.1.11(i18next@26.7.1(typescript@5.9.3))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@5.9.3)
+      react-router-dom:
+        specifier: ^7.17.0
+        version: 7.18.5(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
     devDependencies:
       '@types/react':
         specifier: ^19.2.0
@@ -349,6 +372,9 @@ importers:
       '@sdkwork/doctor-common-agent':
         specifier: workspace:*
         version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-agent
+      '@sdkwork/doctor-common-blocks':
+        specifier: workspace:*
+        version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-blocks
       '@sdkwork/doctor-common-diagnostics':
         specifier: workspace:*
         version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-diagnostics

@@ -34,7 +34,8 @@ Goals:
 - Escalate an emergency red flag before, and independently of, any conversational text.
 - Keep one conversation mode that is explicit: hosted agent or offline triage, never an unstated substitute.
 - Record every consultation on the device so a family can see what was asked and what was advised.
-- Show the same four tabs (对话 / 医生 / 记录 / 我的) on every client.
+- Show the same four tabs (对话 / 医生 / 记录 / 我的) on every client, and one workbench home on the browser surfaces.
+- Reuse one building-block catalogue so a deployment can hide, reorder, relabel, or retheme without forking a client.
 - Keep health facts on the device and in the request only; no client-side analytics.
 
 Non-goals:
@@ -48,6 +49,7 @@ Non-goals:
 
 In scope for this release:
 
+- 首页: the browser workbench landing — mode at a glance, one entry per block, and the last three consultations.
 - 对话: a conversation with the family doctor agent, a triage level per exchange, and an emergency lead that can never be softened.
 - 医生: the household health record and the care rules for the selected member.
 - 记录: every consultation on this device, newest first, with symptom, advice, level, member, time, and transport mode; clearable with one confirmed action.

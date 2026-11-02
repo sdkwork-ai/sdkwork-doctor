@@ -81,8 +81,10 @@
         "export": "."
       }
     ],
-    "requiredPorts": [],
-    "runtimeEntrypoints": [],
+    "requiredPorts": [
+      { "name": "doctorAppBlocks", "export": ".", "provider": "@sdkwork/doctor-common-blocks" }
+    ],
+    "runtimeEntrypoints": ["AppShell", "DoctorPcRoutes"],
     "routeManifest": null,
     "sdkClients": [],
     "sdkDependencies": [],

@@ -77,7 +77,7 @@
       }
     ],
     "requiredPorts": [],
-    "runtimeEntrypoints": [],
+    "runtimeEntrypoints": ["StatTile", "BlockTile", "BlockList", "EmptyState"],
     "routeManifest": null,
     "sdkClients": [],
     "sdkDependencies": [],

@@ -30,9 +30,10 @@
     "requiredPorts": [
       { "name": "doctorAgentConversation", "export": ".", "provider": "@sdkwork/doctor-common-agent" },
       { "name": "doctorFamilyDomain", "export": ".", "provider": "@sdkwork/doctor-common-doctor" },
-      { "name": "doctorVisitRecords", "export": ".", "provider": "@sdkwork/doctor-common-doctor" }
+      { "name": "doctorVisitRecords", "export": ".", "provider": "@sdkwork/doctor-common-doctor" },
+      { "name": "doctorAppBlocks", "export": ".", "provider": "@sdkwork/doctor-common-blocks" }
     ],
-    "runtimeEntrypoints": ["ChatPage", "DoctorPage", "RecordsPage", "MePage"],
+    "runtimeEntrypoints": ["HomePage", "ChatPage", "DoctorPage", "RecordsPage", "MePage"],
     "routeManifest": null,
     "sdkClients": [],
     "sdkDependencies": [],
