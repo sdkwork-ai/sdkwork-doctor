@@ -7,99 +7,167 @@ Specs: ARCHITECTURE_DECISION_SPEC.md, APP_CLIENT_ARCHITECTURE_ALIGNMENT_SPEC.md,
 
 ## 1. Architecture Overview
 
-SDKWork Doctor is one Adaptive Web product with two browser surfaces (PC and H5) and no server component in this release. The two surfaces share one framework-neutral diagnostics contract; each surface supplies its own shell, presentation primitives, and runtime bootstrap.
+SDKWork Doctor is one family-doctor product with four clients that share one
+domain vocabulary, one triage contract, one conversation port shape, and one
+generated copy catalog.
 
 ```text
-apps/sdkwork-doctor-pc    apps/sdkwork-doctor-h5
-  pc-core / h5-core              (SDK ports, module registry, host adapter, session port)
-  pc-commons / h5-commons        (presentation primitives)
-  pc-shell / h5-shell            (layout, navigation, route composition)
-  pc-diagnostics / h5-diagnostics (pages, service, report state)
-            \                 /
-   apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-diagnostics
-        (check vocabulary, default catalog, registry, runner)
+apps/sdkwork-doctor-pc      apps/sdkwork-doctor-h5
+  pc-core / h5-core                (SDK ports, agent port, module registry, session)
+  pc-commons / h5-commons          (presentation primitives)
+  pc-shell / h5-shell              (layout, tab navigation, route composition)
+  pc-care / h5-care                (chat, doctor, me tabs)
+            \                    /
+   apps/sdkwork-doctor-common/packages/
+     sdkwork-doctor-common-doctor      (FamilyMember, HealthSummary, triage rules)
+     sdkwork-doctor-common-agent       (AgentConversationPort, offline + hosted adapters)
+     sdkwork-doctor-common-diagnostics (device environment checks)
+
+apps/sdkwork-doctor-flutter-mobile   (lib/agent, lib/i18n, three tabs)
+apps/sdkwork-doctor-mini-program     (src/lib/agent.js, src/lib/i18n.js, three pages)
+
+apps/sdkwork-doctor-common/.../contracts/
+  triage-rules.json, triage-fixtures.json, care-messages.json,
+  care-fingerprint-vectors.json
 ```
 
-The PC root is the desktop fallback surface; the H5 root is the mobile fallback surface. A client that matches neither architecture falls back to the static web surface, which is not part of this repository.
+The PC root is the desktop surface, H5 the mobile browser surface, Flutter the
+native mobile surface, and the mini program the WeChat surface. All four expose
+the same three tabs in the same order: 对话 / 医生 / 我的.
 
 ## 2. Technology Choices
 
-- **React 19 + Vite 6 + TypeScript 5.8 (strict)** for both browser surfaces.
-- **pnpm workspace** at the repository root; no nested workspace files.
-- **Framework-neutral diagnostics package** with no runtime dependencies, so the same catalog can run in a future Tauri, Electron, Capacitor, or Flutter bridge without importing React.
-- **Plain CSS with custom properties** for the scaffold; Tailwind adoption would follow `TAILWIND_CSS_INTEGRATION_SPEC.md` and is not enabled yet.
-- **i18next + react-i18next** with one app-shell provider. Copy is owned by package-local `src/i18n/<locale>/platform/diagnostics/` fragments; the zh-CN fragment is typed against the en-US keys, so locale parity is a compile error rather than a runtime gap.
-- **Node's built-in test runner** for contract tests; no test framework dependency in the scaffold.
+- **React 19 + Vite 6 + TypeScript 5.8 (strict)** for PC and H5.
+- **Flutter 3.47 / Dart 3** with Material 3 for the native mobile surface.
+- **WeChat mini program** with authored CommonJS modules that stay loadable by Node contract tests.
+- **pnpm workspace** at the repository root; no sibling workspace members and no `file:`/`link:` dependencies.
+- **i18next + react-i18next** on the browser surfaces; a small generated catalog helper on Flutter and the mini program.
+- **No i18n hand-editing**: `contracts/care-messages.json` is the authored source, `tools/generate-care-i18n.mjs` projects it into TypeScript, Dart, and JavaScript, and drift gates compare every projection with the source.
+- **Node's built-in test runner** for cross-client contract tests; `flutter test` for the Dart surface.
 
 ## 3. System Boundaries And Modules
 
 | Layer | Ownership | Must not own |
 | --- | --- | --- |
-| `src/` of each app root | bootstrap, runtime document load, route composition, session gate seam | business checks, pages |
-| `*-core` | SDK port registry, module registry, host adapter contract, session port | pages, product services |
-| `*-commons` | domain-neutral primitives and formatting | business state, route ownership |
-| `*-shell` | layout, navigation, route table | business logic, SDK construction |
-| `*-diagnostics` | check presentation, report state, service wrapper | check definitions that other surfaces need |
-| `doctor-common-diagnostics` | check vocabulary, catalog, runner | DOM-specific presentation, React |
+| `src/` of each app root | runtime document load, runtime composition, route composition, session gate | pages, transports |
+| `*-core` | SDK port registry, agent port construction, host adapter, session port | pages, product services |
+| `*-commons` | domain-neutral primitives | business state, route ownership |
+| `*-shell` | layout, tab navigation, route table | business logic, transport |
+| `*-care` | the three product tabs | transport construction, credentials |
+| `doctor-common-agent` | conversation port, offline adapter, hosted wire adapter, safety composition | React, DOM, storage |
+| `doctor-common-doctor` | family domain types, triage decisions | network, UI copy |
+| `doctor-common-diagnostics` | device environment checks | health data |
 
-Dependency direction is core/commons → shell → diagnostics, with each app root composing them. Feature packages never construct SDK clients; the core package owns ports and will own generated SDK construction when an API exists.
+Dependency direction is core/commons → shell → care, composed by each app root.
+Feature packages never construct a transport, read an access token, or call
+`fetch`. The core package owns the token seam (`DoctorSessionPort`) and the port
+construction.
 
-## 4. Directory And Package Layout
+## 4. Conversation Transport
+
+The single seam is `AgentConversationPort` (`mode`, `send`, `history`). Two
+implementations exist:
+
+- **Offline** (`createLocalCareAgent`): deterministic triage reply, used when no
+  agents deployment or credential is configured.
+- **Hosted** (`createHostedCareAgent`, Flutter `HostedCareAgent`, mini program
+  `createHostedAgent`): speaks the pinned sdkwork-agents app API
+  (`specs/agents-app-api.contract.json`).
+
+Hosted flow per client:
+
+1. Resolve `agentsApiBaseUrl` from the runtime document (browser), the build-time
+   define (Flutter) or the WeChat ext config (mini program).
+2. Resolve the mode from the URL plus the presence of an access token. A missing
+   token means offline, and the client says so; it never reports hosted while the
+   offline adapter answers.
+3. Create one session (`agents.sessions.create`) and reuse it.
+4. Send a turn (`agents.turns.stream`) with `content`, `contentType`, `turnMode`,
+   `idempotencyKey`, `payloadHash`, `clientRequestId`, `requestedAt`, and a
+   member-aware system prompt.
+5. Unwrap the SDKWork envelope (`code: 0`, `traceId`, `data.item`), read the
+   `assistant_output` items, and map problems to typed errors.
+6. Compose the visible answer: the triage lead goes first, the hosted text after
+   it, so a red flag is never buried. A red flag inside the hosted answer can
+   only raise the level.
+
+The idempotency fingerprint is a frozen four-salt FNV-1a 128-bit digest
+(`contracts/care-fingerprint-vectors.json`) reproduced byte-for-byte by
+TypeScript, Dart, and the mini program.
+
+## 5. Directory And Package Layout
 
 ```text
 apps/
-  sdkwork-doctor-common/packages/sdkwork-doctor-common-diagnostics/
+  sdkwork-doctor-common/packages/sdkwork-doctor-common-{doctor,agent,diagnostics}/
   sdkwork-doctor-pc/
-    src/{main.tsx,App.tsx,AuthGate.tsx,bootstrap/}
-    packages/{sdkwork-doctor-pc-core,-commons,-shell,-diagnostics}/
+    src/{main.tsx,App.tsx,bootstrap/}
+    packages/{sdkwork-doctor-pc-core,-commons,-shell,-care,-diagnostics}/
     config/browser/runtime-env.<deployment-profile>.<environment>.example.json
-    etc/sdkwork.deployment.config.json
-    specs/component.spec.json
-  sdkwork-doctor-h5/
-    ... same shape with h5 package names ...
+  sdkwork-doctor-h5/            ... same shape with h5 names ...
+  sdkwork-doctor-flutter-mobile/{lib/{agent,i18n},test}/
+  sdkwork-doctor-mini-program/{src/{lib,pages},tests}/
 etc/sdkwork.deployment.config.json
-specs/README.md
+specs/{agents-app-api,agent-integration}.contract.json
+contracts/ (inside sdkwork-doctor-common-doctor)
 ```
 
-Every authored package owns `specs/component.spec.json`; every application root owns `.sdkwork/`, `specs/`, `tests/`, and its runtime-env documents.
+Every authored package owns `specs/component.spec.json`; every client root owns
+`.sdkwork/`, `specs/`, tests, and its runtime configuration.
 
-## 5. API, SDK, And Data Ownership
+## 6. API, SDK, And Data Ownership
 
 - Doctor owns no HTTP API authority. `agent.app.config.json#backend.apiSurfaces` is empty.
-- No generated SDK family is declared yet. `*-core` exposes an empty but explicit SDK port registry; adding a client means adding a port and a `contracts.sdkDependencies` entry in the core component spec.
-- No persistence. Checks run against browser APIs and the same-origin runtime document; nothing is stored server-side. The only browser write is a probe key that is removed immediately.
+- Doctor consumes one external API family: the sdkwork-agents app API. The
+  dependency is pinned in `specs/agents-app-api.contract.json` and compared with
+  the upstream OpenAPI by `tests/agents-upstream-contract.test.mjs`.
+- No generated transport package is imported. The hosted adapter is a core-owned
+  port implementation; when a scoped composed facade is generated it replaces the
+  adapter without changing the port (ADR-20261103).
+- No server-side persistence. The household record lives in the app, the
+  conversation lives in the agents service, and the device checks run locally.
 
-## 6. Security, Privacy, And Observability
+## 7. Security, Privacy, And Observability
 
-- Checks run locally; the only network request is a `no-store` fetch of `/runtime-env.json` on the page's own origin.
-- No credential, token, or user identifier is read or displayed. The runtime-env document is public by design.
-- The session gate is an explicit pass-through in the scaffold; when appbase IAM lands it becomes the standard `SdkworkSessionAuthBrowserRoot` wrapper (`IAM_LOGIN_INTEGRATION_SPEC.md`).
-- Observability is the report itself: per-check status, duration, and details. A future version may add structured log export, but never secret values.
-
-## 7. Deployment And Runtime Topology
-
-- Runtime target: `browser` for both surfaces. Deployment profiles: `standalone` and `cloud`.
-- Each `<deployment-profile>.<environment>` pair has one checked-in runtime-env example. Vite serves `/runtime-env.json` in development and emits the same document into the build, so a static artifact carries its deploy-time configuration (`APP_RUNTIME_ENV_SPEC.md`, `BROWSER_RUNTIME_ENV_SPEC.md`).
-- Build output follows `dist/<deployment-profile>/<dev|test|staging|demo|prod>/` through `tools/browser-dist-layout.mjs`.
-- No application API, gateway, database, or container process is defined yet; `agent.app.config.json` install packages are placeholders marked `releaseBuildDeferred` until the packaging workflow is added.
+- The access token is read only by the core package or the client's runtime
+  config module; it is never a `VITE_*` build value, never logged, and never
+  rendered.
+- Health facts travel only in the turn's system prompt; the client stores nothing
+  beyond the in-memory conversation history.
+- Device diagnostics report environment facts, never health data.
+- The session gate is a pass-through until appbase IAM lands; the token seam is
+  already in place.
+- Observability is the mode indicator plus typed transport errors carrying
+  `status`, `code`, and `traceId`.
 
 ## 8. Architecture Decision Index
 
-No ADR is recorded yet. The following decisions are inherited from standards rather than locally chosen:
+- `ADR-20261102-agent-transport-binding.md` — the port seam and the explicit
+  hosted/offline rule (superseded only on the SDK packaging choice).
+- `ADR-20261103-hosted-agent-wire-binding.md` — wire-level binding to the pinned
+  sdkwork-agents app API, with the upstream contract test as the guard.
 
-- Adaptive Web PC+H5 pair: `APP_CLIENT_ARCHITECTURE_ALIGNMENT_SPEC.md`.
-- Shared, framework-neutral check contract: `COMPOSABLE_ARCHITECTURE_SPEC.md` and `COMPONENT_SPEC.md`.
-- Runtime-env document instead of build-time inlined base URLs: `APP_RUNTIME_ENV_SPEC.md` section 2.
-
-Record an ADR under `docs/architecture/decisions/` before changing any of them.
+Inherited from standards: Adaptive Web PC+H5 pairing
+(`APP_CLIENT_ARCHITECTURE_ALIGNMENT_SPEC.md`), framework-neutral shared contracts
+(`COMPOSABLE_ARCHITECTURE_SPEC.md`, `COMPONENT_SPEC.md`), and the runtime-env
+document instead of inlined base URLs (`APP_RUNTIME_ENV_SPEC.md`).
 
 ## 9. Verification
 
 ```bash
-pnpm typecheck
-pnpm test
-pnpm check        # typecheck + contract tests + canonical specs validators
-pnpm verify       # check + PC/H5 browser builds
+pnpm typecheck      # 16 workspace projects
+pnpm test           # cross-client contract tests
+pnpm check:i18n     # i18n + locale gate
+pnpm check:specs    # canonical validators
+pnpm build          # PC and H5 browser bundles
+pnpm check          # typecheck + test + i18n + specs
+pnpm verify         # check + both builds
+
+# Flutter surface
+cd apps/sdkwork-doctor-flutter-mobile && flutter analyze && flutter test
 ```
 
-Canonical validators invoked by `pnpm check:specs`: repository baseline, workspace layout, gitignore, repository docs, agent workflow, pnpm scripts, app manifest, apps directory index, component port bindings, workspace member protocol, and Vite workspace aliases.
+Contract tests cover: the hosted wire path against a conformance server, upstream
+API drift, four-client tab identity, triage parity across runtimes, fingerprint
+vectors, generated catalog drift, transport mode selection, and the rule that UI
+packages never build a transport.

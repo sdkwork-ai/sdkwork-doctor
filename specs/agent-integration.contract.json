@@ -1,20 +1,57 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "kind": "sdkwork.doctor.agent-integration",
-  "transport": "@sdkwork/agents-app-sdk",
-  "decision": "docs/architecture/decisions/ADR-20261102-agent-transport-binding.md",
+  "transport": "@sdkwork/doctor-common-agent#createHostedCareAgent",
+  "decision": "docs/architecture/decisions/ADR-20261103-hosted-agent-wire-binding.md",
+  "wireContract": "specs/agents-app-api.contract.json",
+  "upstreamDependency": {
+    "apiAuthority": "sdkwork-agents-app-api",
+    "operations": ["agents.sessions.create", "agents.turns.stream"],
+    "sdk": "@sdkwork/agents-app-sdk",
+    "sdkState": "not installed; the port speaks the pinned wire contract"
+  },
   "requiredInputs": {
     "agentsApiBaseUrl": "runtime-env.<deployment-profile>.<environment>.json#agentsApiBaseUrl",
-    "accessToken": "IAM/appbase session token through the shared TokenManager; never a VITE_* variable"
+    "accessToken": "IAM/appbase session token through the shared session port; never a VITE_* variable"
   },
   "modeSelection": {
     "rule": "hosted only when agentsApiBaseUrl is non-empty and an access token is present; never a silent offline fallback",
-    "module": "@sdkwork/doctor-common-agent#resolveCareAgentMode"
+    "modules": {
+      "shared": "@sdkwork/doctor-common-agent#resolveCareAgentMode",
+      "pc": "@sdkwork/doctor-pc-core#readDoctorPcCareAgentMode",
+      "h5": "@sdkwork/doctor-h5-core#readDoctorH5CareAgentMode",
+      "flutter": "lib/agent/care_agent.dart#resolveCareAgentMode",
+      "mini_program": "lib/agent.js#resolveCareAgentMode"
+    },
+    "observable": "every port reports its own mode and each client renders it on the me tab"
+  },
+  "clients": {
+    "pc": { "port": "@sdkwork/doctor-common-agent#createHostedCareAgent", "streaming": true, "entrySurface": "pc" },
+    "h5": { "port": "@sdkwork/doctor-common-agent#createHostedCareAgent", "streaming": true, "entrySurface": "h5" },
+    "flutter": { "port": "lib/agent/care_agent.dart#HostedCareAgent", "streaming": true, "entrySurface": "flutter" },
+    "mini_program": { "port": "lib/agent.js#createHostedAgent", "streaming": false, "entrySurface": "mini_program" }
   },
   "acceptance": [
-    "A real hosted conversation transcript is recorded for at least one non-emergency symptom.",
-    "An emergency red flag returned by the hosted agent still yields TriageLevel.emergency and is never softened.",
-    "The Me tab shows the active mode and never claims hosted when the offline adapter is running."
+    {
+      "criterion": "A hosted conversation completes a session create plus a turn and returns assistant_output text.",
+      "status": "verified-against-conformance-server",
+      "evidence": "tests/hosted-agent-transport.test.mjs, apps/sdkwork-doctor-flutter-mobile/test/hosted_agent_test.dart, tests/mini-program-agent.test.mjs"
+    },
+    {
+      "criterion": "An emergency red flag still yields TriageLevel.emergency and is never softened.",
+      "status": "verified-in-all-four-clients",
+      "evidence": "hosted-agent-transport, mini-program-agent, Flutter hosted_agent_test, care-agent-wiring"
+    },
+    {
+      "criterion": "The me tab shows the active mode and never claims hosted when the offline adapter answers.",
+      "status": "verified",
+      "evidence": "tests/care-agent-wiring.test.mjs, apps/sdkwork-doctor-flutter-mobile/test/hosted_agent_test.dart"
+    },
+    {
+      "criterion": "A real hosted conversation transcript against a deployed sdkwork-agents service.",
+      "status": "blocked",
+      "blockedUntil": "An agents deployment plus an IAM access token in a target deployment profile."
+    }
   ],
-  "blockedUntil": "An agents API base URL and an IAM access token are provisioned in the target deployment profile."
+  "blockedUntil": "A deployed agents service and an IAM credential; every other acceptance criterion is verified against the pinned contract and a conformance server."
 }

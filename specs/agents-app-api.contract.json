@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "kind": "sdkwork.doctor.agents-app-api-dependency",
+  "purpose": "The slice of the sdkwork-agents app API this application depends on. Pinned so an upstream rename, path move, enum change, or envelope change fails our contract test instead of silently breaking the conversation at runtime.",
+  "apiAuthority": "sdkwork-agents-app-api",
+  "upstream": {
+    "repository": "sdkwork-agents",
+    "openapi": "../sdkwork-agents/sdks/sdkwork-agents-app-sdk/openapi/sdkwork-agents-app-api.openapi.yaml",
+    "generatedTypeScript": "../sdkwork-agents/sdks/sdkwork-agents-app-sdk/sdkwork-agents-app-sdk-typescript",
+    "importPolicy": "The doctor workspace does not depend on the sibling checkout at build or runtime. This file records what the client assumes; tests/agents-upstream-contract.test.mjs compares it with the upstream document when that checkout is present."
+  },
+  "surfacePrefix": "/app/v3/api",
+  "operations": [
+    {
+      "operationId": "agents.sessions.create",
+      "method": "POST",
+      "path": "/app/v3/api/ai/agents/{agentId}/sessions",
+      "requestSchema": "CreateAgentSessionRequest",
+      "responseSchema": "AgentSessionResponse",
+      "successStatus": 201
+    },
+    {
+      "operationId": "agents.turns.stream",
+      "method": "POST",
+      "path": "/app/v3/api/ai/agents/{agentId}/sessions/{sessionId}/turns",
+      "requestSchema": "CreateAgentTurnRequest",
+      "responseSchema": "AgentTurnExecutionResponse",
+      "successStatus": 200,
+      "query": [
+        { "name": "stream", "value": "false", "purpose": "idempotent non-streaming turn" },
+        { "name": "stream", "value": "true", "purpose": "SSE turn" },
+        { "name": "event_protocol", "value": "kernel-v1", "purpose": "rich stream frames" }
+      ]
+    }
+  ],
+  "requiredRequestFields": {
+    "session": ["sessionKind", "entrySurface", "idempotencyKey", "payloadHash", "requestedAt"],
+    "turn": ["content", "turnMode", "idempotencyKey", "payloadHash", "requestedAt"]
+  },
+  "enumValues": {
+    "sessionKind": ["assistant"],
+    "entrySurface": ["pc", "h5", "flutter", "mini_program"],
+    "turnMode": ["interactive"],
+    "assistantItemKind": ["assistant_output"]
+  },
+  "envelope": {
+    "success": { "code": 0, "traceId": "required", "itemPath": "data.item" },
+    "error": "application/problem+json",
+    "streamFrames": ["delta", "event", "completion"]
+  },
+  "sdkBinding": {
+    "publishedPackage": "@sdkwork/agents-app-sdk",
+    "decision": "docs/architecture/decisions/ADR-20261103-hosted-agent-wire-binding.md",
+    "state": "not installed in this workspace; the binding is implemented against this contract by @sdkwork/doctor-common-agent and the per-client ports"
+  }
+}

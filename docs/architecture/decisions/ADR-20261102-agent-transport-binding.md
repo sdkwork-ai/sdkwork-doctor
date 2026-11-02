@@ -1,9 +1,15 @@
 # ADR-20261102 Agent Transport Binding
 
-Status: proposed
+Status: superseded (SDK packaging choice only)
+Superseded by: `ADR-20261103-hosted-agent-wire-binding.md`
 Date: 2026-11-02
 Deciders: sdkwork-platform
 Related: `APP_SDK_INTEGRATION_SPEC.md`, `SDK_SPEC.md`, `IAM_LOGIN_INTEGRATION_SPEC.md`, `ARCHITECTURE_DECISION_SPEC.md`
+
+The port seam, the explicit hosted/offline selection rule, and the no-silent-fallback
+constraint below remain in force. The companion decision that the hosted adapter must
+be imported from the published `@sdkwork/agents-app-sdk` package was not implementable
+in this workspace and is replaced by `ADR-20261103`.
 
 ## Context
 
