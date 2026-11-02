@@ -27,10 +27,17 @@ const checks = [
   ['check-agent-workflow-standard.mjs', ['--root', '.']],
   ['check-pnpm-script-standard.mjs', ['--root', '.', '--application-code-prefix', 'doctor']],
   ['check-app-manifest-standard.mjs', ['--root', '.']],
+  ['check-app-manifest-deployment-standard.mjs', ['--root', '.']],
+  ['check-source-config-standard.mjs', ['--root', '.']],
+  ['check-repository-baseline-content.mjs', ['--root', '.']],
   ['check-apps-directory-index.mjs', ['--root', '.']],
   ['check-component-port-bindings.mjs', ['--root', '.']],
+  ['check-frontend-composition.mjs', ['--root', '.']],
+  ['check-permission-composition.mjs', ['--root', '.']],
+  ['check-application-layering.mjs', ['--root', '.']],
   ['check-workspace-member-protocol.mjs', ['--root', '.']],
   ['check-vite-workspace-aliases.mjs', ['--root', '.']],
+  ['verify-repo.mjs', ['--root', '.']],
 ];
 
 let failed = 0;
