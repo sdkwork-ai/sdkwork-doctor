@@ -55,16 +55,48 @@ test('the session token is the only credential source, never a VITE_ variable', 
   }
 });
 
-test('both app shells pass the composed port into the three tab pages', () => {
+test('both app shells pass the composed port into the tab pages', () => {
   const pairs = [
     [path.join(pcRoot, 'src/App.tsx'), path.join(pcRoot, 'packages/sdkwork-doctor-pc-shell/src/DoctorPcRoutes.tsx')],
     [path.join(h5Root, 'src/App.tsx'), path.join(h5Root, 'packages/sdkwork-doctor-h5-shell/src/DoctorH5Routes.tsx')],
   ];
   for (const [appFile, routesFile] of pairs) {
-    assert.match(fs.readFileSync(appFile, 'utf8'), /agent=\{runtime\.agent\}/u, appFile);
+    const app = fs.readFileSync(appFile, 'utf8');
+    assert.match(app, /agent=\{runtime\.agent\}/u, appFile);
+    assert.match(app, /records=\{runtime\.records\}/u, appFile);
     const routes = fs.readFileSync(routesFile, 'utf8');
     assert.match(routes, /<ChatPage[^>]*agent=\{agent\}/u, routesFile);
     assert.match(routes, /<MePage[^>]*agent=\{agent\}/u, routesFile);
+    assert.match(routes, /path="records"/u, routesFile);
+  }
+});
+
+test('the records store is owned by core and consumed by the care tabs', () => {
+  for (const [, routesFile] of [
+    [path.join(pcRoot, 'src/App.tsx'), path.join(pcRoot, 'packages/sdkwork-doctor-pc-shell/src/DoctorPcRoutes.tsx')],
+    [path.join(h5Root, 'src/App.tsx'), path.join(h5Root, 'packages/sdkwork-doctor-h5-shell/src/DoctorH5Routes.tsx')],
+  ]) {
+    const routes = fs.readFileSync(routesFile, 'utf8');
+    assert.match(routes, /<ChatPage[^>]*records=\{records\}/u, routesFile);
+    assert.match(routes, /<RecordsPage[^>]*records=\{records\}/u, routesFile);
+  }
+  for (const careFile of [
+    path.join(pcRoot, 'packages/sdkwork-doctor-pc-care/src/index.tsx'),
+    path.join(h5Root, 'packages/sdkwork-doctor-h5-care/src/index.tsx'),
+  ]) {
+    const source = fs.readFileSync(careFile, 'utf8');
+    assert.match(source, /export function RecordsPage/u, careFile);
+    assert.match(source, /records\.add\(createVisitRecord/u, careFile);
+    assert.match(source, /useSyncExternalStore/u, careFile);
+    assert.doesNotMatch(source, /localStorage/u, careFile);
+  }
+  for (const storeFile of [
+    path.join(pcRoot, 'packages/sdkwork-doctor-pc-core/src/records/index.ts'),
+    path.join(h5Root, 'packages/sdkwork-doctor-h5-core/src/records/index.ts'),
+  ]) {
+    const source = fs.readFileSync(storeFile, 'utf8');
+    assert.match(source, /VISIT_RECORDS_STORAGE_KEY/u, storeFile);
+    assert.match(source, /createVisitRecordStore/u, storeFile);
   }
 });
 

@@ -16,12 +16,16 @@ test('the Flutter tabs render from the generated care catalog', () => {
   for (const key of [
     'platform.care.nav.chat',
     'platform.care.doctor.title',
+    'platform.care.nav.records',
     'platform.care.me.title',
     'platform.care.chat.send',
     'platform.care.chat.error',
     'platform.care.mode.hosted',
     'platform.care.mode.offline',
     'platform.care.me.completeness',
+    'platform.care.records.title',
+    'platform.care.records.empty',
+    'platform.care.records.clear',
   ]) {
     assert.ok(main.includes(key), 'Flutter main.dart must render ' + key);
   }
@@ -29,12 +33,12 @@ test('the Flutter tabs render from the generated care catalog', () => {
 });
 
 test('the mini program pages render from the generated care catalog', () => {
-  for (const page of ['conversation', 'doctor', 'profile']) {
+  for (const page of ['conversation', 'doctor', 'records', 'profile']) {
     const source = read(path.join(miniProgramRoot, 'src/pages', page, 'index.js'));
     assert.match(source, /require\('\.\.\/\.\.\/lib\/i18n\.js'\)/u, page);
     assert.match(source, /careText\(/u, page);
   }
-  for (const page of ['conversation', 'doctor', 'profile']) {
+  for (const page of ['conversation', 'doctor', 'records', 'profile']) {
     const wxml = read(path.join(miniProgramRoot, 'src/pages', page, 'index.wxml'));
     assert.doesNotMatch(wxml, />Family doctor chat<|>Health record<|>Send<|>Me</u, page + ' hard-codes English copy');
     assert.match(wxml, /\{\{/u, page + ' must bind localized data');

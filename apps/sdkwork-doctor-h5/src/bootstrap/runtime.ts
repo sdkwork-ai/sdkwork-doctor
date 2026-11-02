@@ -1,6 +1,7 @@
 import type { AgentConversationPort } from '@sdkwork/doctor-common-agent';
 import { createDoctorRuntimeContext, type DoctorRuntimeContext } from '@sdkwork/doctor-common-diagnostics';
-import { createAnonymousSessionPort, createDoctorH5CareAgent } from '@sdkwork/doctor-h5-core';
+import type { VisitRecordStore } from '@sdkwork/doctor-common-doctor';
+import { createAnonymousSessionPort, createDoctorH5CareAgent, createDoctorH5VisitRecordStore } from '@sdkwork/doctor-h5-core';
 
 import { loadRuntimeEnvironment, type DoctorH5Environment } from './environment';
 
@@ -13,6 +14,8 @@ export interface DoctorH5Runtime {
    * offline otherwise. The mode travels with the port so the UI never guesses.
    */
   readonly agent: AgentConversationPort;
+  /** Device-local consultation history shared by the chat and records tabs. */
+  readonly records: VisitRecordStore;
 }
 
 let runtimePromise: Promise<DoctorH5Runtime> | null = null;
@@ -36,6 +39,7 @@ export function bootstrapDoctorH5(): Promise<DoctorH5Runtime> {
           backendApiBaseUrl: environment.backendApiBaseUrl,
         }),
         agent: careAgent.port,
+        records: createDoctorH5VisitRecordStore(),
       };
     });
   }

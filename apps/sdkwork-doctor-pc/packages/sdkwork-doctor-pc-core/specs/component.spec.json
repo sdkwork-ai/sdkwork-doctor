@@ -59,7 +59,8 @@
       "./host",
       "./session",
       "./composition",
-      "./agent"
+      "./agent",
+      "./records"
     ],
     "providedPorts": [
       {
@@ -77,6 +78,10 @@
       {
         "name": "doctorPcCareAgentRuntime",
         "export": "./agent"
+      },
+      {
+        "name": "doctorPcVisitRecordStore",
+        "export": "./records"
       }
     ],
     "requiredPorts": [
@@ -84,12 +89,18 @@
         "name": "doctorAgentConversation",
         "export": "./agent",
         "provider": "@sdkwork/doctor-common-agent"
+      },
+      {
+        "name": "doctorVisitRecords",
+        "export": "./records",
+        "provider": "@sdkwork/doctor-common-doctor"
       }
     ],
     "runtimeEntrypoints": [
       "createDoctorPcRuntime",
       "getDoctorPcHostAdapter",
-      "createDoctorPcCareAgent"
+      "createDoctorPcCareAgent",
+      "createDoctorPcVisitRecordStore"
     ],
     "routeManifest": null,
     "sdkClients": [],

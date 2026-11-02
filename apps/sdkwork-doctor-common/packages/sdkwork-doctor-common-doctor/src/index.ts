@@ -112,3 +112,24 @@ export function summarizeHealth(member: FamilyMember): HealthSummary {
     lastCheckupOn: null,
   });
 }
+
+export {
+  VISIT_RECORD_LIMIT,
+  VISIT_RECORDS_STORAGE_KEY,
+  appendVisitRecord,
+  createMemoryVisitRecordStore,
+  createVisitRecord,
+  createVisitRecordStore,
+  isTriageLevel,
+  isVisitRecordMode,
+  newVisitRecordId,
+  parseVisitRecords,
+  serializeVisitRecords,
+} from './visit-records';
+export type {
+  CreateVisitRecordInput,
+  VisitRecord,
+  VisitRecordMode,
+  VisitRecordStorageAdapter,
+  VisitRecordStore,
+} from './visit-records';

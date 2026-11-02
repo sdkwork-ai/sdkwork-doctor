@@ -8,23 +8,29 @@ const read = (relativePath) => fs.readFileSync(path.join(repoRoot, relativePath)
 
 const CHAT = '\u5bf9\u8bdd';
 const DOCTOR = '\u533b\u751f';
+const RECORDS = '\u8bb0\u5f55';
 const ME = '\u6211\u7684';
 const RULES = 'apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor/contracts/triage-rules.json';
 
-test('every client exposes the same three care tabs', () => {
+test('every client exposes the same four care tabs', () => {
   const pc = read('apps/sdkwork-doctor-pc/packages/sdkwork-doctor-pc-shell/src/navigation.ts');
   const h5 = read('apps/sdkwork-doctor-h5/packages/sdkwork-doctor-h5-shell/src/navigation.ts');
   const mp = JSON.parse(read('apps/sdkwork-doctor-mini-program/src/app.json'));
   const flutter = read('apps/sdkwork-doctor-flutter-mobile/lib/main.dart');
 
   for (const [label, text] of [['pc', pc], ['h5', h5]]) {
-    for (const target of ['/doctor/chat', '/doctor/doctor', '/doctor/me']) {
+    for (const target of ['/doctor/chat', '/doctor/doctor', '/doctor/records', '/doctor/me']) {
       assert.match(text, new RegExp(target.replaceAll('/', '\\/'), 'u'), label + ' must route ' + target);
     }
   }
-  assert.deepEqual(mp.pages, ['pages/conversation/index', 'pages/doctor/index', 'pages/profile/index']);
-  assert.deepEqual(mp.tabBar.list.map((tab) => tab.text), [CHAT, DOCTOR, ME]);
-  assert.equal(flutter.split('NavigationDestination(').length - 1, 3);
+  assert.deepEqual(mp.pages, [
+    'pages/conversation/index',
+    'pages/doctor/index',
+    'pages/records/index',
+    'pages/profile/index',
+  ]);
+  assert.deepEqual(mp.tabBar.list.map((tab) => tab.text), [CHAT, DOCTOR, RECORDS, ME]);
+  assert.equal(flutter.split('NavigationDestination(').length - 1, 4);
 });
 
 test('the shared triage rule contract is the single source of the red-flag vocabulary', () => {

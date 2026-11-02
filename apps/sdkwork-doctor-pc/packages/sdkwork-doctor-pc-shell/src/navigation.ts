@@ -9,5 +9,6 @@ export const DOCTOR_PC_HOME_PATH = '/doctor/chat';
 export const doctorPcNavigation: readonly DoctorNavItem[] = Object.freeze([
   Object.freeze({ labelKey: 'platform.diagnostics.nav.chat', to: '/doctor/chat' }),
   Object.freeze({ labelKey: 'platform.diagnostics.nav.doctor', to: '/doctor/doctor' }),
+  Object.freeze({ labelKey: 'platform.diagnostics.nav.records', to: '/doctor/records' }),
   Object.freeze({ labelKey: 'platform.diagnostics.nav.me', to: '/doctor/me' }),
 ]);

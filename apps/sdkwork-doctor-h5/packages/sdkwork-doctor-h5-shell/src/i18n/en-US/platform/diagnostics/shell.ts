@@ -5,6 +5,7 @@ export const enUS = {
   'platform.diagnostics.nav.chat': 'Chat',
   'platform.diagnostics.nav.doctor': 'Doctor',
   'platform.diagnostics.nav.me': 'Me',
+  'platform.diagnostics.nav.records': 'Records',
   'platform.diagnostics.nav.environment': 'Env',
   'platform.diagnostics.nav.label': 'Doctor sections',
   'platform.diagnostics.language.label': 'Language',

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "kind": "sdkwork.doctor.visit-record",
+  "purpose": "One consultation record. Every client reads and writes this exact shape; the TypeScript, Dart, and mini program suites assert it against this file.",
+  "storageKey": "sdkwork.doctor.visit-records.v1",
+  "limit": 200,
+  "ordering": "newest first, de-duplicated by id",
+  "fields": {
+    "id": "string",
+    "recordedAt": "ISO-8601 date-time string",
+    "memberId": "string",
+    "memberLabel": "string",
+    "symptom": "string",
+    "advice": "string",
+    "level": "emergency | urgent | routine | self-care",
+    "mode": "hosted | offline"
+  },
+  "required": [
+    "id",
+    "recordedAt",
+    "memberId",
+    "memberLabel",
+    "symptom",
+    "advice",
+    "level",
+    "mode"
+  ],
+  "example": {
+    "id": "5f0f3a2e-1c1a-4a63-9f2f-4d0e0a1b2c3d",
+    "recordedAt": "2026-11-02T13:30:00.000Z",
+    "memberId": "member-self",
+    "memberLabel": "Me (self)",
+    "symptom": "chest pain for 10 minutes",
+    "advice": "Call local emergency services now. Do not drive yourself.",
+    "level": "emergency",
+    "mode": "offline"
+  }
+}

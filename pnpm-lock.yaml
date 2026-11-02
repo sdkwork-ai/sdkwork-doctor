@@ -131,6 +131,9 @@ importers:
       '@sdkwork/doctor-common-diagnostics':
         specifier: workspace:*
         version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-diagnostics
+      '@sdkwork/doctor-common-doctor':
+        specifier: workspace:*
+        version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor
     devDependencies:
       typescript:
         specifier: ^5.8.2
@@ -311,6 +314,9 @@ importers:
       '@sdkwork/doctor-common-diagnostics':
         specifier: workspace:*
         version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-diagnostics
+      '@sdkwork/doctor-common-doctor':
+        specifier: workspace:*
+        version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor
     devDependencies:
       typescript:
         specifier: ^5.8.2

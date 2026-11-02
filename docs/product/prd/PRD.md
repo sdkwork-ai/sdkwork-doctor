@@ -15,10 +15,10 @@ allergy, this parent's hypertension, or which medications are already in use, an
 they never tell a family how urgently to act.
 
 SDKWork Doctor is a family private-doctor agent application. It pairs an agent
-conversation with the household health record, applies a deterministic
-emergency-first triage before any conversational reply, and runs on the four
-places a family actually uses: the PC browser, the mobile browser, the Flutter
-mobile app, and the WeChat mini program.
+conversation with the household health record, keeps a visit log of every
+consultation, applies a deterministic emergency-first triage before any
+conversational reply, and runs on the four places a family actually uses: the PC
+browser, the mobile browser, the Flutter mobile app, and the WeChat mini program.
 
 ## 2. Target Users
 
@@ -33,7 +33,8 @@ Goals:
 - Answer a symptom question with the member's known allergies, conditions, and medications in context.
 - Escalate an emergency red flag before, and independently of, any conversational text.
 - Keep one conversation mode that is explicit: hosted agent or offline triage, never an unstated substitute.
-- Show the same three tabs (对话 / 医生 / 我的) on every client.
+- Record every consultation on the device so a family can see what was asked and what was advised.
+- Show the same four tabs (对话 / 医生 / 记录 / 我的) on every client.
 - Keep health facts on the device and in the request only; no client-side analytics.
 
 Non-goals:
@@ -49,6 +50,7 @@ In scope for this release:
 
 - 对话: a conversation with the family doctor agent, a triage level per exchange, and an emergency lead that can never be softened.
 - 医生: the household health record and the care rules for the selected member.
+- 记录: every consultation on this device, newest first, with symptom, advice, level, member, time, and transport mode; clearable with one confirmed action.
 - 我的: family members, profile completeness, the active conversation mode, and the device environment check.
 - Hosted conversation through the sdkwork-agents app API, with an offline triage adapter when no deployment or credential exists.
 - Two locales (en-US, zh-CN) generated from one authored catalog into all four clients.
@@ -68,7 +70,9 @@ Out of scope for the first release:
    "Call local emergency services now" even if the model answer is reassuring.
 3. A family member opens the app on a new phone. The 我的 tab shows the same
    household record and states whether the conversation is hosted or offline.
-4. An operator deploys without an agents service. The app runs the offline
+4. A parent wants to recall what the doctor advised last week, opens 记录, and
+   reads the symptom, the advice, the level, and the time of that consultation.
+5. An operator deploys without an agents service. The app runs the offline
    triage adapter and the 我的 tab says so; nothing pretends to be hosted.
 
 ## 6. Success Metrics
@@ -76,13 +80,14 @@ Out of scope for the first release:
 - Time from opening the app to a first triage level under 30 seconds.
 - Zero replies where an emergency red flag is absent from the leading sentence.
 - Zero clients that render a mode other than the transport actually in use.
+- Every consultation is retrievable from the 记录 tab after an app restart.
 - One authored copy contract, zero hand-edited per-client translations.
 
 ## 7. Phases
 
 | Phase | Scope |
 | --- | --- |
-| P0 (delivered) | Three tabs on four clients, shared domain and triage contract, offline adapter, hosted wire transport, generated care catalog, contract tests. |
+| P0 (delivered) | Four tabs on four clients, shared domain and triage contract, offline adapter, hosted wire transport, device-local visit records, generated care catalog, contract tests. |
 | P1 | Live hosted conversation against a deployed sdkwork-agents service plus IAM session; real transcript recorded in the acceptance record. |
 | P2 | Multi-member switching, per-member conversation sessions, and household invitations. |
 | P3 | Clinician handoff and visit summaries through the same agent port. |

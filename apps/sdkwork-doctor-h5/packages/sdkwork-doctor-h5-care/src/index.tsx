@@ -1,8 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AgentConversationPort, ChatMessage } from '@sdkwork/doctor-common-agent';
 import type { DoctorRuntimeContext } from '@sdkwork/doctor-common-diagnostics';
-import { demoSelfMember, summarizeHealth, type FamilyMember } from '@sdkwork/doctor-common-doctor';
+import {
+  createVisitRecord,
+  demoSelfMember,
+  summarizeHealth,
+  type FamilyMember,
+  type VisitRecordStore,
+} from '@sdkwork/doctor-common-doctor';
 import { ActionButton, MobileCard } from '@sdkwork/doctor-h5-commons';
 import { CheckList, useDiagnosticsReport } from '@sdkwork/doctor-h5-diagnostics';
 
@@ -16,9 +22,11 @@ export interface ChatPageProps {
   readonly member: FamilyMember;
   /** Conversation transport composed by the core package (hosted or offline). */
   readonly agent: AgentConversationPort;
+  /** Device-local consultation history; every completed exchange is recorded. */
+  readonly records: VisitRecordStore;
 }
 
-export function ChatPage({ member, agent }: ChatPageProps) {
+export function ChatPage({ member, agent, records }: ChatPageProps) {
   const { t } = useTranslation();
   const [messages, setMessages] = useState<readonly ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
@@ -35,6 +43,13 @@ export function ChatPage({ member, agent }: ChatPageProps) {
       .then((reply) => {
         setMessages([...agent.history()]);
         setDraft('');
+        records.add(createVisitRecord({
+          member,
+          symptom: text,
+          advice: reply.text,
+          level: reply.triage?.level ?? 'routine',
+          mode: agent.mode,
+        }));
         if (reply.triage?.escalate) {
           document.documentElement.dataset.triage = reply.triage.level;
         }
@@ -114,6 +129,56 @@ export function DoctorPage({ member }: { member: FamilyMember }) {
           <li>{t('platform.care.doctor.bullet.medication')}</li>
         </ul>
         <p className="doctor-check-summary">{t('platform.care.doctor.actionsHint')}</p>
+      </MobileCard>
+    </div>
+  );
+}
+
+export interface RecordsPageProps {
+  readonly records: VisitRecordStore;
+}
+
+/** Visit records: every completed consultation, newest first. */
+export function RecordsPage({ records }: RecordsPageProps) {
+  const { t, i18n } = useTranslation();
+  const items = useSyncExternalStore(records.subscribe, records.list, records.list);
+
+  const clear = () => {
+    if (items.length === 0) return;
+    if (typeof window === 'undefined' || window.confirm(t('platform.care.records.clearConfirm'))) {
+      records.clear();
+    }
+  };
+
+  return (
+    <div>
+      <h1 className="doctor-page-title">{t('platform.care.records.title')}</h1>
+      <p className="doctor-page-subtitle">{t('platform.care.records.subtitle')}</p>
+      <MobileCard title={t('platform.care.records.count', { count: items.length })}>
+        {items.length === 0 ? (
+          <p className="doctor-check-summary">{t('platform.care.records.empty')}</p>
+        ) : (
+          <ul className="doctor-check-list">
+            {items.map((record) => (
+              <li className="doctor-check" key={record.id}>
+                <div>
+                  <h3 className="doctor-check-title">{record.symptom}</h3>
+                  <p className="doctor-check-summary">{record.advice}</p>
+                  <p className="doctor-check-detail">
+                    {record.memberLabel} · {new Date(record.recordedAt).toLocaleString(i18n.language)} ·{' '}
+                    {record.mode === 'hosted' ? t('platform.care.mode.hosted') : t('platform.care.mode.offline')}
+                  </p>
+                </div>
+                <span className="doctor-badge" data-status={record.level === 'emergency' || record.level === 'urgent' ? 'warn' : 'ok'}>
+                  {t('platform.care.level.' + record.level)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div style={{ marginTop: 12 }}>
+          <ActionButton onClick={clear} disabled={items.length === 0}>{t('platform.care.records.clear')}</ActionButton>
+        </div>
       </MobileCard>
     </div>
   );

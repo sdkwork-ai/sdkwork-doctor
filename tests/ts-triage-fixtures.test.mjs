@@ -3,6 +3,8 @@ import { test } from 'node:test';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import './support/ts-resolve.mjs';
+
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const fixturesPath = path.join(repoRoot, 'apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor/contracts/triage-fixtures.json');
 const modulePath = path.join(repoRoot, 'apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor/src/index.ts');

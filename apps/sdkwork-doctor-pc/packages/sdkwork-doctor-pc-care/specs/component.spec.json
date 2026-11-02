@@ -29,9 +29,10 @@
     "providedPorts": [{ "name": "doctorPcCareTabs", "export": "." }],
     "requiredPorts": [
       { "name": "doctorAgentConversation", "export": ".", "provider": "@sdkwork/doctor-common-agent" },
-      { "name": "doctorFamilyDomain", "export": ".", "provider": "@sdkwork/doctor-common-doctor" }
+      { "name": "doctorFamilyDomain", "export": ".", "provider": "@sdkwork/doctor-common-doctor" },
+      { "name": "doctorVisitRecords", "export": ".", "provider": "@sdkwork/doctor-common-doctor" }
     ],
-    "runtimeEntrypoints": ["ChatPage", "DoctorPage", "MePage"],
+    "runtimeEntrypoints": ["ChatPage", "DoctorPage", "RecordsPage", "MePage"],
     "routeManifest": null,
     "sdkClients": [],
     "sdkDependencies": [],

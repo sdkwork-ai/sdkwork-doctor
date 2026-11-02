@@ -15,7 +15,8 @@ Scope: 对话 / 医生 / 我的 three-tab family doctor application across four 
 | PC client | `sdkwork-doctor-pc` with `chat` / `doctor` / `me` tabs, mode-aware me tab, `pnpm build` |
 | H5 client | `sdkwork-doctor-h5` with the same tabs and route identity |
 | Flutter client | `apps/sdkwork-doctor-flutter-mobile`: hosted + offline agents, generated catalog, 23 tests |
-| Mini program | `apps/sdkwork-doctor-mini-program`: three pages, hosted + offline agent, generated catalog |
+| Mini program | `apps/sdkwork-doctor-mini-program`: four pages, hosted + offline agent, generated catalog |
+| Visit records | `@sdkwork/doctor-common-doctor` record contract + store; chat writes, records tab reads, device-local per client |
 | Care copy pipeline | `contracts/care-messages.json` -> `tools/generate-care-i18n.mjs` -> TS, Dart, and JS projections |
 | Cross-runtime fingerprint | `contracts/care-fingerprint-vectors.json` reproduced by TS, Dart, and the mini program |
 | Upstream contract pin | `specs/agents-app-api.contract.json` compared with the sdkwork-agents OpenAPI |
@@ -27,8 +28,8 @@ Scope: 对话 / 医生 / 我的 three-tab family doctor application across four 
 Commands run from the repository root on 2026-11-02:
 
 - `pnpm typecheck` — 16 workspace projects, no errors.
-- `pnpm test` — 71 tests, 71 pass, 0 fail.
-- `pnpm check:i18n` — i18n standard check passed (229 files), locale gate wired.
+- `pnpm test` — 86 tests, 86 pass, 0 fail.
+- `pnpm check:i18n` — i18n standard check passed, locale gate wired.
 - `pnpm check:specs` — all canonical validators pass: baseline, workspace layout,
   gitignore, docs, agent/workflow, pnpm scripts, app manifest + deployment, source
   config, repository baseline content gate, apps index, i18n, component ports,
@@ -40,9 +41,11 @@ Commands run from the repository root on 2026-11-02:
 Flutter surface (`apps/sdkwork-doctor-flutter-mobile`):
 
 - `flutter analyze` — no issues.
-- `flutter test` — 23 tests, all pass (triage fixtures, 5 catalog drift checks,
-  5 fingerprint vector checks, 9 hosted-transport checks).
-What the 71 Node tests actually assert:
+- `flutter test` — 36 tests, all pass (triage fixtures, catalog drift, fingerprint
+  vectors, hosted transport, visit-record store, and seven widget tests covering
+  the four tabs, the emergency lead, and the recorded consultation).
+
+What the 86 Node tests actually assert:
 
 - The hosted path performs one session create plus one turn, sends the documented
   fields, reuses the session, parses both the non-streaming envelope and the SSE
@@ -60,6 +63,9 @@ What the 71 Node tests actually assert:
   and the mini program, including placeholder sets.
 - Fingerprint vectors are byte-identical across TypeScript, Dart, and the mini
   program.
+- Visit records carry exactly the contract fields in TypeScript, Dart, and the
+  mini program; they are newest first, de-duplicated, capped, survive a restart
+  through their storage adapter, and degrade to a session copy when storage throws.
 
 ## Not delivered (why)
 
@@ -72,6 +78,10 @@ What the 71 Node tests actually assert:
    were not produced; the release manifest still marks `releaseBuildDeferred`.
 3. **Mini program streaming.** The mini program uses the non-streaming turn
    (`stream=false`); a chunked `wx.request` implementation is not wired.
+4. **Localized offline advice.** The offline adapter's reply text (emergency,
+   routine, self-care) is authored English in all clients; the generated catalog
+   covers UI chrome only. Localizing it needs a copy port threaded through the four
+   clients so one source still drives them.
 
 ## Exit criteria for a full acceptance
 
@@ -80,6 +90,7 @@ What the 71 Node tests actually assert:
 - Produce signed Flutter and WeChat artifacts and flip `releaseBuildDeferred`.
 - Decide whether the mini program needs streaming, or record `stream=false` as the
   permanent contract for that surface.
+- Move the offline agent's advice templates into the care copy contract.
 
 ## Addendum (rounds 13-20)
 
@@ -119,3 +130,32 @@ What the 71 Node tests actually assert:
 Remaining English literals: none in the three tabs of any client. The only
 untranslated strings are brand names, transport error details returned by the
 server, and the generated system prompt sent to the agent.
+
+## Addendum (rounds 27-30): visit records
+
+- **Fourth tab on every client**: 对话 / 医生 / 记录 / 我的. PC and H5 route
+  `/doctor/records`, Flutter adds a `RecordsTab`, and the mini program adds
+  `pages/records/index` to `app.json` and its tab bar.
+- **One record contract**: `contracts/visit-record.schema.json` pins the eight
+  fields (`id`, `recordedAt`, `memberId`, `memberLabel`, `symptom`, `advice`,
+  `level`, `mode`), the storage key `sdkwork.doctor.visit-records.v1`, and the
+  200-record cap. TypeScript, Dart, and the mini program each assert their emitted
+  object against that file.
+- **One store implementation**: `@sdkwork/doctor-common-doctor` owns append,
+  parse, serialize, and the store; PC/H5, Flutter, and the mini program only
+  supply the storage adapter (`localStorage`, `shared_preferences`, `wx` storage).
+  A blocked or corrupt store degrades to a session copy instead of throwing.
+- **Recording rule**: the chat tab writes one record per completed exchange and
+  writes nothing when the transport fails; the records tab subscribes to the store
+  so the entry appears without a reload, and offers a confirmed clear action.
+- **Evidence**: `tests/visit-records.test.mjs` and
+  `tests/mini-program-records.test.mjs` (shape, ordering, de-duplication, cap,
+  corrupt storage, persistence, notification), Flutter
+  `test/visit_store_test.dart`, and two widget tests that send a symptom and read
+  it back from the records tab. Verified on the Android emulator: a consultation
+  recorded before `adb shell am force-stop` was still listed after relaunch.
+
+Remaining English literals: none in the four tabs of any client. The only
+untranslated strings are brand names, transport error details returned by the
+server, the generated system prompt sent to the agent, and the offline agent's
+advice text (see "Not delivered").

@@ -65,8 +65,10 @@
     "runtimeEntrypoints": [
       "pages/conversation",
       "pages/doctor",
+      "pages/records",
       "pages/profile",
-      "lib/agent#createCareAgent"
+      "lib/agent#createCareAgent",
+      "lib/visit-records#createVisitRecordStore"
     ],
     "routeManifest": null,
     "sdkClients": [],

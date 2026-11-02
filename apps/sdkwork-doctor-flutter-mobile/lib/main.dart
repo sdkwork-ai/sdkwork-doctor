@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'agent/care_agent.dart';
 import 'family.dart';
 import 'i18n/care_i18n.dart';
+import 'records/visit_store.dart';
 import 'triage.dart';
 
 /// Agents API base URL injected by the host build; empty selects the offline
@@ -10,10 +11,17 @@ import 'triage.dart';
 /// it after appbase IAM sign-in through [_hostAccessToken].
 const String _agentsApiBaseUrl = String.fromEnvironment('AGENTS_API_BASE_URL', defaultValue: '');
 
-void main() => runApp(const DoctorApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final VisitRecordStore records = await VisitRecordStore.load(SharedPreferencesVisitRecordStorage());
+  runApp(DoctorApp(records: records));
+}
 
 class DoctorApp extends StatefulWidget {
-  const DoctorApp({super.key, this.initialLocale});
+  const DoctorApp({super.key, required this.records, this.initialLocale});
+
+  /// Device-local consultation history shared by the chat and records tabs.
+  final VisitRecordStore records;
 
   /// Forces the starting locale (tests and host overrides); otherwise the
   /// platform locale decides.
@@ -51,6 +59,7 @@ class _DoctorAppState extends State<DoctorApp> {
       home: DoctorHome(
         locale: _locale,
         agent: _agent,
+        records: widget.records,
         onToggleLocale: _toggleLocale,
       ),
     );
@@ -62,11 +71,13 @@ class DoctorHome extends StatefulWidget {
     super.key,
     required this.locale,
     required this.agent,
+    required this.records,
     required this.onToggleLocale,
   });
 
   final String locale;
   final CareAgent agent;
+  final VisitRecordStore records;
   final VoidCallback onToggleLocale;
 
   @override
@@ -93,8 +104,9 @@ class _DoctorHomeState extends State<DoctorHome> {
       body: IndexedStack(
         index: _index,
         children: <Widget>[
-          ChatTab(locale: locale, agent: widget.agent, member: demoSelfMember),
+          ChatTab(locale: locale, agent: widget.agent, records: widget.records, member: demoSelfMember),
           DoctorTab(locale: locale, member: demoSelfMember),
+          RecordsTab(locale: locale, records: widget.records),
           MeTab(locale: locale, agent: widget.agent, member: demoSelfMember),
         ],
       ),
@@ -109,6 +121,10 @@ class _DoctorHomeState extends State<DoctorHome> {
           NavigationDestination(
             icon: const Icon(Icons.medical_information_outlined),
             label: careText(locale, 'platform.care.doctor.title'),
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.receipt_long_outlined),
+            label: careText(locale, 'platform.care.nav.records'),
           ),
           NavigationDestination(
             icon: const Icon(Icons.person_outline),
@@ -164,10 +180,17 @@ class _PageHeader extends StatelessWidget {
 }
 
 class ChatTab extends StatefulWidget {
-  const ChatTab({super.key, required this.locale, required this.agent, required this.member});
+  const ChatTab({
+    super.key,
+    required this.locale,
+    required this.agent,
+    required this.records,
+    required this.member,
+  });
 
   final String locale;
   final CareAgent agent;
+  final VisitRecordStore records;
   final FamilyMember member;
 
   @override
@@ -188,7 +211,14 @@ class _ChatTabState extends State<ChatTab> {
       _error = null;
     });
     try {
-      await widget.agent.send(text, widget.member);
+      final CareMessage reply = await widget.agent.send(text, widget.member);
+      await widget.records.add(createVisitRecord(
+        member: widget.member,
+        symptom: text,
+        advice: reply.text,
+        level: reply.level,
+        mode: widget.agent.mode,
+      ));
       setState(() {
         _messages = widget.agent.history;
         _controller.clear();
@@ -335,6 +365,108 @@ class DoctorTab extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class RecordsTab extends StatelessWidget {
+  const RecordsTab({super.key, required this.locale, required this.records});
+
+  final String locale;
+  final VisitRecordStore records;
+
+  String _formatTime(String iso) {
+    final DateTime? value = DateTime.tryParse(iso);
+    if (value == null) return iso;
+    final DateTime local = value.toLocal();
+    String two(int part) => part.toString().padLeft(2, '0');
+    return '${local.year}-${two(local.month)}-${two(local.day)} ${two(local.hour)}:${two(local.minute)}';
+  }
+
+  Future<void> _confirmClear(BuildContext context) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text(careText(locale, 'platform.care.records.title')),
+        content: Text(careText(locale, 'platform.care.records.clearConfirm')),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(careText(locale, 'platform.care.records.cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(careText(locale, 'platform.care.records.clear')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) await records.clear();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: records,
+      builder: (BuildContext context, Widget? _) {
+        final List<VisitRecord> items = records.records;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            _PageHeader(
+              title: careText(locale, 'platform.care.records.title'),
+              subtitle: careText(locale, 'platform.care.records.subtitle'),
+              extra: careText(
+                locale,
+                'platform.care.records.count',
+                params: <String, String>{'count': '${items.length}'},
+              ),
+            ),
+            Expanded(
+              child: items.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        careText(locale, 'platform.care.records.empty'),
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: items.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        final VisitRecord record = items[index];
+                        return Card(
+                          child: ListTile(
+                            title: Text(record.symptom),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text(record.advice),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${record.memberLabel} · ${_formatTime(record.recordedAt)} · '
+                                  '${careText(locale, record.mode == 'hosted' ? 'platform.care.mode.hosted' : 'platform.care.mode.offline')}',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
+                            trailing: Chip(label: Text(careText(locale, _levelKey(record.level)))),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: FilledButton.tonal(
+                onPressed: items.isEmpty ? null : () => _confirmClear(context),
+                child: Text(careText(locale, 'platform.care.records.clear')),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

@@ -16,15 +16,15 @@ apps/sdkwork-doctor-pc      apps/sdkwork-doctor-h5
   pc-core / h5-core                (SDK ports, agent port, module registry, session)
   pc-commons / h5-commons          (presentation primitives)
   pc-shell / h5-shell              (layout, tab navigation, route composition)
-  pc-care / h5-care                (chat, doctor, me tabs)
+  pc-care / h5-care                (chat, doctor, records, me tabs)
             \                    /
    apps/sdkwork-doctor-common/packages/
-     sdkwork-doctor-common-doctor      (FamilyMember, HealthSummary, triage rules)
+     sdkwork-doctor-common-doctor      (FamilyMember, HealthSummary, triage rules, visit records)
      sdkwork-doctor-common-agent       (AgentConversationPort, offline + hosted adapters)
      sdkwork-doctor-common-diagnostics (device environment checks)
 
-apps/sdkwork-doctor-flutter-mobile   (lib/agent, lib/i18n, three tabs)
-apps/sdkwork-doctor-mini-program     (src/lib/agent.js, src/lib/i18n.js, three pages)
+apps/sdkwork-doctor-flutter-mobile   (lib/agent, lib/i18n, lib/records, four tabs)
+apps/sdkwork-doctor-mini-program     (src/lib/agent.js, records, i18n, four pages)
 
 apps/sdkwork-doctor-common/.../contracts/
   triage-rules.json, triage-fixtures.json, care-messages.json,
@@ -33,7 +33,25 @@ apps/sdkwork-doctor-common/.../contracts/
 
 The PC root is the desktop surface, H5 the mobile browser surface, Flutter the
 native mobile surface, and the mini program the WeChat surface. All four expose
-the same three tabs in the same order: 对话 / 医生 / 我的.
+the same four tabs in the same order: 对话 / 医生 / 记录 / 我的.
+
+## 2.1 Visit Records
+
+`@sdkwork/doctor-common-doctor` owns the record shape
+(`contracts/visit-record.schema.json`), the append/parse/serialize rules, and a
+storage-port store. Each client supplies only the adapter:
+
+| Client | Adapter | Key |
+| --- | --- | --- |
+| PC / H5 | `createDoctorPc/H5VisitRecordStore` over `localStorage` | `sdkwork.doctor.visit-records.v1` |
+| Flutter | `SharedPreferencesVisitRecordStorage` | same key |
+| Mini program | `wx.getStorageSync` / `wx.setStorageSync` | same key |
+
+Rules that every adapter keeps: newest first, de-duplicated by id, capped at 200,
+corrupt entries dropped instead of throwing, and a storage failure degrading to a
+session copy. The chat tab writes one record per completed exchange (never for a
+failed turn), and the records tab subscribes to the store so the new entry is
+visible immediately.
 
 ## 2. Technology Choices
 
@@ -55,7 +73,7 @@ the same three tabs in the same order: 对话 / 医生 / 我的.
 | `*-shell` | layout, tab navigation, route table | business logic, transport |
 | `*-care` | the three product tabs | transport construction, credentials |
 | `doctor-common-agent` | conversation port, offline adapter, hosted wire adapter, safety composition | React, DOM, storage |
-| `doctor-common-doctor` | family domain types, triage decisions | network, UI copy |
+| `doctor-common-doctor` | family domain types, triage decisions, visit-record rules | network, UI copy |
 | `doctor-common-diagnostics` | device environment checks | health data |
 
 Dependency direction is core/commons → shell → care, composed by each app root.
@@ -105,7 +123,7 @@ apps/
     packages/{sdkwork-doctor-pc-core,-commons,-shell,-care,-diagnostics}/
     config/browser/runtime-env.<deployment-profile>.<environment>.example.json
   sdkwork-doctor-h5/            ... same shape with h5 names ...
-  sdkwork-doctor-flutter-mobile/{lib/{agent,i18n},test}/
+  sdkwork-doctor-flutter-mobile/{lib/{agent,i18n,records},test}/
   sdkwork-doctor-mini-program/{src/{lib,pages},tests}/
 etc/sdkwork.deployment.config.json
 specs/{agents-app-api,agent-integration}.contract.json
@@ -134,6 +152,8 @@ Every authored package owns `specs/component.spec.json`; every client root owns
   rendered.
 - Health facts travel only in the turn's system prompt; the client stores nothing
   beyond the in-memory conversation history.
+- Visit records stay on the device in the platform's local storage. They never
+  leave the client, and the records tab offers a confirmed clear action.
 - Device diagnostics report environment facts, never health data.
 - The session gate is a pass-through until appbase IAM lands; the token seam is
   already in place.

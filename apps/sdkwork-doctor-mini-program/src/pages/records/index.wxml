@@ -1,0 +1,17 @@
+<view class="card">
+  <view class="h1">{{title}}</view>
+  <view class="muted">{{subtitle}}</view>
+  <view class="muted">{{countLabel}}</view>
+  <view wx:if="{{items.length === 0}}" class="muted">{{emptyLabel}}</view>
+  <view wx:for="{{items}}" wx:key="id" style="padding:8px 0;border-bottom:1px solid #eef2f8">
+    <view class="row">
+      <text>{{item.symptom}}</text>
+      <text class="badge {{item.warn ? 'warn' : ''}}">{{item.level}}</text>
+    </view>
+    <view class="muted">{{item.advice}}</view>
+    <view class="muted">{{item.meta}}</view>
+  </view>
+</view>
+<view class="card">
+  <button class="btn" bindtap="onClear" disabled="{{items.length === 0}}">{{clearLabel}}</button>
+</view>

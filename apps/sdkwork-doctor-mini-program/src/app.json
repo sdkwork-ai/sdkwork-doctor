@@ -2,6 +2,7 @@
   "pages": [
     "pages/conversation/index",
     "pages/doctor/index",
+    "pages/records/index",
     "pages/profile/index"
   ],
   "window": {
@@ -22,6 +23,10 @@
       {
         "pagePath": "pages/doctor/index",
         "text": "医生"
+      },
+      {
+        "pagePath": "pages/records/index",
+        "text": "记录"
       },
       {
         "pagePath": "pages/profile/index",

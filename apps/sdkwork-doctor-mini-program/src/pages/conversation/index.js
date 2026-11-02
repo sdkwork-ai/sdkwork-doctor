@@ -2,6 +2,7 @@
 // a token, offline triage otherwise. Copy comes from the generated care catalog.
 const { careText } = require('../../lib/i18n.js');
 const { createCareAgent } = require('../../lib/agent.js');
+const { createVisitRecord } = require('../../lib/visit-records.js');
 
 function memberLabel(member) {
   return member.displayName === 'Me' ? 'Me (self)' : member.displayName + ' (' + member.relation + ')';
@@ -47,7 +48,17 @@ Page({
     this.setData({ busy: true, error: '' });
     this.agent
       .send(text, this.member)
-      .then(() => {
+      .then((reply) => {
+        const store = getApp().globalData.records;
+        if (store) {
+          store.add(createVisitRecord({
+            member: this.member,
+            symptom: text,
+            advice: reply.text,
+            level: reply.level,
+            mode: this.agent.mode,
+          }));
+        }
         const messages = this.agent.history().map((message, index) => ({
           id: 'm' + index,
           role: careText(message.role === 'user' ? 'platform.care.chat.you' : 'platform.care.chat.doctor'),

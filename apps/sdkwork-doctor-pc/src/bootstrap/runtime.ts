@@ -1,6 +1,7 @@
 import type { AgentConversationPort } from '@sdkwork/doctor-common-agent';
 import { createDoctorRuntimeContext, type DoctorRuntimeContext } from '@sdkwork/doctor-common-diagnostics';
-import { createAnonymousSessionPort, createDoctorPcCareAgent } from '@sdkwork/doctor-pc-core';
+import type { VisitRecordStore } from '@sdkwork/doctor-common-doctor';
+import { createAnonymousSessionPort, createDoctorPcCareAgent, createDoctorPcVisitRecordStore } from '@sdkwork/doctor-pc-core';
 
 import { loadRuntimeEnvironment, type DoctorPcEnvironment } from './environment';
 
@@ -13,6 +14,8 @@ export interface DoctorPcRuntime {
    * offline otherwise. The mode travels with the port so the UI never guesses.
    */
   readonly agent: AgentConversationPort;
+  /** Device-local consultation history shared by the chat and records tabs. */
+  readonly records: VisitRecordStore;
 }
 
 let runtimePromise: Promise<DoctorPcRuntime> | null = null;
@@ -40,6 +43,7 @@ export function bootstrapDoctorPc(): Promise<DoctorPcRuntime> {
           backendApiBaseUrl: environment.backendApiBaseUrl,
         }),
         agent: careAgent.port,
+        records: createDoctorPcVisitRecordStore(),
       };
     });
   }

@@ -2,6 +2,7 @@ export * from './agent';
 export * from './composition';
 export * from './host';
 export * from './modules';
+export * from './records';
 export * from './sdk';
 export * from './session';
 
