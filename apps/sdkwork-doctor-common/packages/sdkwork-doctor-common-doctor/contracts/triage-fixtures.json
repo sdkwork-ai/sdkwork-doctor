@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "kind": "sdkwork.doctor.triage-fixtures",
+  "cases": [
+    { "input": "chest pain for ten minutes", "level": "emergency" },
+    { "input": "\u80f8\u75db\u5341\u5206\u949f", "level": "emergency" },
+    { "input": "cannot breathe while lying down", "level": "emergency" },
+    { "input": "unconscious after a fall", "level": "emergency" },
+    { "input": "severe bleeding from the arm", "level": "emergency" },
+    { "input": "slurred speech and face droop", "level": "emergency" },
+    { "input": "mild headache since yesterday", "level": "routine" },
+    { "input": "runny nose and sneezing", "level": "routine" },
+    { "input": "   ", "level": "self-care" }
+  ]
+}
