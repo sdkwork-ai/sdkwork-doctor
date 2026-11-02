@@ -63,7 +63,8 @@
       "./modules",
       "./host",
       "./session",
-      "./composition"
+      "./composition",
+      "./agent"
     ],
     "providedPorts": [
       {
@@ -77,11 +78,22 @@
       {
         "name": "doctorH5SessionPort",
         "export": "./session"
+      },
+      {
+        "name": "doctorH5CareAgentRuntime",
+        "export": "./agent"
       }
     ],
-    "requiredPorts": [],
+    "requiredPorts": [
+      {
+        "name": "doctorAgentConversation",
+        "export": "./agent",
+        "provider": "@sdkwork/doctor-common-agent"
+      }
+    ],
     "runtimeEntrypoints": [
-      "createDoctorH5Runtime"
+      "createDoctorH5Runtime",
+      "createDoctorH5CareAgent"
     ],
     "routeManifest": null,
     "sdkClients": [],

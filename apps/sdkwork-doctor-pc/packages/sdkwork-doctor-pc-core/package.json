@@ -18,6 +18,11 @@
       "import": "./src/sdk/index.ts",
       "default": "./src/sdk/index.ts"
     },
+    "./agent": {
+      "types": "./src/agent/index.ts",
+      "import": "./src/agent/index.ts",
+      "default": "./src/agent/index.ts"
+    },
     "./modules": {
       "types": "./src/modules/index.ts",
       "import": "./src/modules/index.ts",
@@ -40,6 +45,7 @@
     }
   },
   "dependencies": {
+    "@sdkwork/doctor-common-agent": "workspace:*",
     "@sdkwork/doctor-common-diagnostics": "workspace:*"
   },
   "devDependencies": {

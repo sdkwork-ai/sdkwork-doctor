@@ -10,6 +10,7 @@ export interface DoctorH5Environment {
   readonly profileId: string;
   readonly apiBaseUrl: string;
   readonly backendApiBaseUrl: string;
+  readonly agentsApiBaseUrl: string;
 }
 
 interface RuntimeDocument {
@@ -18,6 +19,7 @@ interface RuntimeDocument {
   profileId?: string;
   appApiBaseUrl?: string;
   backendApiBaseUrl?: string;
+  agentsApiBaseUrl?: string;
 }
 
 const KNOWN_ENVIRONMENTS = ['development', 'test', 'staging', 'demo', 'production'];
@@ -37,6 +39,7 @@ export function resolveEnvironmentFromDocument(document: RuntimeDocument | null)
     profileId: document?.profileId ?? deploymentProfile + '.' + environment,
     apiBaseUrl: document?.appApiBaseUrl ?? '/',
     backendApiBaseUrl: document?.backendApiBaseUrl ?? '/',
+    agentsApiBaseUrl: document?.agentsApiBaseUrl ?? '',
   });
 }
 

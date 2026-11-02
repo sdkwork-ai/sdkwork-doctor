@@ -1,3 +1,4 @@
+export * from './agent';
 export * from './composition';
 export * from './host';
 export * from './modules';

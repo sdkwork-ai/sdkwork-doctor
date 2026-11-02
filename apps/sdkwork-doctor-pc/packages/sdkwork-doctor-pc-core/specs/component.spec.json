@@ -58,7 +58,8 @@
       "./modules",
       "./host",
       "./session",
-      "./composition"
+      "./composition",
+      "./agent"
     ],
     "providedPorts": [
       {
@@ -72,12 +73,23 @@
       {
         "name": "doctorPcSessionPort",
         "export": "./session"
+      },
+      {
+        "name": "doctorPcCareAgentRuntime",
+        "export": "./agent"
       }
     ],
-    "requiredPorts": [],
+    "requiredPorts": [
+      {
+        "name": "doctorAgentConversation",
+        "export": "./agent",
+        "provider": "@sdkwork/doctor-common-agent"
+      }
+    ],
     "runtimeEntrypoints": [
       "createDoctorPcRuntime",
-      "getDoctorPcHostAdapter"
+      "getDoctorPcHostAdapter",
+      "createDoctorPcCareAgent"
     ],
     "routeManifest": null,
     "sdkClients": [],

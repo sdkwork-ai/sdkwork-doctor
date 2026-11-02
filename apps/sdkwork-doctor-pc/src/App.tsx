@@ -35,7 +35,7 @@ export default function App() {
       <AuthGate>
         <Routes>
           <Route path="/" element={<Navigate replace to={DOCTOR_PC_HOME_PATH} />} />
-          <Route path="/doctor/*" element={<DoctorPcRoutes runtime={runtime.context} hostLabel={runtime.environment.deploymentProfile} />} />
+          <Route path="/doctor/*" element={<DoctorPcRoutes runtime={runtime.context} hostLabel={runtime.environment.deploymentProfile} agent={runtime.agent} />} />
           <Route path="*" element={<Navigate replace to={DOCTOR_PC_HOME_PATH} />} />
         </Routes>
       </AuthGate>

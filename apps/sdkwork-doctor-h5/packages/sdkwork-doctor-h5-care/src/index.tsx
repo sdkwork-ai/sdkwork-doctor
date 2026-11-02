@@ -1,7 +1,6 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ChatMessage } from '@sdkwork/doctor-common-agent';
-import { createLocalCareAgent } from '@sdkwork/doctor-common-agent';
+import type { AgentConversationPort, ChatMessage } from '@sdkwork/doctor-common-agent';
 import type { DoctorRuntimeContext } from '@sdkwork/doctor-common-diagnostics';
 import { demoSelfMember, summarizeHealth, type FamilyMember } from '@sdkwork/doctor-common-doctor';
 import { ActionButton, MobileCard } from '@sdkwork/doctor-h5-commons';
@@ -13,9 +12,14 @@ function who(member: FamilyMember): string {
   return member.displayName + ' (' + member.relation + ')';
 }
 
-export function ChatPage({ member }: { member: FamilyMember }) {
+export interface ChatPageProps {
+  readonly member: FamilyMember;
+  /** Conversation transport composed by the core package (hosted or offline). */
+  readonly agent: AgentConversationPort;
+}
+
+export function ChatPage({ member, agent }: ChatPageProps) {
   const { t } = useTranslation();
-  const agentRef = useRef(createLocalCareAgent());
   const [messages, setMessages] = useState<readonly ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
@@ -26,11 +30,14 @@ export function ChatPage({ member }: { member: FamilyMember }) {
     if (!text || busy) return;
     setBusy(true);
     setError(null);
-    void agentRef.current
+    void agent
       .send(text, { member })
-      .then(() => {
-        setMessages([...agentRef.current.history()]);
+      .then((reply) => {
+        setMessages([...agent.history()]);
         setDraft('');
+        if (reply.triage?.escalate) {
+          document.documentElement.dataset.triage = reply.triage.level;
+        }
       })
       .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : String(reason)))
       .finally(() => setBusy(false));
@@ -41,7 +48,7 @@ export function ChatPage({ member }: { member: FamilyMember }) {
       <h1 className="doctor-page-title">{t('platform.care.chat.title')}</h1>
       <p className="doctor-page-subtitle">{t('platform.care.chat.subtitle', { member: who(member) })}</p>
 
-      {error ? <div className="doctor-error-banner">{error}</div> : null}
+      {error ? <div className="doctor-error-banner">{t('platform.care.chat.error', { message: error })}</div> : null}
 
       <MobileCard title={t('platform.care.chat.panel')}>
         <ul className="doctor-check-list" aria-live="polite">
@@ -53,7 +60,7 @@ export function ChatPage({ member }: { member: FamilyMember }) {
                 <h3 className="doctor-check-title">{message.role === 'user' ? t('platform.care.chat.you') : t('platform.care.chat.doctor')}</h3>
                 <p className="doctor-check-summary">{message.text}</p>
               </div>
-              {message.triage ? <span className="doctor-badge" data-status={message.triage.escalate ? 'warn' : 'ok'}>{message.triage.level}</span> : <span />}
+              {message.triage ? <span className="doctor-badge" data-status={message.triage.escalate ? 'warn' : 'ok'}>{t('platform.care.level.' + message.triage.level)}</span> : <span />}
             </li>
           ))}
         </ul>
@@ -61,7 +68,7 @@ export function ChatPage({ member }: { member: FamilyMember }) {
 
       <div style={{ display: 'flex', gap: 8 }}>
         <input
-          aria-label="Symptom description"
+          aria-label={t('platform.care.chat.inputLabel')}
           className="doctor-button"
           style={{ flex: 1, textAlign: 'left' }}
           value={draft}
@@ -102,17 +109,27 @@ export function DoctorPage({ member }: { member: FamilyMember }) {
       </MobileCard>
       <MobileCard title={t('platform.care.doctor.actions')}>
         <ul className="doctor-check-details">
-          <li>Keep allergies, chronic conditions, and medications current.</li>
-          <li>Emergency symptoms go to local emergency services first.</li>
+          <li>{t('platform.care.doctor.bullet.record')}</li>
+          <li>{t('platform.care.doctor.bullet.urgent')}</li>
+          <li>{t('platform.care.doctor.bullet.medication')}</li>
         </ul>
+        <p className="doctor-check-summary">{t('platform.care.doctor.actionsHint')}</p>
       </MobileCard>
     </div>
   );
 }
 
-export function MePage({ context, member }: { context: DoctorRuntimeContext; member: FamilyMember }) {
+export interface MePageProps {
+  readonly context: DoctorRuntimeContext;
+  readonly member: FamilyMember;
+  /** The transport that actually answers, so the tab never claims the wrong mode. */
+  readonly agent: AgentConversationPort;
+}
+
+export function MePage({ context, member, agent }: MePageProps) {
   const { t } = useTranslation();
   const state = useDiagnosticsReport(context);
+  const modeLabel = agent.mode === 'hosted' ? t('platform.care.mode.hosted') : t('platform.care.mode.offline');
   return (
     <div>
       <h1 className="doctor-page-title">{t('platform.care.me.title')}</h1>
@@ -123,14 +140,20 @@ export function MePage({ context, member }: { context: DoctorRuntimeContext; mem
             <li className="doctor-check" key={item.id}>
               <div>
                 <h3 className="doctor-check-title">{who(item)}</h3>
-                <p className="doctor-check-summary">Profile completeness: {item.allergies.length + item.chronicConditions.length > 0 ? 'in progress' : 'needs review'}</p>
+                <p className="doctor-check-summary">
+                  {t('platform.care.me.completeness')}: {item.allergies.length + item.chronicConditions.length > 0 ? t('platform.care.me.completenessInProgress') : t('platform.care.me.completenessNeedsReview')}
+                </p>
               </div>
               <span className="doctor-badge" data-status={item.id === member.id ? 'ok' : 'skipped'}>{item.id === member.id ? t('platform.care.active') : t('platform.care.available')}</span>
             </li>
           ))}
         </ul>
       </MobileCard>
+      <MobileCard title={t('platform.care.me.mode')}>
+        <span className="doctor-badge" data-status={agent.mode === 'hosted' ? 'ok' : 'skipped'}>{modeLabel}</span>
+      </MobileCard>
       <MobileCard title={t('platform.care.me.device')}>
+        <p className="doctor-check-summary">{t('platform.care.me.deviceHint')}</p>
         <CheckList outcomes={state.report?.outcomes ?? []} />
         <div style={{ marginTop: 12 }}>
           <ActionButton onClick={state.run} disabled={state.running}>{state.running ? t('platform.care.me.running') : t('platform.care.me.rerun')}</ActionButton>

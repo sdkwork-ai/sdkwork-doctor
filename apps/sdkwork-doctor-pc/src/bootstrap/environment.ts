@@ -12,6 +12,7 @@ export interface DoctorPcEnvironment {
   readonly apiBaseUrl: string;
   readonly backendApiBaseUrl: string;
   readonly cloudApiBaseUrl: string;
+  readonly agentsApiBaseUrl: string;
 }
 
 interface RuntimeDocument {
@@ -21,6 +22,7 @@ interface RuntimeDocument {
   appApiBaseUrl?: string;
   backendApiBaseUrl?: string;
   cloudApiBaseUrl?: string;
+  agentsApiBaseUrl?: string;
 }
 
 const KNOWN_ENVIRONMENTS = ['development', 'test', 'staging', 'demo', 'production'];
@@ -43,6 +45,7 @@ export function resolveEnvironmentFromDocument(document: RuntimeDocument | null)
     apiBaseUrl: document?.appApiBaseUrl ?? '/',
     backendApiBaseUrl: document?.backendApiBaseUrl ?? '/',
     cloudApiBaseUrl: document?.cloudApiBaseUrl ?? '',
+    agentsApiBaseUrl: document?.agentsApiBaseUrl ?? '',
   });
 }
 

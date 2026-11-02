@@ -100,6 +100,9 @@ importers:
       react:
         specifier: ^19.0.0
         version: 19.3.1
+      react-i18next:
+        specifier: ^17.0.11
+        version: 17.1.11(i18next@26.7.1(typescript@5.9.3))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@5.9.3)
     devDependencies:
       '@types/react':
         specifier: ^19.2.0
@@ -122,6 +125,9 @@ importers:
 
   apps/sdkwork-doctor-h5/packages/sdkwork-doctor-h5-core:
     dependencies:
+      '@sdkwork/doctor-common-agent':
+        specifier: workspace:*
+        version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-agent
       '@sdkwork/doctor-common-diagnostics':
         specifier: workspace:*
         version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-diagnostics
@@ -154,6 +160,9 @@ importers:
 
   apps/sdkwork-doctor-h5/packages/sdkwork-doctor-h5-shell:
     dependencies:
+      '@sdkwork/doctor-common-agent':
+        specifier: workspace:*
+        version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-agent
       '@sdkwork/doctor-common-diagnostics':
         specifier: workspace:*
         version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-diagnostics
@@ -264,6 +273,9 @@ importers:
       react:
         specifier: ^19.0.0
         version: 19.3.1
+      react-i18next:
+        specifier: ^17.0.11
+        version: 17.1.11(i18next@26.7.1(typescript@5.9.3))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@5.9.3)
     devDependencies:
       '@types/react':
         specifier: ^19.2.0
@@ -293,6 +305,9 @@ importers:
 
   apps/sdkwork-doctor-pc/packages/sdkwork-doctor-pc-core:
     dependencies:
+      '@sdkwork/doctor-common-agent':
+        specifier: workspace:*
+        version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-agent
       '@sdkwork/doctor-common-diagnostics':
         specifier: workspace:*
         version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-diagnostics
@@ -325,6 +340,9 @@ importers:
 
   apps/sdkwork-doctor-pc/packages/sdkwork-doctor-pc-shell:
     dependencies:
+      '@sdkwork/doctor-common-agent':
+        specifier: workspace:*
+        version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-agent
       '@sdkwork/doctor-common-diagnostics':
         specifier: workspace:*
         version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-diagnostics

@@ -1,6 +1,12 @@
 export interface DoctorSession {
   readonly subject: string;
   readonly authenticated: boolean;
+  /**
+   * IAM/appbase access token for outbound app API calls, or null before
+   * sign-in. Feature packages never read this: the core package passes it to
+   * the transport port.
+   */
+  readonly accessToken: string | null;
 }
 
 export interface DoctorSessionPort {
@@ -16,7 +22,7 @@ export interface DoctorSessionPort {
  * Keeping the port here means no feature package has to change when it lands.
  */
 export function createAnonymousSessionPort(): DoctorSessionPort {
-  const session: DoctorSession = Object.freeze({ subject: 'anonymous', authenticated: false });
+  const session: DoctorSession = Object.freeze({ subject: 'anonymous', authenticated: false, accessToken: null });
   return Object.freeze({
     current: () => session,
     subscribe: () => () => undefined,
