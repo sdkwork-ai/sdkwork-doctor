@@ -1,0 +1,33 @@
+{
+  "pages": [
+    "pages/conversation/index",
+    "pages/doctor/index",
+    "pages/profile/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "SDKWork Doctor",
+    "navigationBarBackgroundColor": "#2563eb",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f3f6fc"
+  },
+  "tabBar": {
+    "color": "#5a6478",
+    "selectedColor": "#2563eb",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/conversation/index",
+        "text": "对话"
+      },
+      {
+        "pagePath": "pages/doctor/index",
+        "text": "医生"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的"
+      }
+    ]
+  },
+  "sitemapLocation": "sitemap.json"
+}

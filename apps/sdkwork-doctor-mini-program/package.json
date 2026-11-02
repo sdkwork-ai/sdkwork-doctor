@@ -1,0 +1,10 @@
+{
+  "name": "@sdkwork/doctor-mini-program",
+  "private": true,
+  "version": "0.1.0",
+  "description": "SDKWork Doctor WeChat mini program (family private doctor).",
+  "scripts": {
+    "test": "node --test tests/mini-program.test.mjs",
+    "check": "pnpm test"
+  }
+}
