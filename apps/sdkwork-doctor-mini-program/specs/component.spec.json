@@ -11,7 +11,7 @@
     "capability": "app",
     "surface": "mini-program",
     "languages": [
-      "typescript"
+      "javascript"
     ],
     "generated": false,
     "manifests": [
@@ -65,7 +65,8 @@
     "runtimeEntrypoints": [
       "pages/conversation",
       "pages/doctor",
-      "pages/profile"
+      "pages/profile",
+      "lib/agent#createCareAgent"
     ],
     "routeManifest": null,
     "sdkClients": [],
@@ -74,7 +75,9 @@
     "dependencyApiExports": [],
     "dependencyApiSurfaces": [],
     "events": [],
-    "configKeys": []
+    "configKeys": [
+      "agentsApiBaseUrl"
+    ]
   },
   "verification": {
     "commands": [

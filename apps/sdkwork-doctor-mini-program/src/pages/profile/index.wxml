@@ -1,1 +1,18 @@
-<view class="card"><view class="h1">Me</view><view class="muted">Family members, privacy, and device environment.</view><view wx:for="{{members}}" wx:key="id" class="row"><text>{{item.name}} ({{item.relation}})</text><text class="badge">{{item.status}}</text></view></view><view class="card"><view class="muted">Diagnostics run on-device; health data never leaves this mini program.</view></view>
+<view class="card">
+  <view class="h1">{{title}}</view>
+  <view class="muted">{{subtitle}}</view>
+  <view class="row">
+    <text>{{memberLabel}}</text>
+    <text class="badge">{{activeLabel}}</text>
+  </view>
+  <view class="muted">{{completeness}}</view>
+</view>
+<view class="card">
+  <view class="row">
+    <text>{{modeTitle}}</text>
+    <text class="badge">{{modeLabel}}</text>
+  </view>
+</view>
+<view class="card">
+  <view class="muted">{{privacy}}</view>
+</view>

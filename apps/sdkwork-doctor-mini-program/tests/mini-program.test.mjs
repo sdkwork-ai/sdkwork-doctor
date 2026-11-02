@@ -20,8 +20,16 @@ test('every declared page ships wxml, wxss, js, and json', () => {
   }
 });
 
-test('conversation page keeps the emergency-first triage rule', () => {
+test('conversation page delegates to the shared care agent', () => {
   const source = fs.readFileSync(path.join(root, 'src', 'pages', 'conversation', 'index.js'), 'utf8');
-  assert.match(source, /EMERGENCY/);
-  assert.match(source, /emergency/i);
+  assert.match(source, /require\('\.\.\/\.\.\/lib\/agent\.js'\)/);
+  assert.match(source, /createCareAgent\(/);
+  assert.match(source, /platform\.care\.level\./);
+});
+
+test('the care agent keeps the emergency-first rule the page relies on', () => {
+  const source = fs.readFileSync(path.join(root, 'src', 'lib', 'agent.js'), 'utf8');
+  assert.match(source, /EMERGENCY_LEAD/);
+  assert.match(source, /Call local emergency services now\./);
+  assert.match(source, /resolveReplyTriage/);
 });
