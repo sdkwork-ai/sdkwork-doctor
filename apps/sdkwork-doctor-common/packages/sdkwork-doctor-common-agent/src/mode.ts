@@ -22,7 +22,7 @@ export function resolveCareAgentMode(environment: CareAgentEnvironment): CareAge
 
 export class HostedAgentNotConfiguredError extends Error {
   constructor() {
-    super('hosted agents transport is selected but not constructed; wire @sdkwork/agents-app-sdk in the core package before use');
+    super('hosted agents transport is selected but not constructed; wire the agents app API client in the core package before use');
     this.name = 'HostedAgentNotConfiguredError';
   }
 }

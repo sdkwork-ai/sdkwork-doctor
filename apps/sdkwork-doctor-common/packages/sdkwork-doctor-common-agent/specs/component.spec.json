@@ -26,7 +26,7 @@
     "publicExports": ["."],
     "providedPorts": [{ "name": "doctorAgentConversation", "export": "." }],
     "requiredPorts": [{ "name": "doctorFamilyDomain", "export": ".", "provider": "@sdkwork/doctor-common-doctor" }],
-    "runtimeEntrypoints": ["createLocalCareAgent"],
+    "runtimeEntrypoints": ["createLocalCareAgent", "createHostedCareAgent", "createCareAgentRuntime"],
     "routeManifest": null,
     "sdkClients": [],
     "sdkDependencies": [],
