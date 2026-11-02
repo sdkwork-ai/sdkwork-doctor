@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 2,
+  "kind": "sdkwork.doctor.doctor-directory-dependency",
+  "purpose": "The deployment-bound human-doctor directory this application consumes. A doctor is a person; employment is a separate affiliation to a healthcare organization, so one clinician can be full-time at a hospital and part-time at a community clinic, and the family can choose which site to consult. The roster is operator content, not product data. A deployment binds the document URL in the public runtime document; when it is absent or unreachable the authored fallback roster answers and the UI says so.",
+  "runtimeKey": "careDoctorDirectoryUrl",
+  "runtimeDocument": "config/browser/runtime-env.<deployment-profile>.<environment>.example.json",
+  "document": {
+    "kind": "sdkwork.doctor.doctor-roster",
+    "mediaType": "application/json",
+    "transport": "HTTP GET, same-origin or an allow-listed deployed origin; no credentials are sent",
+    "acceptedShapes": [
+      "{ \"doctors\": DoctorProfile[] }",
+      "DoctorProfile[]",
+      "{ \"data\": { \"item\": { \"doctors\": DoctorProfile[] } } }",
+      "{ \"data\": { \"items\": DoctorProfile[] } }"
+    ],
+    "legacyShape": "A doctor that still carries flat `hospital` / `department` / `title` / `channels` / `availability` fields is migrated into one primary affiliation with employmentType full_time, so an older deployment document never loses its doctors."
+  },
+  "organizationModel": {
+    "authority": "SDKWork Appbase",
+    "employingOrganization": "organizationId — the Appbase organization unit that employs or contracts the clinician. This is the IAM/org scope, and it owns departments, staff roles, and permission scope.",
+    "hospital": "hospitalCode — the Appbase med_hospital natural key (hospital_code). The hospital directory, grade, ownership, and department catalog are Appbase medical reference data (med_hospital, med_department), not sdkwork-company records.",
+    "company": "Not the clinical employer. sdkwork-company is the enterprise/recruitment center with its own permissions (company.profiles.*). An affiliation MAY carry `companyId` only for the commercial contract that sits beside the clinical relationship.",
+    "rule": "Clinical employment is organization + hospital reference data. Never encode a clinician's employment in the doctor id, and never model a hospital as a company."
+  },
+  "doctorProfile": {
+    "id": "string, stable person id across deployments and organizations",
+    "displayName": "string, 1-60 characters",
+    "specialties": "string[]",
+    "languages": "string[]",
+    "yearsOfExperience": "integer 0-70",
+    "bio": "string, <= 600 characters",
+    "verified": "boolean; true only when the operator directory vouched for the clinician",
+    "affiliations": "DoctorAffiliation[] — at least one; person facts never include a hospital"
+  },
+  "doctorAffiliation": {
+    "organizationId": "string, Appbase organization unit (required)",
+    "hospitalCode": "string, Appbase med_hospital natural key (required in a directory document; may be empty in the authored fallback)",
+    "hospitalName": "string, display snapshot of the site (required)",
+    "hospitalGrade": "string, e.g. THIRD_A; empty when not published",
+    "departmentCode": "string, Appbase med_department code; empty when not published",
+    "department": "string, localized department name at this site",
+    "title": "string, clinician rank at this site",
+    "employmentType": "full_time | part_time | contract | visiting",
+    "primary": "boolean; exactly one affiliation is primary, or the first one is used",
+    "acceptingNewPatients": "boolean",
+    "availability": "DoctorAvailabilitySlot[] for this site",
+    "channels": "DoctorConsultationChannel[] for this site",
+    "since": "YYYY-MM since when the engagement is active"
+  },
+  "employmentTypes": {
+    "full_time": "Exclusive full-time employment by the organization.",
+    "part_time": "Part-time engagement, typically limited sessions at this site.",
+    "contract": "Fixed-term contract engagement without a permanent post.",
+    "visiting": "Visiting / multi-site practice (多点执业): the clinician's primary post is elsewhere."
+  },
+  "doctorConsultationChannel": {
+    "kind": "video | phone | messaging | clinic",
+    "target": "URL, tel: link, or channel id; empty means the channel is unavailable"
+  },
+  "doctorAvailabilitySlot": {
+    "weekday": "integer 0-6, 0 = Sunday",
+    "startTime": "HH:mm",
+    "endTime": "HH:mm, later than startTime"
+  },
+  "fallback": {
+    "document": "apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor/contracts/doctor-roster.json",
+    "source": "catalog",
+    "verified": false,
+    "rule": "used when careDoctorDirectoryUrl is empty, the request fails, or the document yields no valid clinician; demo organization ids and hospital codes, never real appointments"
+  },
+  "selection": {
+    "storageKey": "sdkwork.doctor.doctor-selection.v1",
+    "limit": 5,
+    "rules": [
+      "selection is per doctor person, not per affiliation",
+      "the first selected doctor becomes the primary doctor",
+      "the primary doctor is always one of the selected doctors",
+      "removing the primary doctor promotes the next selected doctor",
+      "pruning drops selected ids that are no longer in the roster"
+    ]
+  },
+  "consultation": {
+    "rule": "A human consultation chooses one affiliation (the primary one by default), opens that affiliation's preferred channel, and records the doctor plus organizationId, hospital label, and employment type in the visit record so the history stays accurate after the roster changes."
+  },
+  "clients": {
+    "pc": { "module": "@sdkwork/doctor-pc-core#createDoctorPcDoctorDirectoryPort", "selection": "@sdkwork/doctor-pc-core#createDoctorPcDoctorSelectionStore" },
+    "h5": { "module": "@sdkwork/doctor-h5-core#createDoctorH5DoctorDirectoryPort", "selection": "@sdkwork/doctor-h5-core#createDoctorH5DoctorSelectionStore" },
+    "flutter": { "module": "lib/doctors/doctor_directory.dart", "selection": "lib/doctors/doctor_selection.dart" },
+    "mini_program": { "module": "src/lib/doctors.js", "selection": "src/lib/doctors.js" }
+  },
+  "noAppApi": "This is a deployment document, not an SDKWork-owned app API surface: it uses no app-api path, no envelope code field is required, and no credentials are sent. Adding a first-party doctor service later must be proposed as an app-api change under API_SPEC.md before it replaces this contract."
+}

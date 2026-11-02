@@ -15,7 +15,7 @@ The repository manifest `../../agent.app.config.json` owns application identity;
 ## Local Dictionary Structure
 
 - `specs/`: app-root component contract.
-- `packages/`: core, commons, shell, and diagnostics packages.
+- `packages/`: core, commons, shell, care, and diagnostics packages.
 - `config/browser/`: checked-in runtime-env examples per profile.
 - `etc/`: deployment profile binding.
 - `src/`: bootstrap and route composition only.

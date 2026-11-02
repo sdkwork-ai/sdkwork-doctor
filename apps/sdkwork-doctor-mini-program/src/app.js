@@ -1,22 +1,20 @@
-// Authored mini program shell: locale selection and the shared care-agent options.
+// Authored mini program shell: locale selection, the shared care-agent options,
+// the household's patient files, and the family's doctor selection.
 const { detectLocale, setLocale } = require('./lib/i18n.js');
-const { readAgentsApiBaseUrl, getAccessToken } = require('./lib/runtime-config.js');
+const { readAgentsApiBaseUrl, readCareDoctorDirectoryUrl, getAccessToken } = require('./lib/runtime-config.js');
 const { createVisitRecordStore } = require('./lib/visit-records.js');
+const { createPatientProfileStore } = require('./lib/patient-profiles.js');
+const { createDoctorSelectionStore, CATALOG_DOCTOR_ROSTER } = require('./lib/doctors.js');
 
 App({
   globalData: {
     locale: 'zh-CN',
-    member: {
-      id: 'member-self',
-      displayName: 'Me',
-      relation: 'self',
-      birthYear: 1990,
-      allergies: [],
-      chronicConditions: [],
-      medications: [],
-    },
     careAgentOptions: null,
+    careDoctorDirectoryUrl: '',
+    doctorRoster: CATALOG_DOCTOR_ROSTER,
     records: null,
+    patients: null,
+    doctors: null,
   },
   onLaunch() {
     this.globalData.locale = setLocale(detectLocale());
@@ -25,6 +23,9 @@ App({
       getAccessToken,
       entrySurface: 'mini_program',
     };
+    this.globalData.careDoctorDirectoryUrl = readCareDoctorDirectoryUrl();
     this.globalData.records = createVisitRecordStore();
+    this.globalData.patients = createPatientProfileStore();
+    this.globalData.doctors = createDoctorSelectionStore();
   },
 });

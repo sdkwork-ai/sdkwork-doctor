@@ -7,5 +7,6 @@
   "backendApiBaseUrl": "/",
   "openApiBaseUrl": "/",
   "cloudApiBaseUrl": "https://api-development.sdkwork.com",
-  "agentsApiBaseUrl": ""
+  "agentsApiBaseUrl": "",
+  "careDoctorDirectoryUrl": ""
 }

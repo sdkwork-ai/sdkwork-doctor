@@ -6,5 +6,6 @@
   "appApiBaseUrl": "/",
   "backendApiBaseUrl": "/",
   "openApiBaseUrl": "/",
-  "agentsApiBaseUrl": ""
+  "agentsApiBaseUrl": "",
+  "careDoctorDirectoryUrl": ""
 }

@@ -1,8 +1,16 @@
-import type { AgentConversationPort } from '@sdkwork/doctor-common-agent';
+import type { AgentConversationPort, CareAgentCatalogPort } from '@sdkwork/doctor-common-agent';
 import { applyThemeToStyle, resolveAppBlocks, resolveAppTheme, type ResolvedAppBlock } from '@sdkwork/doctor-common-blocks';
 import { createDoctorRuntimeContext, type DoctorRuntimeContext } from '@sdkwork/doctor-common-diagnostics';
-import type { VisitRecordStore } from '@sdkwork/doctor-common-doctor';
-import { createAnonymousSessionPort, createDoctorH5CareAgent, createDoctorH5VisitRecordStore } from '@sdkwork/doctor-h5-core';
+import type { DoctorDirectoryPort, DoctorSelectionStore, PatientProfileStore, VisitRecordStore } from '@sdkwork/doctor-common-doctor';
+import {
+  createAnonymousSessionPort,
+  createDoctorH5AgentCatalog,
+  createDoctorH5CareAgent,
+  createDoctorH5DoctorDirectoryPort,
+  createDoctorH5DoctorSelectionStore,
+  createDoctorH5PatientProfileStore,
+  createDoctorH5VisitRecordStore,
+} from '@sdkwork/doctor-h5-core';
 
 import { loadRuntimeEnvironment, type DoctorH5Environment } from './environment';
 
@@ -15,7 +23,15 @@ export interface DoctorH5Runtime {
    * offline otherwise. The mode travels with the port so the UI never guesses.
    */
   readonly agent: AgentConversationPort;
-  /** Device-local consultation history shared by the chat and records tabs. */
+  /** Managed agent catalogue: shows whether the family-doctor agent is deployed. */
+  readonly agentCatalog: CareAgentCatalogPort;
+  /** Household patient files, one per patient. */
+  readonly patients: PatientProfileStore;
+  /** Device-local selection of human family doctors. */
+  readonly selection: DoctorSelectionStore;
+  /** Deployment doctor directory with the authored fallback inside. */
+  readonly doctorDirectory: DoctorDirectoryPort;
+  /** Device-local consultation history shared by chat, landing, and records. */
   readonly records: VisitRecordStore;
   /** Blocks resolved for the H5 surface, including deployment overrides. */
   readonly blocks: readonly ResolvedAppBlock[];
@@ -44,6 +60,13 @@ export function bootstrapDoctorH5(): Promise<DoctorH5Runtime> {
           backendApiBaseUrl: environment.backendApiBaseUrl,
         }),
         agent: careAgent.port,
+        agentCatalog: createDoctorH5AgentCatalog({
+          agentsApiBaseUrl: environment.agentsApiBaseUrl,
+          accessToken: session.current().accessToken,
+        }),
+        patients: createDoctorH5PatientProfileStore(),
+        selection: createDoctorH5DoctorSelectionStore(),
+        doctorDirectory: createDoctorH5DoctorDirectoryPort({ directoryUrl: environment.careDoctorDirectoryUrl }),
         records: createDoctorH5VisitRecordStore(),
         blocks,
       };

@@ -3,7 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import type { AgentConversationPort } from '@sdkwork/doctor-common-agent';
 import type { ResolvedAppBlock } from '@sdkwork/doctor-common-blocks';
-import type { FamilyMember, VisitRecordStore } from '@sdkwork/doctor-common-doctor';
+import {
+  resolvePrimaryDoctor,
+  type DoctorRoster,
+  type DoctorSelectionStore,
+  type PatientProfileStore,
+  type VisitRecordStore,
+} from '@sdkwork/doctor-common-doctor';
 import { BlockGrid, BlockTile, Panel, StatRow, StatTile } from '@sdkwork/doctor-pc-commons';
 
 export interface HomePageProps {
@@ -11,8 +17,9 @@ export interface HomePageProps {
   readonly blocks: readonly ResolvedAppBlock[];
   readonly agent: AgentConversationPort;
   readonly records: VisitRecordStore;
-  readonly member: FamilyMember;
-  readonly members: readonly FamilyMember[];
+  readonly patients: PatientProfileStore;
+  readonly selection: DoctorSelectionStore;
+  readonly roster: DoctorRoster | null;
 }
 
 function markOf(label: string): string {
@@ -20,16 +27,18 @@ function markOf(label: string): string {
 }
 
 /**
- * Workbench landing. It is composed from the same blocks as the rail, so hiding
- * or reordering a block in the composition contract changes both places at once
- * and the home page never drifts from the navigation.
+ * Workbench landing at the browser surface root. It is a route, not a tab, so
+ * the tab count stays three; it is composed from the same blocks as the rail so
+ * hiding or reordering a block changes both places at once.
  */
-export function HomePage({ blocks, agent, records, member, members }: HomePageProps) {
+export function HomePage({ blocks, agent, records, patients, selection, roster }: HomePageProps) {
   const { t, i18n } = useTranslation();
   const items = useSyncExternalStore(records.subscribe, records.list, records.list);
-  const sections = blocks.filter((block) => block.id !== 'home');
+  const profiles = useSyncExternalStore(patients.subscribe, patients.list, patients.list);
+  const selectionState = useSyncExternalStore(selection.subscribe, selection.state, selection.state);
   const recent = items.slice(0, 3);
   const modeLabel = agent.mode === 'hosted' ? t('platform.care.mode.hosted') : t('platform.care.mode.offline');
+  const primary = roster ? resolvePrimaryDoctor(roster, selectionState) : null;
 
   return (
     <div>
@@ -47,13 +56,14 @@ export function HomePage({ blocks, agent, records, member, members }: HomePagePr
             value={<span className="doctor-badge" data-status={agent.mode === 'hosted' ? 'ok' : 'skipped'}>{modeLabel}</span>}
           />
           <StatTile label={t('platform.care.home.tile.records')} value={items.length} />
-          <StatTile label={t('platform.care.home.tile.members')} value={members.length} />
+          <StatTile label={t('platform.care.home.tile.members')} value={profiles.length} />
+          <StatTile label={t('platform.care.doctors.primary')} value={primary ? primary.displayName : t('platform.care.me.noDoctor')} />
         </StatRow>
       </Panel>
 
       <Panel title={t('platform.care.home.sections')}>
         <BlockGrid>
-          {sections.map((block) => (
+          {blocks.map((block) => (
             <Link className="doctor-block-link" key={block.id} to={block.route}>
               <BlockTile
                 mark={markOf(t(block.label))}
@@ -78,7 +88,11 @@ export function HomePage({ blocks, agent, records, member, members }: HomePagePr
                   <p className="doctor-check-summary">{record.advice}</p>
                   <p className="doctor-check-detail">
                     {record.memberLabel} · {new Date(record.recordedAt).toLocaleString(i18n.language)} ·{' '}
-                    {record.mode === 'hosted' ? t('platform.care.mode.hosted') : t('platform.care.mode.offline')}
+                    {record.mode === 'human'
+                      ? t('platform.care.mode.human') + (record.doctorLabel ? ' · ' + record.doctorLabel : '')
+                      : record.mode === 'hosted'
+                        ? t('platform.care.mode.hosted')
+                        : t('platform.care.mode.offline')}
                   </p>
                 </div>
                 <span className="doctor-badge" data-status={record.level === 'emergency' || record.level === 'urgent' ? 'warn' : 'ok'}>

@@ -1,7 +1,9 @@
 import {
+  createCareAgentCatalog,
   createCareAgentRuntime,
   resolveCareAgentMode,
   type CareAgentAccessTokenPort,
+  type CareAgentCatalogPort,
   type CareAgentMode,
   type CareAgentRuntime,
 } from '@sdkwork/doctor-common-agent';
@@ -13,10 +15,15 @@ export interface DoctorH5AgentsEnvironment {
   readonly accessToken: string | null;
 }
 
+/**
+ * Token port handed to the shared transport. The H5 core package is the only
+ * place allowed to read the session token; feature packages receive the port.
+ */
 export function createDoctorH5AccessTokenPort(environment: DoctorH5AgentsEnvironment): CareAgentAccessTokenPort {
   return Object.freeze({ getAccessToken: () => environment.accessToken });
 }
 
+/** Observable mode for the Me tab; never inferred from the adapter that answered. */
 export function readDoctorH5CareAgentMode(environment: DoctorH5AgentsEnvironment): CareAgentMode {
   return resolveCareAgentMode({
     agentsApiBaseUrl: environment.agentsApiBaseUrl,
@@ -29,6 +36,18 @@ export function createDoctorH5CareAgent(environment: DoctorH5AgentsEnvironment):
   return createCareAgentRuntime({
     agentsApiBaseUrl: environment.agentsApiBaseUrl,
     accessTokens: createDoctorH5AccessTokenPort(environment),
-    entrySurface: 'h5',
+    entrySurface: 'pc',
+  });
+}
+
+/**
+ * Agent catalogue capability (sdkwork-agents `agents.list`). The doctor tab
+ * shows whether the pinned family-doctor agent is present in this deployment;
+ * offline mode answers with an empty catalogue and no network call.
+ */
+export function createDoctorH5AgentCatalog(environment: DoctorH5AgentsEnvironment): CareAgentCatalogPort {
+  return createCareAgentCatalog({
+    agentsApiBaseUrl: environment.agentsApiBaseUrl,
+    accessTokens: createDoctorH5AccessTokenPort(environment),
   });
 }

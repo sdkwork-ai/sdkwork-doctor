@@ -7,9 +7,10 @@
  * the same JSON.
  */
 import type { FamilyMember, TriageLevel } from './index';
+import type { DoctorEmploymentType } from './doctors';
 
 /** `mode` of the transport that produced the advice. */
-export type VisitRecordMode = 'hosted' | 'offline';
+export type VisitRecordMode = 'hosted' | 'offline' | 'human';
 
 export interface VisitRecord {
   readonly id: string;
@@ -21,6 +22,15 @@ export interface VisitRecord {
   readonly advice: string;
   readonly level: TriageLevel;
   readonly mode: VisitRecordMode;
+  /** Human doctor the consultation was routed to, when the family asked a person. */
+  readonly doctorId?: string;
+  readonly doctorLabel?: string;
+  /** Employing organization of the doctor at consultation time. */
+  readonly doctorOrganizationId?: string;
+  /** Hospital / site the consultation was routed to, as displayed at the time. */
+  readonly doctorHospitalLabel?: string;
+  /** Engagement type of the consulted doctor at that site. */
+  readonly doctorEmploymentType?: DoctorEmploymentType;
 }
 
 /** Storage key shared by every browser surface. */
@@ -30,7 +40,7 @@ export const VISIT_RECORDS_STORAGE_KEY = 'sdkwork.doctor.visit-records.v1';
 export const VISIT_RECORD_LIMIT = 200;
 
 const LEVELS: readonly TriageLevel[] = Object.freeze(['emergency', 'urgent', 'routine', 'self-care']);
-const MODES: readonly VisitRecordMode[] = Object.freeze(['hosted', 'offline']);
+const MODES: readonly VisitRecordMode[] = Object.freeze(['hosted', 'offline', 'human']);
 
 export function isTriageLevel(value: unknown): value is TriageLevel {
   return typeof value === 'string' && (LEVELS as readonly string[]).includes(value);
@@ -55,8 +65,17 @@ export interface CreateVisitRecordInput {
   readonly advice: string;
   readonly level: TriageLevel;
   readonly mode: VisitRecordMode;
+  readonly doctorId?: string;
+  readonly doctorLabel?: string;
+  readonly doctorOrganizationId?: string;
+  readonly doctorHospitalLabel?: string;
+  readonly doctorEmploymentType?: DoctorEmploymentType;
   readonly id?: string;
   readonly recordedAt?: string;
+}
+
+function optionalTrim(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
 }
 
 /**
@@ -70,6 +89,11 @@ export function createVisitRecord(input: CreateVisitRecordInput): VisitRecord {
   if (!advice) throw new Error('a visit record needs advice text');
   if (!isTriageLevel(input.level)) throw new Error('a visit record needs a known triage level');
   if (!isVisitRecordMode(input.mode)) throw new Error('a visit record needs a known transport mode');
+  const doctorId = optionalTrim(input.doctorId);
+  const doctorLabel = optionalTrim(input.doctorLabel);
+  const doctorOrganizationId = optionalTrim(input.doctorOrganizationId);
+  const doctorHospitalLabel = optionalTrim(input.doctorHospitalLabel);
+  const doctorEmploymentType = typeof input.doctorEmploymentType === 'string' ? input.doctorEmploymentType : '';
   return Object.freeze({
     id: input.id ?? newVisitRecordId(),
     recordedAt: input.recordedAt ?? new Date().toISOString(),
@@ -79,6 +103,11 @@ export function createVisitRecord(input: CreateVisitRecordInput): VisitRecord {
     advice,
     level: input.level,
     mode: input.mode,
+    ...(doctorId ? { doctorId } : {}),
+    ...(doctorLabel ? { doctorLabel } : {}),
+    ...(doctorOrganizationId ? { doctorOrganizationId } : {}),
+    ...(doctorHospitalLabel ? { doctorHospitalLabel } : {}),
+    ...(doctorEmploymentType ? { doctorEmploymentType: doctorEmploymentType as DoctorEmploymentType } : {}),
   });
 }
 
@@ -115,7 +144,22 @@ function recordFromUnknown(value: unknown): VisitRecord | null {
   ) {
     return null;
   }
-  return Object.freeze({ id, recordedAt, memberId, memberLabel, symptom, advice, level, mode });
+  const optional: Record<string, string> = {};
+  for (const field of ['doctorId', 'doctorLabel', 'doctorOrganizationId', 'doctorHospitalLabel', 'doctorEmploymentType'] as const) {
+    const value = optionalTrim(candidate[field]);
+    if (value) optional[field] = value;
+  }
+  return Object.freeze({
+    id,
+    recordedAt,
+    memberId,
+    memberLabel,
+    symptom,
+    advice,
+    level,
+    mode,
+    ...optional,
+  });
 }
 
 /**

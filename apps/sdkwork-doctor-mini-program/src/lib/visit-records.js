@@ -4,7 +4,7 @@
 const STORAGE_KEY = 'sdkwork.doctor.visit-records.v1';
 const LIMIT = 200;
 const LEVELS = ['emergency', 'urgent', 'routine', 'self-care'];
-const MODES = ['hosted', 'offline'];
+const MODES = ['hosted', 'offline', 'human'];
 
 function newVisitRecordId() {
   return 'visit-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
@@ -16,11 +16,16 @@ function createVisitRecord(input) {
   const level = input && input.level;
   const mode = input && input.mode;
   const member = (input && input.member) || {};
+  const doctorId = String((input && input.doctorId) || '').trim();
+  const doctorLabel = String((input && input.doctorLabel) || '').trim();
+  const doctorOrganizationId = String((input && input.doctorOrganizationId) || '').trim();
+  const doctorHospitalLabel = String((input && input.doctorHospitalLabel) || '').trim();
+  const doctorEmploymentType = String((input && input.doctorEmploymentType) || '').trim();
   if (!symptom) throw new Error('a visit record needs symptom text');
   if (!advice) throw new Error('a visit record needs advice text');
   if (LEVELS.indexOf(level) < 0) throw new Error('a visit record needs a known triage level');
   if (MODES.indexOf(mode) < 0) throw new Error('a visit record needs a known transport mode');
-  return {
+  const record = {
     id: (input && input.id) || newVisitRecordId(),
     recordedAt: (input && input.recordedAt) || new Date().toISOString(),
     memberId: String(member.id || ''),
@@ -32,6 +37,15 @@ function createVisitRecord(input) {
     level: level,
     mode: mode,
   };
+  // Human consultations keep which doctor, at which site, under which
+  // engagement they were routed to; every other record omits the optional
+  // fields so its shape stays the required set.
+  if (doctorId) record.doctorId = doctorId;
+  if (doctorLabel) record.doctorLabel = doctorLabel;
+  if (doctorOrganizationId) record.doctorOrganizationId = doctorOrganizationId;
+  if (doctorHospitalLabel) record.doctorHospitalLabel = doctorHospitalLabel;
+  if (doctorEmploymentType) record.doctorEmploymentType = doctorEmploymentType;
+  return record;
 }
 
 function recordFromUnknown(value) {
@@ -42,7 +56,7 @@ function recordFromUnknown(value) {
   }
   if (!value.id || !value.recordedAt || !value.symptom || !value.advice) return null;
   if (LEVELS.indexOf(value.level) < 0 || MODES.indexOf(value.mode) < 0) return null;
-  return {
+  const record = {
     id: value.id,
     recordedAt: value.recordedAt,
     memberId: value.memberId,
@@ -52,6 +66,17 @@ function recordFromUnknown(value) {
     level: value.level,
     mode: value.mode,
   };
+  [
+    'doctorId',
+    'doctorLabel',
+    'doctorOrganizationId',
+    'doctorHospitalLabel',
+    'doctorEmploymentType',
+  ].forEach((field) => {
+    const text = typeof value[field] === 'string' ? value[field].trim() : '';
+    if (text) record[field] = text;
+  });
+  return record;
 }
 
 function parseVisitRecords(value) {

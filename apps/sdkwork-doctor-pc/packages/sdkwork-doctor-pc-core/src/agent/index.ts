@@ -1,7 +1,9 @@
 import {
+  createCareAgentCatalog,
   createCareAgentRuntime,
   resolveCareAgentMode,
   type CareAgentAccessTokenPort,
+  type CareAgentCatalogPort,
   type CareAgentMode,
   type CareAgentRuntime,
 } from '@sdkwork/doctor-common-agent';
@@ -35,5 +37,17 @@ export function createDoctorPcCareAgent(environment: DoctorPcAgentsEnvironment):
     agentsApiBaseUrl: environment.agentsApiBaseUrl,
     accessTokens: createDoctorPcAccessTokenPort(environment),
     entrySurface: 'pc',
+  });
+}
+
+/**
+ * Agent catalogue capability (sdkwork-agents `agents.list`). The doctor tab
+ * shows whether the pinned family-doctor agent is present in this deployment;
+ * offline mode answers with an empty catalogue and no network call.
+ */
+export function createDoctorPcAgentCatalog(environment: DoctorPcAgentsEnvironment): CareAgentCatalogPort {
+  return createCareAgentCatalog({
+    agentsApiBaseUrl: environment.agentsApiBaseUrl,
+    accessTokens: createDoctorPcAccessTokenPort(environment),
   });
 }

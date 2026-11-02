@@ -26,4 +26,16 @@ function readAgentsApiBaseUrl() {
   return '';
 }
 
-module.exports = { getAccessToken, setAccessToken, readAgentsApiBaseUrl };
+function readCareDoctorDirectoryUrl() {
+  try {
+    if (typeof wx !== 'undefined' && typeof wx.getExtConfigSync === 'function') {
+      const ext = wx.getExtConfigSync() || {};
+      if (typeof ext.careDoctorDirectoryUrl === 'string') return ext.careDoctorDirectoryUrl;
+    }
+  } catch (error) {
+    // Ext config is optional; absence means the authored fallback roster.
+  }
+  return '';
+}
+
+module.exports = { getAccessToken, setAccessToken, readAgentsApiBaseUrl, readCareDoctorDirectoryUrl };

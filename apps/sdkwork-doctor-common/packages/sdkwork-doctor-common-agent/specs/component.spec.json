@@ -10,23 +10,70 @@
     "domain": "platform",
     "capability": "agent-conversation",
     "surface": "shared",
-    "languages": ["typescript"],
+    "languages": [
+      "typescript"
+    ],
     "generated": false,
-    "manifests": ["package.json"]
+    "manifests": [
+      "package.json"
+    ]
   },
   "canonicalSpecs": [
-    { "file": "APPLICATION_SPEC.md", "path": "../../../../../../sdkwork-specs/APPLICATION_SPEC.md", "purpose": "Application composition." },
-    { "file": "COMPONENT_SPEC.md", "path": "../../../../../../sdkwork-specs/COMPONENT_SPEC.md", "purpose": "Component contract." },
-    { "file": "CODE_STYLE_SPEC.md", "path": "../../../../../../sdkwork-specs/CODE_STYLE_SPEC.md", "purpose": "Code organization." },
-    { "file": "NAMING_SPEC.md", "path": "../../../../../../sdkwork-specs/NAMING_SPEC.md", "purpose": "Naming." },
-    { "file": "TYPESCRIPT_CODE_SPEC.md", "path": "../../../../../../sdkwork-specs/TYPESCRIPT_CODE_SPEC.md", "purpose": "TypeScript rules." }
+    {
+      "file": "APPLICATION_SPEC.md",
+      "path": "../../../../../../sdkwork-specs/APPLICATION_SPEC.md",
+      "purpose": "Application composition."
+    },
+    {
+      "file": "COMPONENT_SPEC.md",
+      "path": "../../../../../../sdkwork-specs/COMPONENT_SPEC.md",
+      "purpose": "Component contract."
+    },
+    {
+      "file": "CODE_STYLE_SPEC.md",
+      "path": "../../../../../../sdkwork-specs/CODE_STYLE_SPEC.md",
+      "purpose": "Code organization."
+    },
+    {
+      "file": "NAMING_SPEC.md",
+      "path": "../../../../../../sdkwork-specs/NAMING_SPEC.md",
+      "purpose": "Naming."
+    },
+    {
+      "file": "TYPESCRIPT_CODE_SPEC.md",
+      "path": "../../../../../../sdkwork-specs/TYPESCRIPT_CODE_SPEC.md",
+      "purpose": "TypeScript rules."
+    }
   ],
   "contracts": {
     "layerRole": "frontend-core",
-    "publicExports": ["."],
-    "providedPorts": [{ "name": "doctorAgentConversation", "export": "." }],
-    "requiredPorts": [{ "name": "doctorFamilyDomain", "export": ".", "provider": "@sdkwork/doctor-common-doctor" }],
-    "runtimeEntrypoints": ["createLocalCareAgent", "createHostedCareAgent", "createCareAgentRuntime"],
+    "publicExports": [
+      "."
+    ],
+    "providedPorts": [
+      {
+        "name": "doctorAgentConversation",
+        "export": "."
+      },
+      {
+        "name": "doctorAgentCatalog",
+        "export": "."
+      }
+    ],
+    "requiredPorts": [
+      {
+        "name": "doctorFamilyDomain",
+        "export": ".",
+        "provider": "@sdkwork/doctor-common-doctor"
+      }
+    ],
+    "runtimeEntrypoints": [
+      "createLocalCareAgent",
+      "createHostedCareAgent",
+      "createCareAgentRuntime",
+      "createCareAgentCatalog",
+      "findCareAgent"
+    ],
     "routeManifest": null,
     "sdkClients": [],
     "sdkDependencies": [],
@@ -36,5 +83,10 @@
     "events": [],
     "configKeys": []
   },
-  "verification": { "commands": ["pnpm --dir apps/sdkwork-doctor-pc typecheck", "pnpm test"] }
+  "verification": {
+    "commands": [
+      "pnpm --dir apps/sdkwork-doctor-pc typecheck",
+      "pnpm test"
+    ]
+  }
 }

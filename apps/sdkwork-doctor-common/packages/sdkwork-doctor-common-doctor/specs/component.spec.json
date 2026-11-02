@@ -10,26 +10,78 @@
     "domain": "platform",
     "capability": "doctor",
     "surface": "shared",
-    "languages": ["typescript"],
+    "languages": [
+      "typescript"
+    ],
     "generated": false,
-    "manifests": ["package.json"]
+    "manifests": [
+      "package.json"
+    ]
   },
   "canonicalSpecs": [
-    { "file": "APPLICATION_SPEC.md", "path": "../../../../../../sdkwork-specs/APPLICATION_SPEC.md", "purpose": "Application-wide capability boundary." },
-    { "file": "COMPONENT_SPEC.md", "path": "../../../../../../sdkwork-specs/COMPONENT_SPEC.md", "purpose": "Component contract." },
-    { "file": "CODE_STYLE_SPEC.md", "path": "../../../../../../sdkwork-specs/CODE_STYLE_SPEC.md", "purpose": "Code organization." },
-    { "file": "NAMING_SPEC.md", "path": "../../../../../../sdkwork-specs/NAMING_SPEC.md", "purpose": "Naming." },
-    { "file": "TYPESCRIPT_CODE_SPEC.md", "path": "../../../../../../sdkwork-specs/TYPESCRIPT_CODE_SPEC.md", "purpose": "TypeScript rules." }
+    {
+      "file": "APPLICATION_SPEC.md",
+      "path": "../../../../../../sdkwork-specs/APPLICATION_SPEC.md",
+      "purpose": "Application-wide capability boundary."
+    },
+    {
+      "file": "COMPONENT_SPEC.md",
+      "path": "../../../../../../sdkwork-specs/COMPONENT_SPEC.md",
+      "purpose": "Component contract."
+    },
+    {
+      "file": "CODE_STYLE_SPEC.md",
+      "path": "../../../../../../sdkwork-specs/CODE_STYLE_SPEC.md",
+      "purpose": "Code organization."
+    },
+    {
+      "file": "NAMING_SPEC.md",
+      "path": "../../../../../../sdkwork-specs/NAMING_SPEC.md",
+      "purpose": "Naming."
+    },
+    {
+      "file": "TYPESCRIPT_CODE_SPEC.md",
+      "path": "../../../../../../sdkwork-specs/TYPESCRIPT_CODE_SPEC.md",
+      "purpose": "TypeScript rules."
+    }
   ],
   "contracts": {
     "layerRole": "frontend-core",
-    "publicExports": ["."],
+    "publicExports": [
+      "."
+    ],
     "providedPorts": [
-      { "name": "doctorFamilyDomain", "export": "." },
-      { "name": "doctorTriage", "export": "." }
+      {
+        "name": "doctorFamilyDomain",
+        "export": "."
+      },
+      {
+        "name": "doctorTriage",
+        "export": "."
+      },
+      {
+        "name": "doctorPatientFiles",
+        "export": "."
+      },
+      {
+        "name": "doctorDoctorDirectory",
+        "export": "."
+      },
+      {
+        "name": "doctorDoctorSelection",
+        "export": "."
+      }
     ],
     "requiredPorts": [],
-    "runtimeEntrypoints": ["triageSymptoms", "summarizeHealth"],
+    "runtimeEntrypoints": [
+      "triageSymptoms",
+      "summarizeHealth",
+      "createPatientProfileStore",
+      "parsePatientHousehold",
+      "createDoctorSelectionStore",
+      "parseDoctorRoster",
+      "resolvePrimaryDoctor"
+    ],
     "routeManifest": null,
     "sdkClients": [],
     "sdkDependencies": [],
@@ -39,5 +91,10 @@
     "events": [],
     "configKeys": []
   },
-  "verification": { "commands": ["pnpm --dir apps/sdkwork-doctor-pc typecheck", "pnpm test"] }
+  "verification": {
+    "commands": [
+      "pnpm --dir apps/sdkwork-doctor-pc typecheck",
+      "pnpm test"
+    ]
+  }
 }

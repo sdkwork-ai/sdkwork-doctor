@@ -11,25 +11,44 @@ function read(file) {
   return fs.readFileSync(file, 'utf8');
 }
 
+function readFlutterSources() {
+  const sources = [];
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        // The generated catalog is the one place copy is allowed to live.
+        if (entry.name !== 'i18n') walk(full);
+      } else if (entry.name.endsWith('.dart')) {
+        sources.push(fs.readFileSync(full, 'utf8'));
+      }
+    }
+  };
+  walk(path.join(flutterRoot, 'lib'));
+  return sources.join('\n');
+}
+
 test('the Flutter tabs render from the generated care catalog', () => {
-  const main = read(path.join(flutterRoot, 'lib/main.dart'));
+  const flutter = readFlutterSources();
   for (const key of [
     'platform.care.nav.chat',
-    'platform.care.doctor.title',
-    'platform.care.nav.records',
-    'platform.care.me.title',
+    'platform.care.nav.doctor',
+    'platform.care.doctors.title',
+    'platform.care.nav.me',
     'platform.care.chat.send',
     'platform.care.chat.error',
     'platform.care.mode.hosted',
     'platform.care.mode.offline',
-    'platform.care.me.completeness',
+    'platform.care.profile.add',
+    'platform.care.profile.field.name',
     'platform.care.records.title',
     'platform.care.records.empty',
     'platform.care.records.clear',
   ]) {
-    assert.ok(main.includes(key), 'Flutter main.dart must render ' + key);
+    assert.ok(flutter.includes(key), 'the Flutter surface must render ' + key);
   }
-  assert.doesNotMatch(main, /'对话'|'医生'|'我的'/u, 'Flutter tab copy must not be hard-coded');
+  const withoutComments = flutter.replace(/\/\/[^\n]*/gu, '');
+  assert.doesNotMatch(withoutComments, /'对话'|'医生'|'我的'/u, 'Flutter tab copy must not be hard-coded');
 });
 
 test('the mini program pages render from the generated care catalog', () => {

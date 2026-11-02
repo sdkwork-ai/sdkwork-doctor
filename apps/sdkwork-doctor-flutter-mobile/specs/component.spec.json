@@ -48,12 +48,27 @@
   "contracts": {
     "layerRole": "runtime-composition",
     "publicExports": [
-      "."
+      ".",
+      "lib/patients/patient_store.dart",
+      "lib/doctors/doctor_directory.dart",
+      "lib/doctors/doctor_selection.dart"
     ],
     "providedPorts": [
       {
         "name": "doctorFlutterApp",
         "export": "."
+      },
+      {
+        "name": "patientFiles",
+        "export": "lib/patients/patient_store.dart"
+      },
+      {
+        "name": "doctorDirectory",
+        "export": "lib/doctors/doctor_directory.dart"
+      },
+      {
+        "name": "doctorSelection",
+        "export": "lib/doctors/doctor_selection.dart"
       }
     ],
     "requiredPorts": [],
@@ -63,8 +78,9 @@
       "NewConsultationSheet",
       "ChatTab",
       "DoctorTab",
-      "RecordsTab",
       "MeTab",
+      "RecordsScreen",
+      "PatientEditorScreen",
       "createCareAgent"
     ],
     "routeManifest": null,
@@ -75,7 +91,8 @@
     "dependencyApiSurfaces": [],
     "events": [],
     "configKeys": [
-      "AGENTS_API_BASE_URL"
+      "AGENTS_API_BASE_URL",
+      "CARE_DOCTOR_DIRECTORY_URL"
     ]
   },
   "verification": {

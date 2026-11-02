@@ -102,13 +102,32 @@ test('the conversation page records every completed consultation', () => {
   assert.match(source, /store\.add\(/u);
 });
 
-test('the records tab is registered with the generator-backed catalog', () => {
+test('the mini program records a human consultation against the doctor', () => {
+  const value = record({
+    mode: 'human',
+    doctorId: 'doctor-lin-qinghe',
+    doctorLabel: 'Lin Qinghe · Cardiology',
+  });
+  assert.equal(value.mode, 'human');
+  assert.equal(value.doctorId, 'doctor-lin-qinghe');
+  const roundTrip = records.parseVisitRecords(JSON.stringify([value]));
+  assert.equal(roundTrip.length, 1);
+  assert.equal(roundTrip[0].doctorLabel, 'Lin Qinghe · Cardiology');
+  assert.equal(Object.keys(record()).includes('doctorId'), false, 'a plain record omits the doctor fields');
+});
+
+test('the records screen is registered but is not a tab', () => {
   const app = JSON.parse(fs.readFileSync(path.join(repoRoot, 'apps/sdkwork-doctor-mini-program/src/app.json'), 'utf8'));
-  assert.ok(app.pages.includes('pages/records/index'));
-  const tab = app.tabBar.list.find((entry) => entry.pagePath === 'pages/records/index');
-  assert.ok(tab, 'the records tab must exist');
-  assert.equal(tab.text, '记录');
+  assert.ok(app.pages.includes('pages/records/index'), 'the records page must stay registered');
+  assert.equal(
+    app.tabBar.list.some((entry) => entry.pagePath === 'pages/records/index'),
+    false,
+    'records is a sub-screen of 我的, not a tab',
+  );
+  assert.deepEqual(app.tabBar.list.map((entry) => entry.text), ['对话', '医生', '我的']);
   const page = fs.readFileSync(path.join(repoRoot, 'apps/sdkwork-doctor-mini-program/src/pages/records/index.js'), 'utf8');
   assert.match(page, /platform\.care\.records\.title/u);
   assert.match(page, /platform\.care\.records\.empty/u);
+  const profile = fs.readFileSync(path.join(repoRoot, 'apps/sdkwork-doctor-mini-program/src/pages/profile/index.js'), 'utf8');
+  assert.match(profile, /pages\/records\/index/u, '我的 must link to the records screen');
 });

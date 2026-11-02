@@ -1,8 +1,16 @@
-import type { AgentConversationPort } from '@sdkwork/doctor-common-agent';
+import type { AgentConversationPort, CareAgentCatalogPort } from '@sdkwork/doctor-common-agent';
 import { applyThemeToStyle, resolveAppBlocks, resolveAppTheme, type ResolvedAppBlock } from '@sdkwork/doctor-common-blocks';
 import { createDoctorRuntimeContext, type DoctorRuntimeContext } from '@sdkwork/doctor-common-diagnostics';
-import type { VisitRecordStore } from '@sdkwork/doctor-common-doctor';
-import { createAnonymousSessionPort, createDoctorPcCareAgent, createDoctorPcVisitRecordStore } from '@sdkwork/doctor-pc-core';
+import type { DoctorDirectoryPort, DoctorSelectionStore, PatientProfileStore, VisitRecordStore } from '@sdkwork/doctor-common-doctor';
+import {
+  createAnonymousSessionPort,
+  createDoctorPcAgentCatalog,
+  createDoctorPcCareAgent,
+  createDoctorPcDoctorDirectoryPort,
+  createDoctorPcDoctorSelectionStore,
+  createDoctorPcPatientProfileStore,
+  createDoctorPcVisitRecordStore,
+} from '@sdkwork/doctor-pc-core';
 
 import { loadRuntimeEnvironment, type DoctorPcEnvironment } from './environment';
 
@@ -15,7 +23,15 @@ export interface DoctorPcRuntime {
    * offline otherwise. The mode travels with the port so the UI never guesses.
    */
   readonly agent: AgentConversationPort;
-  /** Device-local consultation history shared by the chat and records tabs. */
+  /** Managed agent catalogue: shows whether the family-doctor agent is deployed. */
+  readonly agentCatalog: CareAgentCatalogPort;
+  /** Household patient files, one per patient. */
+  readonly patients: PatientProfileStore;
+  /** Device-local selection of human family doctors. */
+  readonly selection: DoctorSelectionStore;
+  /** Deployment doctor directory with the authored fallback inside. */
+  readonly doctorDirectory: DoctorDirectoryPort;
+  /** Device-local consultation history shared by chat, landing, and records. */
   readonly records: VisitRecordStore;
   /** Blocks resolved for the PC surface, including deployment overrides. */
   readonly blocks: readonly ResolvedAppBlock[];
@@ -24,7 +40,7 @@ export interface DoctorPcRuntime {
 let runtimePromise: Promise<DoctorPcRuntime> | null = null;
 
 /**
- * Compose the PC runtime once per page load. SDK clients and the block
+ * Compose the PC runtime once per page load. Ports, stores, and the block
  * composition are built here; UI packages receive the resolved ports.
  */
 export function bootstrapDoctorPc(): Promise<DoctorPcRuntime> {
@@ -50,6 +66,13 @@ export function bootstrapDoctorPc(): Promise<DoctorPcRuntime> {
           backendApiBaseUrl: environment.backendApiBaseUrl,
         }),
         agent: careAgent.port,
+        agentCatalog: createDoctorPcAgentCatalog({
+          agentsApiBaseUrl: environment.agentsApiBaseUrl,
+          accessToken: session.current().accessToken,
+        }),
+        patients: createDoctorPcPatientProfileStore(),
+        selection: createDoctorPcDoctorSelectionStore(),
+        doctorDirectory: createDoctorPcDoctorDirectoryPort({ directoryUrl: environment.careDoctorDirectoryUrl }),
         records: createDoctorPcVisitRecordStore(),
         blocks,
       };

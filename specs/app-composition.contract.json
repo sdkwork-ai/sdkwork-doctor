@@ -1,21 +1,9 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "kind": "sdkwork.doctor.app-composition",
-  "purpose": "The building-block catalogue for the family-doctor app. Each block is one independently composable unit with a stable id, a canonical cross-client page id, a route, an i18n label key, and a surface presentation. Clients compose these blocks instead of hard-coding navigation, and a deployment can reorder, hide, or relabel them.",
+  "purpose": "The building-block catalogue for the family private-doctor app. Each block is one independently composable unit with a stable id, a canonical cross-client page id, a route, an i18n label key, and a surface presentation. Clients compose these blocks instead of hard-coding navigation, and a deployment can reorder, hide, or relabel them. The catalogue is exactly the three tabs (chat / doctor / me); the browser workbench landing is a route, not a tab.",
   "pageIdFormat": "<surface>.<domain>.<capability>.<screen>",
   "blocks": [
-    {
-      "id": "home",
-      "kind": "navigation",
-      "pageId": "app.doctor.home.index",
-      "route": "/doctor/home",
-      "labelKey": "platform.care.nav.home",
-      "icon": "home",
-      "order": 0,
-      "surfaces": ["pc", "h5"],
-      "optional": true,
-      "description": "Workbench landing: conversation entry, active mode, recent visit records."
-    },
     {
       "id": "chat",
       "kind": "navigation",
@@ -26,31 +14,19 @@
       "order": 10,
       "surfaces": ["pc", "h5", "flutter", "mini_program"],
       "optional": false,
-      "description": "Family-doctor conversation with triage per exchange."
+      "description": "Family-doctor conversation with the active patient's facts and triage per exchange."
     },
     {
       "id": "doctor",
       "kind": "navigation",
-      "pageId": "app.doctor.record.summary",
+      "pageId": "app.doctor.doctor.directory",
       "route": "/doctor/doctor",
       "labelKey": "platform.care.nav.doctor",
       "icon": "doctor",
       "order": 20,
       "surfaces": ["pc", "h5", "flutter", "mini_program"],
       "optional": false,
-      "description": "Household health record and care rules."
-    },
-    {
-      "id": "records",
-      "kind": "navigation",
-      "pageId": "app.doctor.record.list",
-      "route": "/doctor/records",
-      "labelKey": "platform.care.nav.records",
-      "icon": "records",
-      "order": 30,
-      "surfaces": ["pc", "h5", "flutter", "mini_program"],
-      "optional": false,
-      "description": "Visit records recorded on this device."
+      "description": "Human doctor directory: choose the family doctor and start a human consultation."
     },
     {
       "id": "me",
@@ -59,19 +35,21 @@
       "route": "/doctor/me",
       "labelKey": "platform.care.nav.me",
       "icon": "user",
-      "order": 40,
+      "order": 30,
       "surfaces": ["pc", "h5", "flutter", "mini_program"],
       "optional": false,
-      "description": "Family members, active conversation mode, device checks."
+      "description": "Patient files, my doctors, visit records, active mode, device checks."
     }
   ],
-  "home": {
+  "landing": {
+    "purpose": "The browser workbench landing at the surface root. It is a route, not a tab, so the tab count stays three on every client.",
+    "route": "/doctor",
     "sections": [
       {
         "id": "status",
         "kind": "insight",
         "titleKey": "platform.care.home.status",
-        "tiles": ["conversationMode", "recentRecords", "familyMembers", "profileCompleteness"]
+        "tiles": ["conversationMode", "recentRecords", "patientFiles", "profileCompleteness"]
       },
       {
         "id": "blocks",
@@ -100,9 +78,9 @@
     ]
   },
   "surfaces": {
-    "pc": { "presentation": "icon-rail + block grid", "homeBlock": true },
-    "h5": { "presentation": "bottom tabs + block list", "homeBlock": true },
-    "flutter": { "presentation": "bottom tabs", "homeBlock": false },
-    "mini_program": { "presentation": "native tab bar", "homeBlock": false }
+    "pc": { "presentation": "icon rail with three tabs plus workbench landing", "landing": true },
+    "h5": { "presentation": "bottom tabs with three tabs plus workbench landing", "landing": true },
+    "flutter": { "presentation": "bottom tabs", "landing": false },
+    "mini_program": { "presentation": "native tab bar", "landing": false }
   }
 }

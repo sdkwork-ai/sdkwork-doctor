@@ -64,11 +64,17 @@ test('both app shells pass the composed port into the tab pages', () => {
     const app = fs.readFileSync(appFile, 'utf8');
     assert.match(app, /agent=\{runtime\.agent\}/u, appFile);
     assert.match(app, /records=\{runtime\.records\}/u, appFile);
+    assert.match(app, /patients=\{runtime\.patients\}/u, appFile);
+    assert.match(app, /selection=\{runtime\.selection\}/u, appFile);
+    assert.match(app, /doctorDirectory=\{runtime\.doctorDirectory\}/u, appFile);
+    assert.match(app, /agentCatalog=\{runtime\.agentCatalog\}/u, appFile);
     assert.match(app, /blocks=\{runtime\.blocks\}/u, appFile);
     const routes = fs.readFileSync(routesFile, 'utf8');
     assert.match(routes, /<ChatPage[^>]*agent=\{agent\}/u, routesFile);
     assert.match(routes, /<MePage[^>]*agent=\{agent\}/u, routesFile);
-    assert.match(routes, /path="records"/u, routesFile);
+    assert.match(routes, /path="me\/records"/u, routesFile);
+    assert.doesNotMatch(routes, /path="records"/u, 'records is a sub-screen, not a tab');
+    assert.match(routes, /<DoctorPage[^>]*selection=\{selection\}/u, routesFile);
   }
 });
 

@@ -1,10 +1,13 @@
 export * from './agent';
 export * from './composition';
+export * from './doctors';
 export * from './host';
 export * from './modules';
+export * from './patients';
 export * from './records';
 export * from './sdk';
 export * from './session';
+export * from './storage';
 
 import { getDoctorPcHostAdapter, type DoctorPcHostAdapter } from './host';
 import { doctorPcModules } from './modules';

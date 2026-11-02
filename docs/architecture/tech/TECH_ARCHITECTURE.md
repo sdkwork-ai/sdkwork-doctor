@@ -2,40 +2,97 @@
 
 Status: draft
 Owner: sdkwork-platform
-Updated: 2026-11-02
+Updated: 2026-11-03
 Specs: ARCHITECTURE_DECISION_SPEC.md, APP_CLIENT_ARCHITECTURE_ALIGNMENT_SPEC.md, APP_PC_ARCHITECTURE_SPEC.md, APP_H5_ARCHITECTURE_SPEC.md, APP_RUNTIME_ENV_SPEC.md, COMPONENT_SPEC.md
 
 ## 1. Architecture Overview
 
-SDKWork Doctor is one family-doctor product with four clients that share one
-domain vocabulary, one triage contract, one conversation port shape, and one
-generated copy catalog.
+SDKWork Doctor is one family private-doctor product with four clients that share
+one domain vocabulary, one triage contract, one conversation port shape, one
+patient-file contract, one human-doctor directory contract, and one generated
+copy catalog.
 
 ```text
 apps/sdkwork-doctor-pc      apps/sdkwork-doctor-h5
-  pc-core / h5-core                (SDK ports, agent port, module registry, session)
+  pc-core / h5-core                (SDK ports, agent port, patient/doctor stores, session)
   pc-commons / h5-commons          (presentation primitives)
   pc-shell / h5-shell              (layout, tab navigation, route composition)
-  pc-care / h5-care                (chat, doctor, records, me tabs)
+  pc-care / h5-care                (chat, doctor directory, me, records sub-screen)
             \                    /
    apps/sdkwork-doctor-common/packages/
-     sdkwork-doctor-common-doctor      (FamilyMember, HealthSummary, triage rules, visit records)
-     sdkwork-doctor-common-agent       (AgentConversationPort, offline + hosted adapters)
+     sdkwork-doctor-common-doctor      (PatientProfile, doctor roster, triage, visit records)
+     sdkwork-doctor-common-agent       (AgentConversationPort, offline + hosted adapters, agent catalogue)
      sdkwork-doctor-common-diagnostics (device environment checks)
 
-apps/sdkwork-doctor-flutter-mobile   (lib/agent, lib/i18n, lib/records, four tabs)
-apps/sdkwork-doctor-mini-program     (src/lib/agent.js, records, i18n, four pages)
+apps/sdkwork-doctor-flutter-mobile   (lib/{agent,patients,doctors,records,i18n,ui}, three tabs)
+apps/sdkwork-doctor-mini-program     (src/{lib,pages}, three tabs)
 
 apps/sdkwork-doctor-common/.../contracts/
   triage-rules.json, triage-fixtures.json, care-messages.json,
-  care-fingerprint-vectors.json
+  care-fingerprint-vectors.json, patient-profile.schema.json,
+  doctor-roster.json, visit-record.schema.json
 ```
 
 The PC root is the desktop surface, H5 the mobile browser surface, Flutter the
 native mobile surface, and the mini program the WeChat surface. All four expose
-the same four tabs in the same order: 对话 / 医生 / 记录 / 我的.
+the same three tabs in the same order: 对话 / 医生 / 我的. Visit records are a
+sub-screen of 我的, not a tab; the browser surfaces additionally render a
+workbench landing at `/doctor`.
 
-## 2.1 Visit Records
+## 2.1 Patient Files
+
+`@sdkwork/doctor-common-doctor` owns one patient record per household member
+(`contracts/patient-profile.schema.json`) and the household document:
+`{"version":1,"activeId":"...","profiles":[...]}` under
+`sdkwork.doctor.patient-profiles.v1`, limited to 12 profiles. Each client
+supplies only the adapter:
+
+| Client | Adapter | Key |
+| --- | --- | --- |
+| PC / H5 | `createDoctorPc/H5PatientProfileStore` over `localStorage` | `sdkwork.doctor.patient-profiles.v1` |
+| Flutter | the app's preferences adapter | same key |
+| Mini program | `wx.getStorageSync` / `wx.setStorageSync` | same key |
+
+Rules every adapter keeps: strict validation on write (name, relation, sex,
+birth year, normalized lists), defensive parse on read, corrupt profiles dropped,
+an unknown `activeId` falling back to the first profile, a seed applied only when
+no document was ever stored, and a storage failure degrading to a session copy.
+The chat tab reads the active profile on every turn; `我的` is the only writer.
+
+## 2.2 Human-Doctor Directory
+
+The 医生 tab lists real clinicians. A doctor is a **person**
+(`DoctorProfile`); each employment or practice relationship is a
+`DoctorAffiliation`, so one clinician can be full-time at a hospital and
+part-time at a community clinic and the family can choose the site.
+
+- **Organization authority is Appbase.** `organizationId` is the Appbase
+  organization unit that employs or contracts the clinician and owns the
+  IAM/org scope. `hospitalCode` is the Appbase `med_hospital` natural key; the
+  hospital directory, grade, ownership, and department catalog are Appbase
+  medical reference data. `sdkwork-company` is the enterprise/recruitment
+  center, never the clinical employer; `companyId` on an affiliation is only the
+  commercial contract beside the clinical relationship.
+- **Engagement** is `full_time | part_time | contract | visiting`, recorded per
+  affiliation with `department`, `title`, `primary`, `acceptingNewPatients`,
+  per-site `availability` and `channels`, and `since`.
+- **The roster is deployment content**: a deployment binds a document URL in
+  `runtime-env.json#careDoctorDirectoryUrl` and the client performs one
+  credential-free `GET`. `source: 'directory'` when the operator document
+  answered; `source: 'catalog'` when the URL is empty, the request failed, or
+  the document contained no valid clinician, in which case the authored roster
+  in `contracts/doctor-roster.json` answers and the UI shows the fallback badge.
+- **Selection is device-local** under `sdkwork.doctor.doctor-selection.v1`: up
+  to five doctors, the first selected becomes primary, the primary is always
+  among the selected, and removing the primary promotes the next. Selection is
+  per person, not per affiliation.
+- **Consultation** uses the chosen affiliation's preferred configured channel
+  (video → messaging → phone → clinic, skipping empty targets) and records a
+  visit with `mode: 'human'` plus `doctorId`, `doctorLabel`,
+  `doctorOrganizationId`, `doctorHospitalLabel`, and `doctorEmploymentType`
+  against the active patient. There is no in-conversation handoff in this
+  release (PRD P3).
+## 2.3 Visit Records
 `@sdkwork/doctor-common-doctor` owns the record shape
 (`contracts/visit-record.schema.json`), the append/parse/serialize rules, and a
 storage-port store. Each client supplies only the adapter:
@@ -50,9 +107,9 @@ Rules that every adapter keeps: newest first, de-duplicated by id, capped at 200
 corrupt entries dropped instead of throwing, and a storage failure degrading to a
 session copy. The chat tab writes one record per completed exchange (never for a
 failed turn), and the records tab subscribes to the store so the new entry is
-visible immediately.
+visible immediately. The 我的 tab hosts the records entry, and the records screen carries an explicit way back.
 
-## 2.2 Visual System
+## 2.4 Visual System
 
 `specs/design-tokens.contract.json` pins one tech-blue, flat, borderless system:
 canvas `#F2F5FA`, surface `#FFFFFF`, tonal layer `#E6EDF8`, chrome navy `#061A3A`,
@@ -67,17 +124,16 @@ white cards on the canvas, and tonal rows/inputs inside cards. Emergency and
 urgent keep the warm semantic tone so triage colour is never lost to the brand
 blue.
 
-## 2.3 App Composition And Blocks
+## 2.5 App Composition And Blocks
 
-`specs/app-composition.contract.json` is the building-block catalogue. Every
-navigation unit — and the browser home landing — is a block with a stable id, a
+`specs/app-composition.contract.json` is the building-block catalogue; the workbench landing is a route outside it. Every navigation tab is a block with a stable id, a
 canonical page id (`app.doctor.<domain>.<capability>`), a route, an i18n label
 key, an icon, and the surfaces that render it. A client projects its navigation
 from the resolved block list; it never hard-codes a second list.
 
 `@sdkwork/doctor-common-blocks` owns the resolution rules:
 
-- filter by surface (`home` is a browser-only block);
+- filter by surface, so only the three tabs resolve on every client;
 - hide optional blocks, never required ones;
 - float deployment-preferred ids to the front, ignore unknown ids;
 - relabel a block with a deployment i18n key;
@@ -85,8 +141,8 @@ from the resolved block list; it never hard-codes a second list.
   by one.
 
 The PC rail (`AppShell`) and the H5 tab bar (`MobileShell`) are projections of
-the same resolved list, and the browser `HomePage` renders the same blocks as a
-grid plus status tiles and recent records. Adding, hiding, or reordering a block
+the same resolved list of three tabs, and the browser `HomePage` renders them as
+a grid plus status tiles and recent records at the `/doctor` landing route. Adding, hiding, or reordering a block
 therefore changes navigation and home together without editing a page.
 
 Customization is runtime data, not code: `runtime-env.json#app.blocks` and
@@ -157,6 +213,10 @@ Hosted flow per client:
 6. Compose the visible answer: the triage lead goes first, the hosted text after
    it, so a red flag is never buried. A red flag inside the hosted answer can
    only raise the level.
+7. Read the managed-agent catalogue (`agents.list`) once through the
+   core-owned `createCareAgentCatalog` port, so the 医生 and 我的 tabs can show
+   whether the pinned `agent.family-doctor` agent is deployed. Offline mode
+   returns an empty catalogue without a network call.
 
 The idempotency fingerprint is a frozen four-salt FNV-1a 128-bit digest
 (`contracts/care-fingerprint-vectors.json`) reproduced byte-for-byte by
@@ -172,10 +232,10 @@ apps/
     packages/{sdkwork-doctor-pc-core,-commons,-shell,-care,-diagnostics}/
     config/browser/runtime-env.<deployment-profile>.<environment>.example.json
   sdkwork-doctor-h5/            ... same shape with h5 names ...
-  sdkwork-doctor-flutter-mobile/{lib/{agent,i18n,records},test}/
+  sdkwork-doctor-flutter-mobile/{lib/{agent,patients,doctors,records,i18n,ui},test}/
   sdkwork-doctor-mini-program/{src/{lib,pages},tests}/
 etc/sdkwork.deployment.config.json
-specs/{agents-app-api,agent-integration}.contract.json
+specs/{agents-app-api,agent-integration,doctor-directory,app-composition}.contract.json
 contracts/ (inside sdkwork-doctor-common-doctor)
 ```
 
@@ -188,6 +248,11 @@ Every authored package owns `specs/component.spec.json`; every client root owns
 - Doctor consumes one external API family: the sdkwork-agents app API. The
   dependency is pinned in `specs/agents-app-api.contract.json` and compared with
   the upstream OpenAPI by `tests/agents-upstream-contract.test.mjs`.
+- Doctor consumes one deployment document for the human-doctor roster
+  (`specs/doctor-directory.contract.json`, runtime key
+  `careDoctorDirectoryUrl`). It is not an SDKWork-owned app API: no app-api
+  path, no envelope, and no credential. A first-party doctor service would be
+  proposed as an app-api change first.
 - No generated transport package is imported. The hosted adapter is a core-owned
   port implementation; when a scoped composed facade is generated it replaces the
   adapter without changing the port (ADR-20261103).
@@ -215,6 +280,9 @@ Every authored package owns `specs/component.spec.json`; every client root owns
   hosted/offline rule (superseded only on the SDK packaging choice).
 - `ADR-20261103-hosted-agent-wire-binding.md` — wire-level binding to the pinned
   sdkwork-agents app API, with the upstream contract test as the guard.
+- `ADR-20261103-doctor-directory-and-agent-catalogue.md` — the roster is
+  deployment content with an authored fallback, and the agent catalogue is a
+  status probe rather than a list UI.
 
 Inherited from standards: Adaptive Web PC+H5 pairing
 (`APP_CLIENT_ARCHITECTURE_ALIGNMENT_SPEC.md`), framework-neutral shared contracts
@@ -237,6 +305,8 @@ cd apps/sdkwork-doctor-flutter-mobile && flutter analyze && flutter test
 ```
 
 Contract tests cover: the hosted wire path against a conformance server, upstream
-API drift, four-client tab identity, triage parity across runtimes, fingerprint
-vectors, generated catalog drift, transport mode selection, and the rule that UI
-packages never build a transport.
+API drift (including the agent catalogue), the three-tab identity on four
+clients, patient-file validation and persistence, doctor-roster/selection rules
+and fallback parity, human-consultation records, triage parity across runtimes,
+fingerprint vectors, generated catalog drift, transport mode selection, and the
+rule that UI packages never build a transport.

@@ -10,30 +10,67 @@
     "domain": "platform",
     "capability": "app-composition",
     "surface": "shared",
-    "languages": ["typescript"],
+    "languages": [
+      "typescript"
+    ],
     "generated": false,
-    "manifests": ["package.json"]
+    "manifests": [
+      "package.json"
+    ]
   },
   "canonicalSpecs": [
-    { "file": "COMPOSABLE_ARCHITECTURE_SPEC.md", "path": "../../../../../sdkwork-specs/COMPOSABLE_ARCHITECTURE_SPEC.md", "purpose": "Ports, layer roles, and cross-architecture reuse rules." },
-    { "file": "APP_COMPOSITION_SPEC.md", "path": "../../../../../sdkwork-specs/APP_COMPOSITION_SPEC.md", "purpose": "Composition layers and surface metadata." },
-    { "file": "COMPONENT_SPEC.md", "path": "../../../../../sdkwork-specs/COMPONENT_SPEC.md", "purpose": "Component contract." },
-    { "file": "CODE_STYLE_SPEC.md", "path": "../../../../../sdkwork-specs/CODE_STYLE_SPEC.md", "purpose": "Code organization." },
-    { "file": "NAMING_SPEC.md", "path": "../../../../../sdkwork-specs/NAMING_SPEC.md", "purpose": "Naming." },
-    { "file": "TYPESCRIPT_CODE_SPEC.md", "path": "../../../../../sdkwork-specs/TYPESCRIPT_CODE_SPEC.md", "purpose": "TypeScript rules." }
+    {
+      "file": "COMPOSABLE_ARCHITECTURE_SPEC.md",
+      "path": "../../../../../sdkwork-specs/COMPOSABLE_ARCHITECTURE_SPEC.md",
+      "purpose": "Ports, layer roles, and cross-architecture reuse rules."
+    },
+    {
+      "file": "APP_COMPOSITION_SPEC.md",
+      "path": "../../../../../sdkwork-specs/APP_COMPOSITION_SPEC.md",
+      "purpose": "Composition layers and surface metadata."
+    },
+    {
+      "file": "COMPONENT_SPEC.md",
+      "path": "../../../../../sdkwork-specs/COMPONENT_SPEC.md",
+      "purpose": "Component contract."
+    },
+    {
+      "file": "CODE_STYLE_SPEC.md",
+      "path": "../../../../../sdkwork-specs/CODE_STYLE_SPEC.md",
+      "purpose": "Code organization."
+    },
+    {
+      "file": "NAMING_SPEC.md",
+      "path": "../../../../../sdkwork-specs/NAMING_SPEC.md",
+      "purpose": "Naming."
+    },
+    {
+      "file": "TYPESCRIPT_CODE_SPEC.md",
+      "path": "../../../../../sdkwork-specs/TYPESCRIPT_CODE_SPEC.md",
+      "purpose": "TypeScript rules."
+    }
   ],
   "contracts": {
     "layerRole": "frontend-core",
-    "publicExports": ["."],
+    "publicExports": [
+      "."
+    ],
     "providedPorts": [
-      { "name": "doctorAppBlocks", "export": "." },
-      { "name": "doctorAppTheme", "export": "." }
+      {
+        "name": "doctorAppBlocks",
+        "export": "."
+      },
+      {
+        "name": "doctorAppTheme",
+        "export": "."
+      }
     ],
     "requiredPorts": [],
     "runtimeEntrypoints": [
       "resolveAppBlocks",
       "resolveAppTheme",
-      "resolveHomeRoute",
+      "resolveLandingRoute",
+      "hasLanding",
       "applyThemeToStyle"
     ],
     "routeManifest": null,
@@ -43,9 +80,15 @@
     "dependencyApiExports": [],
     "dependencyApiSurfaces": [],
     "events": [],
-    "configKeys": ["app.blocks", "theme"]
+    "configKeys": [
+      "app.blocks",
+      "theme"
+    ]
   },
   "verification": {
-    "commands": ["pnpm typecheck", "pnpm test"]
+    "commands": [
+      "pnpm typecheck",
+      "pnpm test"
+    ]
   }
 }

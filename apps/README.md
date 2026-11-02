@@ -8,11 +8,11 @@
 
 | Root | Architecture | Standard | Purpose |
 | --- | --- | --- | --- |
-| `sdkwork-doctor-common/` | shared | `APPLICATION_SPEC.md`, `MODULE_SPEC.md` | Cross-surface TypeScript contracts. Currently `packages/sdkwork-doctor-common-diagnostics`: check vocabulary, default catalog, registry, and runner. Not a runnable surface. |
-| `sdkwork-doctor-pc/` | PC browser (+ future desktop/tablet hosts) | `APP_PC_ARCHITECTURE_SPEC.md` | PC renderer: sidebar shell, overview/checks/environment pages, runtime-env documents, `dist/standalone/<env>` and `dist/cloud/<env>` builds. |
-| `sdkwork-doctor-h5/` | H5 mobile browser (+ future Capacitor host) | `APP_H5_ARCHITECTURE_SPEC.md` | Phone-first renderer: app bar, bottom tabs, safe-area layout, same diagnostics catalog, runtime-env documents. |
-| `sdkwork-doctor-flutter-mobile/` | Flutter iOS/Android | `FLUTTER_APP_MOBILE_ARCHITECTURE_SPEC.md` | Flutter mobile root with the same three tabs; triage mirrors the shared contract. |
-| `sdkwork-doctor-mini-program/` | WeChat mini program | `MINI_PROGRAM_APP_ARCHITECTURE_SPEC.md` | Three-tab projection (`conversation`, `doctor`, `profile`) with the same route identity as PC/H5. |
+| `sdkwork-doctor-common/` | shared | `APPLICATION_SPEC.md`, `MODULE_SPEC.md` | Cross-surface TypeScript contracts: `sdkwork-doctor-common-doctor` (patient files, triage, doctor roster, visit records), `-agent` (conversation port, hosted wire, agent catalogue), `-blocks` (composition), `-diagnostics` (device checks). Not a runnable surface. |
+| `sdkwork-doctor-pc/` | PC browser (+ future desktop/tablet hosts) | `APP_PC_ARCHITECTURE_SPEC.md` | PC renderer: three-tab rail (对话 / 医生 / 我的), workbench landing, patient files, human-doctor directory, records sub-screen, runtime-env documents, `dist/standalone/<env>` and `dist/cloud/<env>` builds. |
+| `sdkwork-doctor-h5/` | H5 mobile browser (+ future Capacitor host) | `APP_H5_ARCHITECTURE_SPEC.md` | Phone-first renderer: app bar, three bottom tabs, safe-area layout, the same care pages and runtime-env documents. |
+| `sdkwork-doctor-flutter-mobile/` | Flutter iOS/Android | `FLUTTER_APP_MOBILE_ARCHITECTURE_SPEC.md` | Flutter mobile root with the same three tabs, patient store, doctor directory/selection, and records screen. |
+| `sdkwork-doctor-mini-program/` | WeChat mini program | `MINI_PROGRAM_APP_ARCHITECTURE_SPEC.md` | Three-tab projection (`conversation`, `doctor`, `profile`) plus a records page reached from 我的. |
 
 Each application root owns `AGENTS.md`, `.sdkwork/`, `specs/component.spec.json`, `tests/`, and its `config/browser/` runtime-env examples. No native host package exists yet; when one is added it lands inside the owning surface root as `packages/sdkwork-doctor-<surface>-tauri`, `-electron`, `-capacitor`, or as the H5 Capacitor package.
 

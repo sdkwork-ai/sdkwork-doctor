@@ -1,5 +1,8 @@
-// Visit records tab: every consultation recorded on this device, newest first.
+// Visit records page: every consultation recorded on this device, newest first.
+// It is no longer a tab; the Me tab opens it with wx.navigateTo, so it carries a
+// back action. Human consultations show the doctor they were routed to.
 const { careText } = require('../../lib/i18n.js');
+const { isDoctorEmploymentType } = require('../../lib/doctors.js');
 
 function formatTime(iso) {
   const value = new Date(iso);
@@ -11,6 +14,17 @@ function formatTime(iso) {
   );
 }
 
+function modeLabel(mode) {
+  if (mode === 'human') return careText('platform.care.mode.human');
+  return careText(mode === 'hosted' ? 'platform.care.mode.hosted' : 'platform.care.mode.offline');
+}
+
+function employmentLabel(employmentType) {
+  return isDoctorEmploymentType(employmentType)
+    ? careText('platform.care.doctors.employment.' + employmentType)
+    : '';
+}
+
 Page({
   data: {
     title: '',
@@ -18,6 +32,10 @@ Page({
     countLabel: '',
     emptyLabel: '',
     clearLabel: '',
+    backLabel: '',
+    doctorTitle: '',
+    hospitalTitle: '',
+    employmentTitle: '',
     items: [],
   },
 
@@ -27,6 +45,10 @@ Page({
       subtitle: careText('platform.care.records.subtitle'),
       emptyLabel: careText('platform.care.records.empty'),
       clearLabel: careText('platform.care.records.clear'),
+      backLabel: careText('platform.care.records.back'),
+      doctorTitle: careText('platform.care.records.doctor'),
+      hospitalTitle: careText('platform.care.records.hospital'),
+      employmentTitle: careText('platform.care.records.employment'),
     });
     try {
       wx.setNavigationBarTitle({ title: careText('platform.care.records.title') });
@@ -50,11 +72,26 @@ Page({
         advice: record.advice,
         level: careText('platform.care.level.' + record.level),
         warn: record.level === 'emergency',
+        doctor: record.doctorLabel || '',
+        hospital: record.doctorHospitalLabel || '',
+        employment: employmentLabel(record.doctorEmploymentType),
         meta:
-          record.memberLabel + ' · ' + formatTime(record.recordedAt) + ' · ' +
-          careText(record.mode === 'hosted' ? 'platform.care.mode.hosted' : 'platform.care.mode.offline'),
+          record.memberLabel + ' · ' + formatTime(record.recordedAt) + ' · ' + modeLabel(record.mode),
       })),
     });
+  },
+
+  onBack() {
+    try {
+      wx.navigateBack({
+        delta: 1,
+        fail: () => {
+          wx.switchTab({ url: '/pages/profile/index' });
+        },
+      });
+    } catch (error) {
+      // The tab bar remains the way back on a host without a navigation stack.
+    }
   },
 
   onClear() {

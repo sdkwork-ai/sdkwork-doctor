@@ -30,6 +30,67 @@ void main() {
     expect(sample().toJson().keys.toSet(), required.toSet());
     expect(schema()['storageKey'], kVisitRecordsStorageKey);
     expect(schema()['limit'], kVisitRecordLimit);
+    expect(schema()['fields']['mode'] as String, contains('human'));
+    final Set<String> optional = (schema()['fields'] as Map<String, dynamic>)
+        .keys
+        .toSet()
+        .difference(required.cast<String>().toSet());
+    expect(optional, <String>{
+      'doctorId',
+      'doctorLabel',
+      'doctorOrganizationId',
+      'doctorHospitalLabel',
+      'doctorEmploymentType',
+    });
+  });
+
+  test('a human consultation round-trips with the doctor and site it used', () {
+    final VisitRecord human = createHumanVisitRecord(
+      member: demoSelfMember,
+      reason: 'chest tightness after dinner',
+      advice: 'Human consultation requested with Lin Qinghe.',
+      doctorId: 'doctor-lin-qinghe',
+      doctorLabel: 'Lin Qinghe · Cardiology',
+      doctorOrganizationId: 'org-sdkwork-care-network',
+      doctorHospitalLabel: 'SDKWork Care Network',
+      doctorEmploymentType: 'full_time',
+      id: 'visit-human',
+      recordedAt: DateTime.utc(2026, 11, 2, 13, 30),
+    );
+    expect(human.mode, 'human');
+    expect(human.level, TriageLevel.routine);
+    expect(human.symptom, 'chest tightness after dinner');
+    expect(human.advice, 'Human consultation requested with Lin Qinghe.');
+    expect(human.memberId, demoSelfMember.id);
+
+    final VisitRecord? parsed =
+        VisitRecord.fromJson(jsonDecode(jsonEncode(human.toJson())));
+    expect(parsed, isNotNull);
+    expect(parsed!.toJson(), human.toJson());
+    expect(parsed.doctorId, 'doctor-lin-qinghe');
+    expect(parsed.doctorLabel, 'Lin Qinghe · Cardiology');
+    expect(parsed.doctorOrganizationId, 'org-sdkwork-care-network');
+    expect(parsed.doctorHospitalLabel, 'SDKWork Care Network');
+    expect(parsed.doctorEmploymentType, 'full_time');
+    expect(parsed.mode, 'human');
+
+    final VisitRecord unlabelled = createVisitRecord(
+      member: demoSelfMember,
+      symptom: 'mild headache',
+      advice: 'Booked a routine review.',
+      level: TriageLevel.routine,
+      mode: 'human',
+      id: 'visit-human-2',
+    );
+    for (final String field in <String>[
+      'doctorId',
+      'doctorLabel',
+      'doctorOrganizationId',
+      'doctorHospitalLabel',
+      'doctorEmploymentType',
+    ]) {
+      expect(unlabelled.toJson().containsKey(field), isFalse, reason: field);
+    }
   });
 
   test('a record round-trips through JSON and drops unknown modes', () {

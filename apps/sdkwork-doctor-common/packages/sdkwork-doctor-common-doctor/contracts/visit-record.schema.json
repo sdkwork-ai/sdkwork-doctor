@@ -13,7 +13,12 @@
     "symptom": "string",
     "advice": "string",
     "level": "emergency | urgent | routine | self-care",
-    "mode": "hosted | offline"
+    "mode": "hosted | offline | human",
+    "doctorId": "string (optional, human consultations only)",
+    "doctorLabel": "string (optional, human consultations only)",
+    "doctorOrganizationId": "string (optional, Appbase organization of the doctor at consultation time)",
+    "doctorHospitalLabel": "string (optional, hospital / site displayed at consultation time)",
+    "doctorEmploymentType": "full_time | part_time | contract | visiting (optional, engagement at that site)"
   },
   "required": [
     "id",

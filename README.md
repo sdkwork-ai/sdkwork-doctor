@@ -2,19 +2,19 @@
 
 repository-kind: application
 
-SDKWork Doctor is the diagnostics surface for SDKWork applications. It inspects a running client surface — runtime profile, browser capabilities, secure context, local persistence, locale metadata, clock, API base URLs, and runtime-document reachability — and reports actionable findings without sending diagnostic data anywhere.
+SDKWork Doctor is a family private-doctor agent application. A household keeps one patient file per member, talks to the sdkwork-agents family doctor with the active patient's facts in context, chooses its **real human doctors** from a deployment-bound doctor directory, and keeps every consultation in a device-local visit log. It runs on the PC browser, the mobile browser, the Flutter mobile app, and the WeChat mini program, with exactly three tabs: 对话 / 医生 / 我的.
 
 ## Surfaces
 
-Adaptive Web: one product, two browser surfaces sharing one workspace and one diagnostics contract.
-
-| Surface | Root | Packages |
+| Surface | Root | Packages / modules |
 | --- | --- | --- |
-| PC browser | `apps/sdkwork-doctor-pc/` | `sdkwork-doctor-pc-core`, `-commons`, `-shell`, `-diagnostics` |
-| H5 mobile browser | `apps/sdkwork-doctor-h5/` | `sdkwork-doctor-h5-core`, `-commons`, `-shell`, `-diagnostics` |
-| Shared contract | `apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-diagnostics/` | `@sdkwork/doctor-common-diagnostics` |
+| PC browser | `apps/sdkwork-doctor-pc/` | `sdkwork-doctor-pc-core`, `-commons`, `-shell`, `-care`, `-diagnostics` |
+| H5 mobile browser | `apps/sdkwork-doctor-h5/` | `sdkwork-doctor-h5-core`, `-commons`, `-shell`, `-care`, `-diagnostics` |
+| Flutter mobile | `apps/sdkwork-doctor-flutter-mobile/` | `lib/agent`, `lib/patients`, `lib/doctors`, `lib/records`, `lib/ui` |
+| WeChat mini program | `apps/sdkwork-doctor-mini-program/` | `src/lib`, `src/pages` |
+| Shared contracts | `apps/sdkwork-doctor-common/packages/` | `@sdkwork/doctor-common-doctor`, `-agent`, `-blocks`, `-diagnostics` |
 
-Each surface is a thin bootstrap (`src/`) over its package family. Business behavior lives in the diagnostics capability package; the shared contract package owns the check vocabulary and runner.
+Each surface is a thin bootstrap (`src/` or `lib/`) over its package family. Business behavior lives in the capability packages; the shared packages own the domain vocabulary, the triage contract, the conversation port, and the doctor/patient file contracts.
 
 ## Commands
 
@@ -44,34 +44,44 @@ Public runtime values are checked in per `<deployment-profile>.<environment>`:
 
 The Vite development server serves `/runtime-env.json` from those files and the production build emits the same document, so a static artifact carries its deploy-time configuration. Deployment bindings live in `etc/sdkwork.deployment.config.json`.
 
+Keys that change product behaviour:
+
+- `agentsApiBaseUrl` — the sdkwork-agents gateway; with an IAM token it selects the hosted conversation, otherwise the offline triage adapter answers and says so.
+- `careDoctorDirectoryUrl` — the operator's human-doctor directory document; empty selects the authored fallback roster.
+- `app.blocks` / `theme` — hide, reorder, relabel, or retheme the three tabs and the palette.
+
 
 ## Family Doctor Capability
 
-The product is now a family private-doctor agent application with three tabs on every client:
+Three tabs on every client; the browser surfaces also keep a workbench landing at the surface root.
 
 | Tab | PC / H5 | Flutter | Mini program |
 | --- | --- | --- | --- |
-| Chat | `/doctor/chat` | `ChatTab` | `pages/conversation` |
-| Doctor | `/doctor/doctor` | `DoctorTab` | `pages/doctor` |
-| Me | `/doctor/me` | `MeTab` | `pages/profile` |
+| 对话 | `/doctor/chat` | chat destination | `pages/conversation` |
+| 医生 | `/doctor/doctor` | doctor destination | `pages/doctor` |
+| 我的 | `/doctor/me` | me destination | `pages/profile` |
+| 记录 (sub-screen of 我的) | `/doctor/me/records` | pushed screen | `pages/records` (not a tab) |
 
 Shared contracts:
 
-- `@sdkwork/doctor-common-doctor` owns family members, health summary, and emergency-first triage.
+- `@sdkwork/doctor-common-doctor` owns patient files, family members, health summary, emergency-first triage, and the human-doctor roster/selection rules.
 - `contracts/triage-rules.json` is the single red-flag vocabulary; a parity test fails when any client drifts.
-- `@sdkwork/doctor-common-agent` owns `AgentConversationPort`, the offline care adapter, and `resolveCareAgentMode()` (hosted vs offline is explicit, never a silent fallback).
+- `contracts/doctor-roster.json` is the authored fallback roster; an operator binds a real directory through `runtime-env.json#careDoctorDirectoryUrl` (`specs/doctor-directory.contract.json`). A doctor is a person; each practice site is an affiliation that names the Appbase `organizationId`, the `med_hospital` code, the department/rank, and the engagement (`full_time` / `part_time` / `contract` / `visiting`). `sdkwork-company` is never the clinical employer.
+- `@sdkwork/doctor-common-agent` owns `AgentConversationPort`, the offline care adapter, the hosted wire adapter, the managed-agent catalogue port, and `resolveCareAgentMode()` (hosted vs offline is explicit, never a silent fallback).
 
 ### Verified
 
-- `pnpm verify` (typecheck, 24 contract tests, canonical validators, PC/H5 builds).
-- `flutter analyze` clean and `flutter test` 3/3.
+- `pnpm check` (typecheck, contract tests, i18n gates, canonical specs validators) and `pnpm build` (PC + H5).
+- `flutter analyze` clean and `flutter test` green.
+- `pnpm --dir apps/sdkwork-doctor-mini-program test` green.
 - `agent.app.config.json` covers WEB, H5, MP_WEIXIN, APP_IOS, APP_ANDROID with 7 install packages.
 
 ### Known limits
 
-- The hosted `sdkwork-agents` conversation path is selected and specified but not constructed: it needs a deployed agents API base URL plus an IAM access token. Until then only the offline adapter runs.
-- Care page body copy is still English literals; only tab labels are localized.
-- Mini program and Flutter mirror triage rules instead of binding the hosted transport.
+- The hosted `sdkwork-agents` conversation path is selected and specified but not verified against a live deployment: it needs a deployed agents API base URL plus an IAM access token. Until then the offline adapter runs and says so.
+- The human-doctor directory is deployment content: without `careDoctorDirectoryUrl` every client shows the authored fallback roster badged as the fallback, not a live directory.
+- Patient files and doctor selection are device-local; there is no cross-device sync in this release.
+- The mini program copies a doctor's channel link to the clipboard because opening arbitrary external URLs needs a web-view page this release does not add.
 ## Documentation
 
 - [Documentation index](docs/README.md)
@@ -81,8 +91,6 @@ Shared contracts:
 
 ## Status
 
-The repository is initialized as a standards-compliant scaffold:
-
-- Both browser surfaces build and typecheck; the diagnostics catalog is fully implemented locally.
-- The UI is bilingual (`en-US`, `zh-CN`): copy lives in package-owned `src/i18n/<locale>/platform/diagnostics/` fragments, the shell resolves the locale once, and the switch persists in local storage.
+- All four clients implement the same three tabs, patient files, the human-doctor directory, and device-local visit records; the browser surfaces build and typecheck, Flutter analyze/test and the mini program tests pass.
+- The UI is bilingual (`en-US`, `zh-CN`) on the browser surfaces and consumes one generated catalog on every client: copy lives in `contracts/care-messages.json`, projected by `tools/generate-care-i18n.mjs` into TypeScript, Dart, and mini program JavaScript.
 - Appbase IAM/login, generated app/backend SDK families, native host packages, and live packaging are not wired yet. Each seam is explicit in the component contracts and architecture document, so those integrations add code rather than reshape the layout. The packaging GitHub workflow is a thin caller of the shared package workflow.

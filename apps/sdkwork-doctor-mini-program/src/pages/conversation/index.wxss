@@ -1,1 +1,22 @@
+/* Patient switcher: one flat tech-blue chip per profile file. */
+.chips {
+  white-space: nowrap;
+  margin: 8px 0;
+  width: 100%;
+}
 
+.chip {
+  display: inline-block;
+  padding: 7px 14px;
+  margin-right: 8px;
+  border-radius: 999px;
+  background: #e6edf8;
+  color: #0a1324;
+  font-size: 13px;
+}
+
+.chip.on {
+  background: #0a5cff;
+  color: #ffffff;
+  font-weight: 600;
+}

@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 2,
+  "kind": "sdkwork.doctor.doctor-roster",
+  "purpose": "Authored fallback roster of human doctors, used when a deployment has no doctor directory configured or the configured directory is unreachable. A doctor is a person; each employment/practice relationship is a separate affiliation that names the employing organization, the Appbase med_hospital code, the department, the rank, and whether the engagement is full-time or part-time. Every client ships this exact roster; `tests/doctor-directory.test.mjs` asserts the TypeScript, Dart, and mini program copies equal this file. A deployment binds its own directory through the runtime document key `careDoctorDirectoryUrl`.",
+  "source": "catalog",
+  "verified": false,
+  "organizationModel": {
+    "authority": "SDKWork Appbase",
+    "organizationId": "Appbase organization unit that employs or contracts the clinician; the IAM/org scope for the affiliation.",
+    "hospitalCode": "Appbase med_hospital natural key (hospital_code). The hospital is reference data owned by Appbase, not an sdkwork-company record.",
+    "companyId": "Optional sdkwork-company id for the commercial contract beside the clinical relationship. Never the clinical employer."
+  },
+  "employmentTypes": ["full_time", "part_time", "contract", "visiting"],
+  "doctors": [
+    {
+      "id": "doctor-lin-qinghe",
+      "displayName": "Lin Qinghe",
+      "specialties": ["Hypertension", "Coronary heart disease", "Arrhythmia"],
+      "languages": ["zh-CN", "en-US"],
+      "yearsOfExperience": 22,
+      "bio": "Cardiology lead focused on long-term blood-pressure and coronary care for families.",
+      "verified": false,
+      "affiliations": [
+        {
+          "organizationId": "org-sdkwork-care-network",
+          "hospitalCode": "SDKWORK-CARE-001",
+          "hospitalName": "SDKWork Care Network",
+          "hospitalGrade": "THIRD_A",
+          "departmentCode": "0304",
+          "department": "Cardiology",
+          "title": "Chief physician",
+          "employmentType": "full_time",
+          "primary": true,
+          "acceptingNewPatients": true,
+          "since": "2011-07",
+          "availability": [
+            { "weekday": 1, "startTime": "09:00", "endTime": "12:00" },
+            { "weekday": 3, "startTime": "14:00", "endTime": "17:30" },
+            { "weekday": 5, "startTime": "09:00", "endTime": "12:00" }
+          ],
+          "channels": [
+            { "kind": "video", "target": "https://care.sdkwork.com/consult/doctor-lin-qinghe" },
+            { "kind": "messaging", "target": "https://care.sdkwork.com/consult/doctor-lin-qinghe/messages" }
+          ]
+        },
+        {
+          "organizationId": "org-sdkwork-community-clinic",
+          "hospitalCode": "SDKWORK-CARE-002",
+          "hospitalName": "SDKWork Community Clinic",
+          "hospitalGrade": "COMMUNITY",
+          "departmentCode": "02",
+          "department": "General practice",
+          "title": "Visiting cardiologist",
+          "employmentType": "part_time",
+          "primary": false,
+          "acceptingNewPatients": true,
+          "since": "2023-03",
+          "availability": [
+            { "weekday": 6, "startTime": "09:00", "endTime": "11:30" }
+          ],
+          "channels": [
+            { "kind": "video", "target": "https://care.sdkwork.com/consult/doctor-lin-qinghe/clinic" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "doctor-su-wanning",
+      "displayName": "Su Wanning",
+      "specialties": ["Child fever", "Childhood asthma", "Vaccination planning"],
+      "languages": ["zh-CN"],
+      "yearsOfExperience": 15,
+      "bio": "Pediatrician for infants and school-age children, with a focus on fever triage and asthma.",
+      "verified": false,
+      "affiliations": [
+        {
+          "organizationId": "org-sdkwork-care-network",
+          "hospitalCode": "SDKWORK-CARE-001",
+          "hospitalName": "SDKWork Care Network",
+          "hospitalGrade": "THIRD_A",
+          "departmentCode": "07",
+          "department": "Pediatrics",
+          "title": "Associate chief physician",
+          "employmentType": "full_time",
+          "primary": true,
+          "acceptingNewPatients": true,
+          "since": "2018-09",
+          "availability": [
+            { "weekday": 2, "startTime": "08:30", "endTime": "12:00" },
+            { "weekday": 4, "startTime": "13:30", "endTime": "17:00" },
+            { "weekday": 6, "startTime": "09:00", "endTime": "11:30" }
+          ],
+          "channels": [
+            { "kind": "video", "target": "https://care.sdkwork.com/consult/doctor-su-wanning" },
+            { "kind": "phone", "target": "https://care.sdkwork.com/consult/doctor-su-wanning/phone" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "doctor-he-zhiyuan",
+      "displayName": "He Zhiyuan",
+      "specialties": ["Respiratory infection", "Gastroenteritis", "Chronic disease follow-up"],
+      "languages": ["zh-CN", "en-US"],
+      "yearsOfExperience": 9,
+      "bio": "Family physician handling common infections and chronic-disease follow-up for all ages.",
+      "verified": false,
+      "affiliations": [
+        {
+          "organizationId": "org-sdkwork-community-clinic",
+          "hospitalCode": "SDKWORK-CARE-002",
+          "hospitalName": "SDKWork Community Clinic",
+          "hospitalGrade": "COMMUNITY",
+          "departmentCode": "02",
+          "department": "General practice",
+          "title": "Attending physician",
+          "employmentType": "part_time",
+          "primary": true,
+          "acceptingNewPatients": false,
+          "since": "2024-01",
+          "availability": [
+            { "weekday": 1, "startTime": "13:30", "endTime": "18:00" },
+            { "weekday": 3, "startTime": "08:30", "endTime": "12:00" },
+            { "weekday": 5, "startTime": "13:30", "endTime": "18:00" }
+          ],
+          "channels": [
+            { "kind": "messaging", "target": "https://care.sdkwork.com/consult/doctor-he-zhiyuan/messages" },
+            { "kind": "clinic", "target": "https://care.sdkwork.com/consult/doctor-he-zhiyuan/clinic" }
+          ]
+        }
+      ]
+    }
+  ]
+}

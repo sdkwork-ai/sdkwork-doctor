@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "SDKWork Doctor WeChat mini program (family private doctor).",
   "scripts": {
-    "test": "node --test tests/mini-program.test.mjs",
+    "test": "node --test tests/mini-program.test.mjs tests/patient-profiles.test.mjs tests/doctors.test.mjs tests/visit-records.test.mjs tests/pages.test.mjs",
     "check": "pnpm test"
   }
 }

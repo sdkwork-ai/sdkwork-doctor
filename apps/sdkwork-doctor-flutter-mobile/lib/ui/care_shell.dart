@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../agent/care_agent.dart';
-import '../family.dart';
 import '../i18n/care_i18n.dart';
+import '../patients/patient_store.dart';
 import '../theme/doctor_theme.dart';
+import 'care_widgets.dart';
 
 /// Shell building blocks shared by the home surface: the chat-first landing, the
 /// left drawer, and the "+" action sheet. They mirror the sdkwork-agents home
@@ -77,14 +78,14 @@ class CareChatLanding extends StatelessWidget {
   }
 }
 
-/// Left drawer: identity, block navigation, locale, and the active mode.
+/// Left drawer: identity, the three care destinations, locale, and the mode.
 class CareDrawer extends StatelessWidget {
   const CareDrawer({
     super.key,
     required this.agent,
     required this.index,
     required this.locale,
-    required this.member,
+    required this.patient,
     required this.onSelect,
     required this.onToggleLocale,
   });
@@ -92,7 +93,9 @@ class CareDrawer extends StatelessWidget {
   final CareAgent agent;
   final int index;
   final String locale;
-  final FamilyMember member;
+
+  /// The active patient file, or null when the household has none.
+  final PatientProfile? patient;
   final ValueChanged<int> onSelect;
   final VoidCallback onToggleLocale;
 
@@ -103,11 +106,6 @@ class CareDrawer extends StatelessWidget {
       Icons.medical_information_outlined,
       Icons.medical_information,
       'platform.care.nav.doctor',
-    ),
-    (
-      Icons.receipt_long_outlined,
-      Icons.receipt_long,
-      'platform.care.nav.records'
     ),
     (Icons.person_outline, Icons.person, 'platform.care.nav.me'),
   ];
@@ -149,9 +147,12 @@ class CareDrawer extends StatelessWidget {
                         const Text('SDKWork Doctor',
                             style: TextStyle(
                                 fontWeight: FontWeight.w600, color: kInk)),
-                        Text(member.label,
-                            style:
-                                const TextStyle(fontSize: 12, color: kMuted)),
+                        Text(
+                          patient == null
+                              ? careText(locale, 'platform.care.chat.noPatient')
+                              : carePatientLabel(locale, patient!),
+                          style: const TextStyle(fontSize: 12, color: kMuted),
+                        ),
                       ],
                     ),
                   ),
@@ -227,7 +228,7 @@ class CareDrawer extends StatelessWidget {
   }
 }
 
-/// Right-hand "+": start a fresh consultation, or jump to the records block.
+/// Right-hand "+": start a fresh consultation, or open 看病记录.
 class NewConsultationSheet extends StatelessWidget {
   const NewConsultationSheet({
     super.key,

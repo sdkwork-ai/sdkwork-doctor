@@ -68,7 +68,10 @@
       "pages/records",
       "pages/profile",
       "lib/agent#createCareAgent",
-      "lib/visit-records#createVisitRecordStore"
+      "lib/visit-records#createVisitRecordStore",
+      "lib/patient-profiles#createPatientProfileStore",
+      "lib/doctors#createDoctorSelectionStore",
+      "lib/doctors#createDoctorDirectoryPort"
     ],
     "routeManifest": null,
     "sdkClients": [],
@@ -78,7 +81,8 @@
     "dependencyApiSurfaces": [],
     "events": [],
     "configKeys": [
-      "agentsApiBaseUrl"
+      "agentsApiBaseUrl",
+      "careDoctorDirectoryUrl"
     ]
   },
   "verification": {

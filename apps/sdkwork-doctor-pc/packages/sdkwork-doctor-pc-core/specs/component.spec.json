@@ -64,24 +64,40 @@
     ],
     "providedPorts": [
       {
-        "name": "doctorPcSdkPorts",
+        "name": "doctorPCSdkPorts",
         "export": "./sdk"
       },
       {
-        "name": "doctorPcHostAdapter",
+        "name": "doctorPCHostAdapter",
         "export": "./host"
       },
       {
-        "name": "doctorPcSessionPort",
+        "name": "doctorPCSessionPort",
         "export": "./session"
       },
       {
-        "name": "doctorPcCareAgentRuntime",
+        "name": "doctorPCCareAgentRuntime",
         "export": "./agent"
       },
       {
-        "name": "doctorPcVisitRecordStore",
+        "name": "doctorPCAgentCatalog",
+        "export": "."
+      },
+      {
+        "name": "doctorPCVisitRecordStore",
         "export": "./records"
+      },
+      {
+        "name": "doctorPCPatientProfileStore",
+        "export": "."
+      },
+      {
+        "name": "doctorPCDoctorDirectory",
+        "export": "."
+      },
+      {
+        "name": "doctorPCDoctorSelectionStore",
+        "export": "."
       }
     ],
     "requiredPorts": [
@@ -94,13 +110,27 @@
         "name": "doctorVisitRecords",
         "export": "./records",
         "provider": "@sdkwork/doctor-common-doctor"
+      },
+      {
+        "name": "doctorPatientFiles",
+        "export": ".",
+        "provider": "@sdkwork/doctor-common-doctor"
+      },
+      {
+        "name": "doctorDoctorDirectory",
+        "export": ".",
+        "provider": "@sdkwork/doctor-common-doctor"
       }
     ],
     "runtimeEntrypoints": [
-      "createDoctorPcRuntime",
-      "getDoctorPcHostAdapter",
-      "createDoctorPcCareAgent",
-      "createDoctorPcVisitRecordStore"
+      "createDoctorPCRuntime",
+      "getDoctorPCHostAdapter",
+      "createDoctorPCCareAgent",
+      "createDoctorPCAgentCatalog",
+      "createDoctorPCVisitRecordStore",
+      "createDoctorPCPatientProfileStore",
+      "createDoctorPCDoctorDirectoryPort",
+      "createDoctorPCDoctorSelectionStore"
     ],
     "routeManifest": null,
     "sdkClients": [],

@@ -31,8 +31,27 @@
         { "name": "stream", "value": "true", "purpose": "SSE turn" },
         { "name": "event_protocol", "value": "kernel-v1", "purpose": "rich stream frames" }
       ]
+    },
+    {
+      "operationId": "agents.list",
+      "method": "GET",
+      "path": "/app/v3/api/ai/agents",
+      "responseSchema": "AgentListResponse",
+      "successStatus": 200,
+      "query": [
+        { "name": "page", "value": "1", "purpose": "offset pagination, first page" },
+        { "name": "page_size", "value": "20", "purpose": "single status-probe page" }
+      ],
+      "purpose": "Agent catalogue capability: proves the pinned family-doctor agent exists in this deployment."
     }
   ],
+  "catalogue": {
+    "itemPath": "data.items",
+    "pageInfoPath": "data.pageInfo",
+    "fields": ["agentId", "displayName", "description", "status"],
+    "pageSize": 20,
+    "clientPort": "@sdkwork/doctor-common-agent#createCareAgentCatalog"
+  },
   "requiredRequestFields": {
     "session": ["sessionKind", "entrySurface", "idempotencyKey", "payloadHash", "requestedAt"],
     "turn": ["content", "turnMode", "idempotencyKey", "payloadHash", "requestedAt"]

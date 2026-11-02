@@ -1,5 +1,8 @@
 <view class="card">
-  <view class="h1">{{title}}</view>
+  <view class="row">
+    <text class="h1">{{title}}</text>
+    <text class="badge" bindtap="onBack">{{backLabel}}</text>
+  </view>
   <view class="muted">{{subtitle}}</view>
   <view class="muted">{{countLabel}}</view>
   <view wx:if="{{items.length === 0}}" class="muted">{{emptyLabel}}</view>
@@ -9,6 +12,9 @@
       <text class="badge {{item.warn ? 'warn' : ''}}">{{item.level}}</text>
     </view>
     <view class="muted">{{item.advice}}</view>
+    <view wx:if="{{item.doctor}}" class="muted">{{doctorTitle}}: {{item.doctor}}</view>
+    <view wx:if="{{item.hospital}}" class="muted">{{hospitalTitle}}: {{item.hospital}}</view>
+    <view wx:if="{{item.employment}}" class="muted">{{employmentTitle}}: {{item.employment}}</view>
     <view class="muted">{{item.meta}}</view>
   </view>
 </view>

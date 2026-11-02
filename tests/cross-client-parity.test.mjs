@@ -5,17 +5,30 @@ import path from 'node:path';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const read = (relativePath) => fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
+const exists = (relativePath) => fs.existsSync(path.join(repoRoot, relativePath));
 
 const CHAT = '\u5bf9\u8bdd';
 const DOCTOR = '\u533b\u751f';
-const RECORDS = '\u8bb0\u5f55';
 const ME = '\u6211\u7684';
 const RULES = 'apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor/contracts/triage-rules.json';
 const COMPOSITION = 'specs/app-composition.contract.json';
 
-test('every client exposes the same care blocks', () => {
+function flutterSources() {
+  const files = [];
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name.endsWith('.dart')) files.push(fs.readFileSync(full, 'utf8'));
+    }
+  };
+  walk(path.join(repoRoot, 'apps/sdkwork-doctor-flutter-mobile/lib'));
+  return files.join('\n');
+}
+
+test('every client exposes the same three care blocks', () => {
   const contract = JSON.parse(read(COMPOSITION));
-  const required = ['chat', 'doctor', 'records', 'me'];
+  const required = ['chat', 'doctor', 'me'];
   for (const id of required) {
     const block = contract.blocks.find((entry) => entry.id === id);
     assert.ok(block, 'the composition contract must declare the ' + id + ' block');
@@ -31,20 +44,94 @@ test('every client exposes the same care blocks', () => {
       const segment = contract.blocks.find((entry) => entry.id === id).route.split('/').pop();
       assert.match(routes, new RegExp('path="' + segment + '"', 'u'), 'browser routes must implement ' + id);
     }
+    assert.match(routes, /path="me\/records"/u, 'records must be a sub-screen of 我的');
+    assert.doesNotMatch(routes, /path="records"/u, 'records must not be a tab');
   }
 
   const mp = JSON.parse(read('apps/sdkwork-doctor-mini-program/src/app.json'));
   assert.deepEqual(mp.pages, [
     'pages/conversation/index',
     'pages/doctor/index',
-    'pages/records/index',
     'pages/profile/index',
+    'pages/records/index',
   ]);
-  assert.deepEqual(mp.tabBar.list.map((tab) => tab.text), [CHAT, DOCTOR, RECORDS, ME]);
+  assert.deepEqual(mp.tabBar.list.map((tab) => tab.text), [CHAT, DOCTOR, ME]);
   assert.equal(mp.tabBar.list.length, required.length);
+  assert.equal(
+    mp.tabBar.list.some((tab) => tab.pagePath === 'pages/records/index'),
+    false,
+    'the mini program must not expose records as a tab',
+  );
 
-  const flutter = read('apps/sdkwork-doctor-flutter-mobile/lib/main.dart');
-  assert.equal(flutter.split('NavigationDestination(').length - 1, required.length);
+  const flutter = flutterSources();
+  assert.equal(
+    flutter.split('NavigationDestination(').length - 1,
+    required.length,
+    'Flutter must render exactly three navigation destinations',
+  );
+  assert.doesNotMatch(flutter, /nav\.records/u, 'Flutter must not keep a records destination label');
+});
+
+test('every client ships the patient-file and human-doctor capability', () => {
+  const shared = [
+    'apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor/src/patient-profiles.ts',
+    'apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor/src/doctors.ts',
+    'apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor/contracts/patient-profile.schema.json',
+    'apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor/contracts/doctor-roster.json',
+    'specs/doctor-directory.contract.json',
+  ];
+  for (const file of shared) assert.ok(exists(file), file + ' must exist');
+
+  for (const surface of ['pc', 'h5']) {
+    const care = read('apps/sdkwork-doctor-' + surface + '/packages/sdkwork-doctor-' + surface + '-care/src/index.tsx');
+    assert.match(care, /mode: 'human'/u, surface + ' must record human consultations');
+    assert.match(care, /preferredDoctorChannel/u, surface);
+    assert.match(care, /selection\.setPrimary\(/u, surface);
+    assert.match(care, /platform\.care\.doctors\.source\.catalog/u, surface + ' must show the roster source');
+    assert.match(care, /primaryAffiliation/u, surface + ' must render the doctor affiliation model');
+    assert.match(care, /platform\.care\.doctors\.employment\./u, surface + ' must show full-time / part-time engagement');
+    assert.match(care, /doctorOrganizationId/u, surface + ' must record the employing organization');
+    assert.match(care, /doctorEmploymentType/u, surface + ' must record the engagement');
+    const patients = read('apps/sdkwork-doctor-' + surface + '/packages/sdkwork-doctor-' + surface + '-care/src/patients.tsx');
+    assert.match(patients, /patients\.add\(/u, surface);
+    assert.match(patients, /patients\.remove\(/u, surface);
+  }
+
+  const flutterFiles = [
+    'apps/sdkwork-doctor-flutter-mobile/lib/patients/patient_store.dart',
+    'apps/sdkwork-doctor-flutter-mobile/lib/doctors/doctor_directory.dart',
+    'apps/sdkwork-doctor-flutter-mobile/lib/doctors/doctor_selection.dart',
+    'apps/sdkwork-doctor-flutter-mobile/lib/ui/doctor_tab.dart',
+    'apps/sdkwork-doctor-flutter-mobile/lib/ui/me_tab.dart',
+    'apps/sdkwork-doctor-flutter-mobile/lib/ui/records_screen.dart',
+  ];
+  for (const file of flutterFiles) assert.ok(exists(file), file + ' must exist');
+  assert.match(read('apps/sdkwork-doctor-flutter-mobile/lib/patients/patient_store.dart'), /sdkwork\.doctor\.patient-profiles\.v1/u);
+  assert.match(read('apps/sdkwork-doctor-flutter-mobile/lib/doctors/doctor_selection.dart'), /sdkwork\.doctor\.doctor-selection\.v1/u);
+  assert.match(read('apps/sdkwork-doctor-flutter-mobile/lib/doctors/doctor_directory.dart'), /sdkwork\.doctor\.doctor-roster/u);
+  assert.match(read('apps/sdkwork-doctor-flutter-mobile/lib/doctors/doctor_directory.dart'), /doctor-lin-qinghe/u);
+  const flutter = flutterSources();
+  assert.match(flutter, /employmentType/u, 'Flutter must model the employment type');
+  assert.match(flutter, /part_time/u, 'Flutter must render a part-time engagement');
+  assert.match(flutter, /doctorEmploymentType/u, 'Flutter must record the engagement on a consultation');
+  assert.match(flutter, /platform\.care\.profile\.add/u, 'Flutter 我的 must offer patient creation');
+  assert.match(flutter, /platform\.care\.doctors\.select/u, 'Flutter 医生 must offer doctor selection');
+  assert.match(flutter, /human/u, 'Flutter must record the human consultation mode');
+
+  for (const file of [
+    'apps/sdkwork-doctor-mini-program/src/lib/patient-profiles.js',
+    'apps/sdkwork-doctor-mini-program/src/lib/doctors.js',
+  ]) {
+    assert.ok(exists(file), file + ' must exist');
+  }
+  assert.match(read('apps/sdkwork-doctor-mini-program/src/lib/patient-profiles.js'), /sdkwork\.doctor\.patient-profiles\.v1/u);
+  assert.match(read('apps/sdkwork-doctor-mini-program/src/lib/doctors.js'), /sdkwork\.doctor\.doctor-selection\.v1/u);
+  assert.match(read('apps/sdkwork-doctor-mini-program/src/lib/doctors.js'), /doctor-lin-qinghe/u);
+  assert.match(read('apps/sdkwork-doctor-mini-program/src/lib/doctors.js'), /employmentType/u);
+  assert.match(read('apps/sdkwork-doctor-mini-program/src/lib/doctors.js'), /part_time/u);
+  assert.match(read('apps/sdkwork-doctor-mini-program/src/pages/doctor/index.js'), /platform\.care\.doctors\./u);
+  assert.match(read('apps/sdkwork-doctor-mini-program/src/pages/doctor/index.js'), /platform\.care\.doctors\.employment/u);
+  assert.match(read('apps/sdkwork-doctor-mini-program/src/pages/profile/index.js'), /platform\.care\.profile\./u);
 });
 
 test('the shared triage rule contract is the single source of the red-flag vocabulary', () => {

@@ -5,7 +5,7 @@
     "key": "sdkwork-doctor",
     "name": "sdkwork-doctor",
     "displayName": "SDKWork Doctor",
-    "description": "Diagnostics console for SDKWork application surfaces: runtime profile, browser capabilities, locale, storage, clock, API base URLs, and runtime-document reachability.",
+    "description": "Family private-doctor agent application: patient files for several household members, a conversation with the sdkwork-agents family doctor, a directory of real human doctors with their employing hospital and full-time/part-time engagement, device-local visit records, and device diagnostics across PC, H5, Flutter, and the WeChat mini program.",
     "appType": "APP_REACT",
     "officialWebsiteUrl": "https://sdkwork.com/apps/sdkwork-doctor",
     "supportUrl": "https://sdkwork.com/support",
@@ -23,7 +23,8 @@
   "backend": {
     "domain": "platform",
     "capabilities": [
-      "diagnostics"
+      "diagnostics",
+      "care"
     ],
     "apiSurfaces": [],
     "tenantId": "100001",
@@ -307,12 +308,16 @@
         "version": "0.1.0",
         "releaseChannel": "STABLE",
         "title": "SDKWork Doctor 0.1.0",
-        "summary": "Initial standards-compliant scaffold of the SDKWork Doctor PC and H5 surfaces.",
-        "content": "Initial SDKWork App Standard v3 manifest for SDKWork Doctor. Diagnostics checks cover runtime profile, browser capabilities, secure context, storage, locale, clock, API base URLs, and runtime-document reachability.",
+        "summary": "Family private-doctor agent app: patient files, the sdkwork-agents family doctor, a real human-doctor directory, and device-local visit records on four clients.",
+        "content": "SDKWork Doctor is a family private-doctor agent application. A household keeps one patient file per member (allergies, chronic conditions, medications, notes) and switches the active patient for the conversation. Exactly three tabs ship on every client: 对话 (the sdkwork-agents family doctor with deterministic emergency-first triage), 医生 (a directory of real human doctors with family-doctor selection and consultation channels), and 我的 (patient files, my doctors, visit records, conversation mode, device checks). The browser surfaces also keep a workbench landing at the surface root. The human-doctor roster is deployment content bound through runtime-env key careDoctorDirectoryUrl, with an authored fallback roster when no directory is configured; the sdkwork-agents agent catalogue proves the managed family-doctor agent is deployed.",
         "highlights": [
-          "Adaptive Web PC and H5 surfaces under one workspace",
-          "Shared diagnostics contract package",
-          "Runtime-env documents per deployment profile and lifecycle environment"
+          "Three tabs (对话 / 医生 / 我的) on PC, H5, Flutter, and the WeChat mini program",
+          "Multiple patient files per household with one active patient for the conversation",
+          "Real human-doctor directory with selection, primary doctor, and consultation channels",
+          "Doctor employment model: Appbase organization + med_hospital reference per affiliation, full-time / part-time / contract / visiting, multi-site consultation",
+          "sdkwork-agents app API integration: session, turn stream, and agent catalogue",
+          "Device-local visit records, including human consultations with the doctor recorded",
+          "One authored copy contract projected into TypeScript, Dart, and mini program catalogs"
         ],
         "packageIds": [
           "pc-web-browser-standalone-web-url",

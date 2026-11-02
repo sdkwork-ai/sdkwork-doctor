@@ -2,8 +2,9 @@
  * Building-block composition model.
  *
  * Authority: `specs/app-composition.contract.json`. A block is one composable
- * unit (a tab, or the home landing) with a stable id, a canonical cross-client
- * page id, a route, an i18n label key, and the surfaces that render it.
+ * tab with a stable id, a canonical cross-client page id, a route, an i18n label
+ * key, and the surfaces that render it. The browser workbench landing is a route
+ * outside the catalogue, so every client keeps exactly three tabs.
  *
  * Clients resolve blocks instead of hard-coding navigation, and a deployment can
  * hide optional blocks, reorder them, relabel them, and override theme tokens
@@ -12,9 +13,9 @@
  */
 
 export type AppSurface = 'pc' | 'h5' | 'flutter' | 'mini_program';
-export type AppBlockId = 'home' | 'chat' | 'doctor' | 'records' | 'me';
+export type AppBlockId = 'chat' | 'doctor' | 'me';
 export type AppBlockKind = 'navigation' | 'insight' | 'record';
-export type AppBlockIcon = 'home' | 'chat' | 'doctor' | 'records' | 'user';
+export type AppBlockIcon = 'chat' | 'doctor' | 'user';
 
 export interface AppBlockDescriptor {
   readonly id: AppBlockId;
@@ -47,34 +48,22 @@ export interface AppBlockOverrides {
 
 export const APP_BLOCKS: readonly AppBlockDescriptor[] = Object.freeze([
   Object.freeze({
-    id: 'home', kind: 'navigation', pageId: 'app.doctor.home.index', route: '/doctor/home',
-    labelKey: 'platform.care.nav.home', icon: 'home', order: 0,
-    surfaces: Object.freeze(['pc', 'h5'] as const), optional: true,
-    description: 'Workbench landing for the browser surfaces.',
-  }),
-  Object.freeze({
     id: 'chat', kind: 'navigation', pageId: 'app.doctor.conversation.chat', route: '/doctor/chat',
     labelKey: 'platform.care.nav.chat', icon: 'chat', order: 10,
     surfaces: Object.freeze(['pc', 'h5', 'flutter', 'mini_program'] as const), optional: false,
-    description: 'Family-doctor conversation with per-exchange triage.',
+    description: "Family-doctor conversation with the active patient's facts and per-exchange triage.",
   }),
   Object.freeze({
-    id: 'doctor', kind: 'navigation', pageId: 'app.doctor.record.summary', route: '/doctor/doctor',
+    id: 'doctor', kind: 'navigation', pageId: 'app.doctor.doctor.directory', route: '/doctor/doctor',
     labelKey: 'platform.care.nav.doctor', icon: 'doctor', order: 20,
     surfaces: Object.freeze(['pc', 'h5', 'flutter', 'mini_program'] as const), optional: false,
-    description: 'Household health record and care rules.',
-  }),
-  Object.freeze({
-    id: 'records', kind: 'navigation', pageId: 'app.doctor.record.list', route: '/doctor/records',
-    labelKey: 'platform.care.nav.records', icon: 'records', order: 30,
-    surfaces: Object.freeze(['pc', 'h5', 'flutter', 'mini_program'] as const), optional: false,
-    description: 'Visit records stored on this device.',
+    description: 'Human doctor directory, family-doctor selection, and human consultation.',
   }),
   Object.freeze({
     id: 'me', kind: 'navigation', pageId: 'app.doctor.profile.index', route: '/doctor/me',
-    labelKey: 'platform.care.nav.me', icon: 'user', order: 40,
+    labelKey: 'platform.care.nav.me', icon: 'user', order: 30,
     surfaces: Object.freeze(['pc', 'h5', 'flutter', 'mini_program'] as const), optional: false,
-    description: 'Family members, active mode, device checks.',
+    description: 'Patient files, my doctors, visit records, active mode, device checks.',
   }),
 ]);
 
@@ -133,15 +122,14 @@ export function resolveAppBlocks(
   );
 }
 
-/** True when the surface renders a home landing block. */
-export function hasHomeBlock(surface: AppSurface): boolean {
-  return APP_BLOCKS.some((block) => block.id === 'home' && block.surfaces.includes(surface));
+/** True when the surface renders a workbench landing at its root route. */
+export function hasLanding(surface: AppSurface): boolean {
+  return surface === 'pc' || surface === 'h5';
 }
 
-/** Home route for a surface, or the chat route when the surface has no home. */
-export function resolveHomeRoute(surface: AppSurface): string {
-  const home = APP_BLOCKS.find((block) => block.id === 'home' && block.surfaces.includes(surface));
-  return home ? home.route : '/doctor/chat';
+/** Surface root route: the workbench landing, or the chat tab when there is none. */
+export function resolveLandingRoute(surface: AppSurface): string {
+  return hasLanding(surface) ? '/doctor' : '/doctor/chat';
 }
 
 // ---------------------------------------------------------------------------
@@ -213,7 +201,7 @@ export interface AppCompositionSummary {
   readonly surface: AppSurface;
   readonly blockIds: readonly AppBlockId[];
   readonly routes: readonly string[];
-  readonly hasHome: boolean;
+  readonly hasLanding: boolean;
 }
 
 export function describeAppComposition(
@@ -225,6 +213,6 @@ export function describeAppComposition(
     surface,
     blockIds: blocks.map((block) => block.id),
     routes: blocks.map((block) => block.route),
-    hasHome: hasHomeBlock(surface),
+    hasLanding: hasLanding(surface),
   });
 }

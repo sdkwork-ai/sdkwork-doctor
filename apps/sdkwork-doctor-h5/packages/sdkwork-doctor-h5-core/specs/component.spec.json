@@ -85,8 +85,24 @@
         "export": "./agent"
       },
       {
+        "name": "doctorH5AgentCatalog",
+        "export": "."
+      },
+      {
         "name": "doctorH5VisitRecordStore",
         "export": "./records"
+      },
+      {
+        "name": "doctorH5PatientProfileStore",
+        "export": "."
+      },
+      {
+        "name": "doctorH5DoctorDirectory",
+        "export": "."
+      },
+      {
+        "name": "doctorH5DoctorSelectionStore",
+        "export": "."
       }
     ],
     "requiredPorts": [
@@ -99,12 +115,27 @@
         "name": "doctorVisitRecords",
         "export": "./records",
         "provider": "@sdkwork/doctor-common-doctor"
+      },
+      {
+        "name": "doctorPatientFiles",
+        "export": ".",
+        "provider": "@sdkwork/doctor-common-doctor"
+      },
+      {
+        "name": "doctorDoctorDirectory",
+        "export": ".",
+        "provider": "@sdkwork/doctor-common-doctor"
       }
     ],
     "runtimeEntrypoints": [
       "createDoctorH5Runtime",
+      "getDoctorH5HostAdapter",
       "createDoctorH5CareAgent",
-      "createDoctorH5VisitRecordStore"
+      "createDoctorH5AgentCatalog",
+      "createDoctorH5VisitRecordStore",
+      "createDoctorH5PatientProfileStore",
+      "createDoctorH5DoctorDirectoryPort",
+      "createDoctorH5DoctorSelectionStore"
     ],
     "routeManifest": null,
     "sdkClients": [],

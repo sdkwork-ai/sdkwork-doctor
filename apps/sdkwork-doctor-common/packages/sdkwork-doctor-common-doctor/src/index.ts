@@ -10,17 +10,35 @@ export type FamilyRelation = 'self' | 'spouse' | 'child' | 'parent' | 'other';
 
 export type Sex = 'female' | 'male' | 'unspecified';
 
-export interface FamilyMember {
+/**
+ * One patient file in the household record.
+ *
+ * "Family member" and "patient" are the same record: a household keeps one
+ * profile per person it consults for, and the conversation carries the active
+ * profile's facts. Shape is pinned by `contracts/patient-profile.schema.json`
+ * and asserted by the TypeScript, Dart, and mini program suites.
+ */
+export interface PatientProfile {
   readonly id: string;
   readonly displayName: string;
   readonly relation: FamilyRelation;
   readonly birthYear: number;
+  readonly birthDate?: string | null;
   readonly sex: Sex;
   readonly bloodType?: string;
   readonly allergies: readonly string[];
   readonly chronicConditions: readonly string[];
   readonly medications: readonly string[];
+  readonly notes?: string;
+  readonly createdAt?: string;
+  readonly updatedAt?: string;
 }
+
+/**
+ * Historical alias kept so the agent transport, visit records, and every
+ * existing surface keep compiling against the same structural record.
+ */
+export type FamilyMember = PatientProfile;
 
 export type TriageLevel = 'emergency' | 'urgent' | 'routine' | 'self-care';
 
@@ -92,17 +110,6 @@ export function triageSymptoms(symptoms: string): TriageResult {
   };
 }
 
-export const demoSelfMember: FamilyMember = Object.freeze({
-  id: 'member-self',
-  displayName: 'Me',
-  relation: 'self',
-  birthYear: 1990,
-  sex: 'unspecified',
-  allergies: [],
-  chronicConditions: [],
-  medications: [],
-});
-
 export function summarizeHealth(member: FamilyMember): HealthSummary {
   return Object.freeze({
     memberId: member.id,
@@ -133,3 +140,69 @@ export type {
   VisitRecordStorageAdapter,
   VisitRecordStore,
 } from './visit-records';
+
+export {
+  MIN_PATIENT_BIRTH_YEAR,
+  PATIENT_PROFILE_LIMIT,
+  PATIENT_PROFILES_STORAGE_KEY,
+  PATIENT_PROFILE_VERSION,
+  createDefaultHousehold,
+  createMemoryPatientProfileStore,
+  createPatientProfile,
+  createPatientProfileStore,
+  demoSelfMember,
+  isBloodType,
+  isFamilyRelation,
+  isSex,
+  newPatientProfileId,
+  normalizeProfileList,
+  parsePatientHousehold,
+  patientProfileCompleteness,
+  serializePatientHousehold,
+  splitProfileField,
+  updatePatientProfile,
+} from './patient-profiles';
+export type {
+  CreatePatientProfileInput,
+  CreatePatientProfileStoreOptions,
+  PatientHousehold,
+  PatientProfilePatch,
+  PatientProfileStorageAdapter,
+  PatientProfileStore,
+} from './patient-profiles';
+
+export {
+  CATALOG_DOCTOR_ROSTER,
+  DOCTOR_DIRECTORY_KIND,
+  DOCTOR_SELECTION_LIMIT,
+  DOCTOR_SELECTION_STORAGE_KEY,
+  affiliationByOrganization,
+  createDoctorRoster,
+  createDoctorSelectionStore,
+  createMemoryDoctorSelectionStore,
+  doctorEmploymentTypes,
+  hasPartTimeEngagement,
+  isDoctorConsultationKind,
+  isDoctorEmploymentType,
+  parseDoctorRoster,
+  parseDoctorSelection,
+  preferredDoctorChannel,
+  primaryAffiliation,
+  resolvePrimaryDoctor,
+  resolveSelectedDoctors,
+  serializeDoctorSelection,
+} from './doctors';
+export type {
+  DoctorAffiliation,
+  DoctorAvailabilitySlot,
+  DoctorConsultationChannel,
+  DoctorConsultationKind,
+  DoctorDirectoryPort,
+  DoctorEmploymentType,
+  DoctorProfile,
+  DoctorRoster,
+  DoctorRosterSource,
+  DoctorSelectionState,
+  DoctorSelectionStorageAdapter,
+  DoctorSelectionStore,
+} from './doctors';

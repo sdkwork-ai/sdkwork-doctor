@@ -501,3 +501,198 @@ button {
   color: var(--doctor-muted);
   font-size: 13px;
 }
+/* ---------------------------------------------------------------------------
+   Patient files, doctor directory, and forms (family private doctor).
+   Flat and borderless: tonal surfaces, no shadows, one accent.
+   --------------------------------------------------------------------------- */
+
+.doctor-list-card {
+  background: var(--doctor-surface);
+  border-radius: var(--doctor-radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.doctor-card-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.doctor-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.doctor-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.doctor-inline-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.doctor-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.doctor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.doctor-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--doctor-muted);
+  flex: 1 1 160px;
+}
+
+.doctor-field-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.doctor-field input,
+.doctor-field select,
+.doctor-field textarea,
+.doctor-input,
+.doctor-textarea {
+  font: inherit;
+  font-size: 14px;
+  color: var(--doctor-text);
+  background: var(--doctor-surface-alt);
+  border: 0;
+  border-radius: var(--doctor-radius-sm);
+  padding: 10px 12px;
+  width: 100%;
+}
+
+.doctor-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.doctor-editor {
+  background: var(--doctor-surface-alt);
+  border-radius: var(--doctor-radius-sm);
+  padding: 14px 16px;
+  margin-top: 12px;
+}
+
+.doctor-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.doctor-chip {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--doctor-accent-strong);
+  background: var(--doctor-surface-alt);
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.doctor-chip[aria-pressed='true'] {
+  background: var(--doctor-accent);
+  color: #fff;
+}
+
+.doctor-chat-compose {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.doctor-chat-compose .doctor-input {
+  flex: 1;
+}
+
+.doctor-notice {
+  background: var(--doctor-ok-bg);
+  color: var(--doctor-ok);
+  border-radius: var(--doctor-radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  margin: 10px 0;
+}
+
+.doctor-link {
+  color: var(--doctor-accent-strong);
+  font-weight: 600;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.doctor-link:hover {
+  text-decoration: underline;
+}
+
+.doctor-button[data-tone='danger'] {
+  background: var(--doctor-error-bg);
+  color: var(--doctor-error);
+}
+
+/* Doctor affiliations: one row per employment / practice site. */
+.doctor-affiliation-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.doctor-affiliation {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: var(--doctor-surface);
+  border-radius: var(--doctor-radius-sm);
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.doctor-affiliation input {
+  margin-top: 3px;
+  accent-color: var(--doctor-accent);
+}
+
+.doctor-affiliation > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.doctor-affiliation strong {
+  color: var(--doctor-text);
+}

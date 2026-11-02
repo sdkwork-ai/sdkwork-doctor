@@ -20,6 +20,8 @@ export interface DoctorPcEnvironment {
   readonly backendApiBaseUrl: string;
   readonly cloudApiBaseUrl: string;
   readonly agentsApiBaseUrl: string;
+  /** Deployment doctor-directory document URL; empty uses the authored roster. */
+  readonly careDoctorDirectoryUrl: string;
   readonly appBlocks: AppBlockOverrides;
   readonly theme: Readonly<Record<string, unknown>>;
 }
@@ -32,6 +34,7 @@ interface RuntimeDocument {
   backendApiBaseUrl?: string;
   cloudApiBaseUrl?: string;
   agentsApiBaseUrl?: string;
+  careDoctorDirectoryUrl?: string;
   app?: { blocks?: AppBlockOverrides };
   theme?: Record<string, unknown>;
 }
@@ -58,6 +61,7 @@ export function resolveEnvironmentFromDocument(document: RuntimeDocument | null)
     backendApiBaseUrl: document?.backendApiBaseUrl ?? '/',
     cloudApiBaseUrl: document?.cloudApiBaseUrl ?? '',
     agentsApiBaseUrl: document?.agentsApiBaseUrl ?? '',
+    careDoctorDirectoryUrl: document?.careDoctorDirectoryUrl ?? '',
     appBlocks: Object.freeze({
       hidden: Array.isArray(appBlocks?.hidden) ? [...appBlocks.hidden] : [],
       order: Array.isArray(appBlocks?.order) ? [...appBlocks.order] : [],

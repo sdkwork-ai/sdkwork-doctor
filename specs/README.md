@@ -8,7 +8,8 @@ Current contracts:
 - `etc/sdkwork.deployment.config.json` — deployment profile bindings for both browser surfaces.
 - `agents-app-api.contract.json` — the pinned slice of the sdkwork-agents app API this application consumes; compared with the upstream OpenAPI by `tests/agents-upstream-contract.test.mjs`.
 - `agent-integration.contract.json` — transport selection, per-client ports, and acceptance status for the hosted conversation.
-- `app-composition.contract.json` — the building-block catalogue: block ids, canonical page ids, routes, i18n keys, surfaces, and the customization rules.
+- `app-composition.contract.json` — the building-block catalogue: the three tabs (chat / doctor / me), canonical page ids, routes, i18n keys, surfaces, the landing route, and the customization rules.
+- `doctor-directory.contract.json` — the deployment human-doctor directory document (`runtime-env.json#careDoctorDirectoryUrl`), the doctor/affiliation employment model (Appbase organization + `med_hospital` code, full-time/part-time/contract/visiting), the authored fallback roster, and the per-client selection rules.
 - `design-tokens.contract.json` — the tech-blue, flat, borderless palette, radius, and elevation that every client binds.
 - `apps/sdkwork-doctor-pc/specs/component.spec.json` and `apps/sdkwork-doctor-h5/specs/component.spec.json` — application-root component contracts.
 - `apps/sdkwork-doctor-*/packages/*/specs/component.spec.json` — module-local component contracts.

@@ -45,4 +45,16 @@ export type {
   CareAgentTurnStreamFrame,
 } from './contract';
 export { careFingerprint, canonicalTurnPayload, careSessionPayloadHash, careTurnPayloadHash } from './fingerprint';
+export {
+  CARE_AGENT_CATALOG_PAGE_SIZE,
+  CARE_AGENT_CATALOG_PATH,
+  createCareAgentCatalog,
+  findCareAgent,
+} from './catalog';
+export type {
+  CareAgentCatalogPort,
+  CareAgentHttpGet,
+  CareAgentSummary,
+  CreateCareAgentCatalogOptions,
+} from './catalog';
 export * from './mode';

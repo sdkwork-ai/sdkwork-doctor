@@ -25,7 +25,7 @@ export function MobileShell({ children, profileId, appVersion, blocks }: MobileS
       <main className="doctor-content">{children}</main>
       <nav aria-label={t('platform.diagnostics.nav.label')} className="doctor-tabbar">
         {blocks.map((block) => (
-          <NavLink className="doctor-tab" end={block.id === 'home'} key={block.id} to={block.route}>
+          <NavLink className="doctor-tab" key={block.id} to={block.route}>
             {t(block.label)}
           </NavLink>
         ))}

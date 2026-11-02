@@ -6,10 +6,8 @@ import type { AppBlockIcon, ResolvedAppBlock } from '@sdkwork/doctor-common-bloc
 import { LanguageToggle } from './LanguageToggle';
 
 const ICON_PATHS: Readonly<Record<AppBlockIcon, string>> = Object.freeze({
-  home: 'M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z',
   chat: 'M4 5h16v11H8l-4 4z',
   doctor: 'M12 4v16M4 12h16',
-  records: 'M6 3h12v18H6zM9 8h6M9 12h6M9 16h4',
   user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c0-4 4-6 8-6s8 2 8 6',
 });
 
@@ -37,7 +35,7 @@ export function AppShell({ children, profileId, appVersion, blocks }: AppShellPr
         <div aria-hidden="true" className="doctor-rail-brand">D</div>
         <nav aria-label={t('platform.diagnostics.nav.label')} className="doctor-rail-nav">
           {blocks.map((block) => (
-            <NavLink className="doctor-rail-item" end={block.id === 'home'} key={block.id} to={block.route}>
+            <NavLink className="doctor-rail-item" key={block.id} to={block.route}>
               <RailIcon icon={block.icon} />
               <span className="doctor-rail-label">{t(block.label)}</span>
             </NavLink>

@@ -1,11 +1,13 @@
 // Conversation tab: hosted agent when the host provisions an agents API URL and
-// a token, offline triage otherwise. Copy comes from the generated care catalog.
+// a token, offline triage otherwise. The switcher at the top chooses which
+// patient file the conversation is for; every exchange is recorded against the
+// active patient. Copy comes from the generated care catalog.
 const { careText } = require('../../lib/i18n.js');
 const { createCareAgent } = require('../../lib/agent.js');
 const { createVisitRecord } = require('../../lib/visit-records.js');
 
-function memberLabel(member) {
-  return member.displayName === 'Me' ? 'Me (self)' : member.displayName + ' (' + member.relation + ')';
+function patientLabel(profile) {
+  return careText('platform.care.profile.relation.' + profile.relation) + ' · ' + profile.displayName;
 }
 
 Page({
@@ -21,21 +23,77 @@ Page({
     draft: '',
     busy: false,
     messages: [],
+    patientTitle: '',
+    switchHint: '',
+    noPatient: '',
+    goProfile: '',
+    hasPatient: false,
+    patients: [],
   },
 
   onLoad() {
     const app = getApp();
     this.agent = createCareAgent(app.globalData.careAgentOptions);
-    this.member = app.globalData.member;
+    this.store = app.globalData.patients;
+    this.member = null;
     this.setData({
       title: careText('platform.care.chat.title'),
-      subtitle: careText('platform.care.chat.subtitle', { member: memberLabel(this.member) }),
       empty: careText('platform.care.chat.empty'),
       modeLabel: careText(this.agent.mode === 'hosted' ? 'platform.care.mode.hosted' : 'platform.care.mode.offline'),
       placeholder: careText('platform.care.chat.placeholder'),
       send: careText('platform.care.chat.send'),
       sending: careText('platform.care.chat.sending'),
+      patientTitle: careText('platform.care.chat.patient'),
+      switchHint: careText('platform.care.chat.switchPatient'),
+      noPatient: careText('platform.care.chat.noPatient'),
+      goProfile: careText('platform.care.nav.me'),
     });
+    this.renderPatients();
+    if (this.store && typeof this.store.subscribe === 'function') {
+      this.unsubscribe = this.store.subscribe(() => this.renderPatients());
+    }
+  },
+
+  onShow() {
+    this.renderPatients();
+  },
+
+  onUnload() {
+    if (this.unsubscribe) this.unsubscribe();
+    this.unsubscribe = null;
+  },
+
+  renderPatients() {
+    const active = this.store ? this.store.getActive() : null;
+    const activeId = active ? active.id : null;
+    const profiles = this.store ? this.store.list() : [];
+    this.member = active;
+    this.setData({
+      hasPatient: Boolean(active),
+      patients: profiles.map((profile) => ({
+        id: profile.id,
+        label: patientLabel(profile),
+        active: profile.id === activeId,
+      })),
+      subtitle: active
+        ? careText('platform.care.chat.subtitle', { member: patientLabel(active) })
+        : '',
+    });
+  },
+
+  onSelectPatient(event) {
+    const id = event && event.currentTarget ? event.currentTarget.dataset.id : '';
+    if (!this.store || !id) return;
+    this.store.select(id);
+    this.renderPatients();
+  },
+
+  onGoProfile() {
+    try {
+      wx.switchTab({ url: '/pages/profile/index' });
+    } catch (error) {
+      // Without a tab bar host the guidance text stays the fallback.
+    }
   },
 
   onInput(event) {
@@ -44,15 +102,16 @@ Page({
 
   onSend() {
     const text = (this.data.draft || '').trim();
-    if (!text || this.data.busy) return;
+    const member = this.member;
+    if (!member || !text || this.data.busy) return;
     this.setData({ busy: true, error: '' });
     this.agent
-      .send(text, this.member)
+      .send(text, member)
       .then((reply) => {
         const store = getApp().globalData.records;
         if (store) {
           store.add(createVisitRecord({
-            member: this.member,
+            member: member,
             symptom: text,
             advice: reply.text,
             level: reply.level,

@@ -1,10 +1,13 @@
 export * from './agent';
 export * from './composition';
+export * from './doctors';
 export * from './host';
 export * from './modules';
+export * from './patients';
 export * from './records';
 export * from './sdk';
 export * from './session';
+export * from './storage';
 
 import { getDoctorH5HostAdapter, type DoctorH5HostAdapter } from './host';
 import { doctorH5Modules } from './modules';

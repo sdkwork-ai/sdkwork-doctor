@@ -1,18 +1,106 @@
 <view class="card">
   <view class="h1">{{title}}</view>
   <view class="muted">{{subtitle}}</view>
-  <view class="row">
-    <text>{{memberLabel}}</text>
-    <text class="badge">{{activeLabel}}</text>
-  </view>
-  <view class="muted">{{completeness}}</view>
 </view>
+
+<view class="card">
+  <view class="h1">{{patientsTitle}}</view>
+  <view class="muted">{{patientsSubtitle}}</view>
+  <view class="row">
+    <text>{{currentLabel}}</text>
+    <text>{{activeName}}</text>
+  </view>
+  <view wx:if="{{patients.length === 0}}" class="muted">{{emptyLabel}}</view>
+  <view wx:for="{{patients}}" wx:key="id" class="file">
+    <view class="row">
+      <text>{{item.label}}</text>
+      <text wx:if="{{item.active}}" class="badge">{{activeLabel}}</text>
+    </view>
+    <view class="muted">{{item.completeness}}</view>
+    <view class="actions">
+      <button class="mini" data-id="{{item.id}}" bindtap="onSelectPatient" disabled="{{item.active}}">{{selectLabel}}</button>
+      <button class="mini" data-id="{{item.id}}" bindtap="onEditPatient">{{editLabel}}</button>
+      <button class="mini warn" data-id="{{item.id}}" bindtap="onDeletePatient">{{deleteLabel}}</button>
+    </view>
+  </view>
+  <button class="btn" bindtap="onAddPatient">{{addLabel}}</button>
+  <view class="muted">{{limitLabel}}</view>
+
+  <view wx:if="{{formOpen}}" class="form">
+    <view class="h1">{{formTitle}}</view>
+    <view wx:if="{{formError}}" class="error">{{formError}}</view>
+    <view class="label">{{fieldName}}</view>
+    <input class="input" value="{{form.displayName}}" data-field="displayName" bindinput="onFieldInput"/>
+    <view class="label">{{fieldRelation}}</view>
+    <picker mode="selector" range="{{relationLabels}}" value="{{form.relationIndex}}" bindchange="onRelationChange">
+      <view class="row"><text>{{fieldRelation}}</text><text>{{relationLabels[form.relationIndex]}}</text></view>
+    </picker>
+    <view class="label">{{fieldSex}}</view>
+    <picker mode="selector" range="{{sexLabels}}" value="{{form.sexIndex}}" bindchange="onSexChange">
+      <view class="row"><text>{{fieldSex}}</text><text>{{sexLabels[form.sexIndex]}}</text></view>
+    </picker>
+    <view class="label">{{fieldBirthYear}}</view>
+    <input class="input" type="number" value="{{form.birthYear}}" data-field="birthYear" bindinput="onFieldInput"/>
+    <view class="label">{{fieldBloodType}}</view>
+    <picker mode="selector" range="{{bloodTypeLabels}}" value="{{form.bloodTypeIndex}}" bindchange="onBloodTypeChange">
+      <view class="row"><text>{{fieldBloodType}}</text><text>{{bloodTypeLabels[form.bloodTypeIndex]}}</text></view>
+    </picker>
+    <view class="label">{{fieldAllergies}}</view>
+    <input class="input" value="{{form.allergies}}" data-field="allergies" bindinput="onFieldInput"/>
+    <view class="label">{{fieldConditions}}</view>
+    <input class="input" value="{{form.chronicConditions}}" data-field="chronicConditions" bindinput="onFieldInput"/>
+    <view class="label">{{fieldMedications}}</view>
+    <input class="input" value="{{form.medications}}" data-field="medications" bindinput="onFieldInput"/>
+    <view class="label">{{fieldNotes}}</view>
+    <textarea class="textarea" value="{{form.notes}}" data-field="notes" bindinput="onFieldInput" maxlength="500"/>
+    <view class="actions">
+      <button class="btn" bindtap="onSavePatient">{{saveLabel}}</button>
+      <button class="btn ghost" bindtap="onCancelForm">{{cancelLabel}}</button>
+    </view>
+  </view>
+</view>
+
+<view class="card">
+  <view class="h1">{{doctorsTitle}}</view>
+  <view class="muted">{{doctorsHint}}</view>
+  <view wx:if="{{doctorName}}">
+    <view class="row">
+      <text>{{doctorName}}</text>
+      <text class="badge">{{primaryLabel}}</text>
+    </view>
+    <view class="muted">{{doctorSite}}</view>
+    <view class="row">
+      <text>{{employmentTitle}}</text>
+      <text class="badge">{{doctorEmployment}}</text>
+    </view>
+    <view class="muted">{{doctorCount}}</view>
+  </view>
+  <view wx:else class="muted">{{doctorEmpty}}</view>
+  <button class="btn" bindtap="onOpenDoctors">{{chooseDoctorsLabel}}</button>
+</view>
+
+<view class="card">
+  <view class="h1">{{recordsTitle}}</view>
+  <view class="muted">{{recordsCount}}</view>
+  <button class="btn" bindtap="onOpenRecords">{{recordsOpenLabel}}</button>
+</view>
+
 <view class="card">
   <view class="row">
     <text>{{modeTitle}}</text>
     <text class="badge">{{modeLabel}}</text>
   </view>
 </view>
+
+<view class="card">
+  <view class="row">
+    <text class="h1">{{deviceTitle}}</text>
+    <text class="badge">{{deviceStatus}}</text>
+  </view>
+  <view class="muted">{{deviceHint}}</view>
+  <button class="btn" bindtap="onRerunChecks" disabled="{{checking}}">{{checking ? runningLabel : rerunLabel}}</button>
+</view>
+
 <view class="card">
   <view class="muted">{{privacy}}</view>
 </view>

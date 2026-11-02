@@ -32,8 +32,43 @@ test('the shared schema pins every field the domain emits', () => {
   assert.equal(schema.kind, 'sdkwork.doctor.visit-record');
   assert.equal(schema.storageKey, domain.VISIT_RECORDS_STORAGE_KEY);
   assert.equal(schema.limit, domain.VISIT_RECORD_LIMIT);
-  assert.deepEqual(Object.keys(record()).sort(), [...schema.required].sort());
-  assert.deepEqual(Object.keys(schema.fields).sort(), [...schema.required].sort());
+  assert.deepEqual(Object.keys(record()).sort(), [...schema.required].sort(), 'a plain record emits exactly the required fields');
+  const optional = Object.keys(schema.fields).filter((field) => !schema.required.includes(field)).sort();
+  assert.deepEqual(
+    optional,
+    ['doctorEmploymentType', 'doctorHospitalLabel', 'doctorId', 'doctorLabel', 'doctorOrganizationId'],
+    'human-consultation fields are declared optional',
+  );
+  assert.match(schema.fields.mode, /human/u, 'the schema declares the human consultation mode');
+});
+
+test('a human consultation records the doctor it was routed to', () => {
+  const value = record({
+    mode: 'human',
+    symptom: 'chest tightness after dinner',
+    advice: 'Human consultation requested with Lin Qinghe.',
+    level: 'routine',
+    doctorId: 'doctor-lin-qinghe',
+    doctorLabel: 'Lin Qinghe · Cardiology',
+    doctorOrganizationId: 'org-sdkwork-care-network',
+    doctorHospitalLabel: 'SDKWork Care Network',
+    doctorEmploymentType: 'part_time',
+  });
+  assert.equal(value.mode, 'human');
+  assert.equal(value.doctorId, 'doctor-lin-qinghe');
+  assert.equal(value.doctorLabel, 'Lin Qinghe · Cardiology');
+  assert.equal(value.doctorOrganizationId, 'org-sdkwork-care-network');
+  assert.equal(value.doctorHospitalLabel, 'SDKWork Care Network');
+  assert.equal(value.doctorEmploymentType, 'part_time');
+
+  const roundTrip = domain.parseVisitRecords(JSON.stringify([value]));
+  assert.equal(roundTrip.length, 1);
+  assert.equal(roundTrip[0].doctorId, 'doctor-lin-qinghe');
+  assert.equal(roundTrip[0].doctorEmploymentType, 'part_time');
+  assert.equal(roundTrip[0].mode, 'human');
+
+  const withoutDoctor = record({ mode: 'human' });
+  assert.equal('doctorId' in withoutDoctor, false, 'an unlabelled human record omits the doctor fields');
 });
 
 test('a record carries the member label, level, and transport mode', () => {

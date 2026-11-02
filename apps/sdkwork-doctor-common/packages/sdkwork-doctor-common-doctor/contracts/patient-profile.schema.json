@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "kind": "sdkwork.doctor.patient-profile",
+  "purpose": "One patient file in the household health record. Every client reads and writes this exact shape; the TypeScript, Dart, and mini program suites assert it against this file.",
+  "storageKey": "sdkwork.doctor.patient-profiles.v1",
+  "documentVersion": 1,
+  "limit": 12,
+  "ordering": "household order, newest added last",
+  "document": {
+    "version": "1",
+    "activeId": "string | null",
+    "profiles": "PatientProfile[]"
+  },
+  "fields": {
+    "id": "string",
+    "displayName": "string (1-40 characters)",
+    "relation": "self | spouse | child | parent | other",
+    "birthYear": "integer 1900..current year",
+    "birthDate": "YYYY-MM-DD | null",
+    "sex": "female | male | unspecified",
+    "bloodType": "A+ | A- | B+ | B- | AB+ | AB- | O+ | O- | empty string",
+    "allergies": "string[] (trimmed, de-duplicated)",
+    "chronicConditions": "string[] (trimmed, de-duplicated)",
+    "medications": "string[] (trimmed, de-duplicated)",
+    "notes": "string (<= 500 characters)",
+    "createdAt": "ISO-8601 date-time string",
+    "updatedAt": "ISO-8601 date-time string"
+  },
+  "required": ["id", "displayName", "relation", "birthYear", "sex", "allergies", "chronicConditions", "medications"],
+  "example": {
+    "id": "member-child",
+    "displayName": "Xiaoman",
+    "relation": "child",
+    "birthYear": 2019,
+    "birthDate": "2019-06-02",
+    "sex": "female",
+    "bloodType": "O+",
+    "allergies": ["penicillin"],
+    "chronicConditions": [],
+    "medications": ["vitamin D"],
+    "notes": "Penicillin allergy confirmed in 2024.",
+    "createdAt": "2026-11-02T09:00:00.000Z",
+    "updatedAt": "2026-11-02T09:00:00.000Z"
+  }
+}
