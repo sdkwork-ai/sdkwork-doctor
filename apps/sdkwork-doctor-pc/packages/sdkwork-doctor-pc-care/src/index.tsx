@@ -82,25 +82,26 @@ export function ChatPage({ member }: { member: FamilyMember }) {
 }
 
 export function DoctorPage({ member }: { member: FamilyMember }) {
+  const { t } = useTranslation();
   const summary = useMemo(() => summarizeHealth(member), [member]);
   const rows: Array<[string, string]> = [
-    ['Member', memberLabel(member)],
-    ['Born', String(member.birthYear)],
-    ['Blood type', member.bloodType ?? 'unknown'],
-    ['Allergies', member.allergies.length > 0 ? member.allergies.join(', ') : 'none recorded'],
-    ['Conditions', summary.activeConditions.length > 0 ? summary.activeConditions.join(', ') : 'none recorded'],
-    ['Medications', summary.activeMedications.length > 0 ? summary.activeMedications.join(', ') : 'none recorded'],
-    ['Last checkup', summary.lastCheckupOn ?? 'not recorded'],
+    [t('platform.care.fact.member'), memberLabel(member)],
+    [t('platform.care.fact.born'), String(member.birthYear)],
+    [t('platform.care.fact.bloodType'), member.bloodType ?? t('platform.care.value.unknown')],
+    [t('platform.care.fact.allergies'), member.allergies.length > 0 ? member.allergies.join(', ') : t('platform.care.value.none')],
+    [t('platform.care.fact.conditions'), summary.activeConditions.length > 0 ? summary.activeConditions.join(', ') : t('platform.care.value.none')],
+    [t('platform.care.fact.medications'), summary.activeMedications.length > 0 ? summary.activeMedications.join(', ') : t('platform.care.value.none')],
+    [t('platform.care.fact.lastCheckup'), summary.lastCheckupOn ?? t('platform.care.value.none')],
   ];
   return (
     <div>
       <header className="doctor-page-header">
         <div>
-          <h1 className="doctor-page-title">Doctor</h1>
-          <p className="doctor-page-subtitle">Health record for the selected family member.</p>
+          <h1 className="doctor-page-title">{t('platform.care.doctor.title')}</h1>
+          <p className="doctor-page-subtitle">{t('platform.care.doctor.subtitle')}</p>
         </div>
       </header>
-      <Panel title="Health summary">
+      <Panel title={t('platform.care.doctor.panel')}>
         <table className="doctor-facts">
           <tbody>
             {rows.map(([label, value]) => (
@@ -109,7 +110,7 @@ export function DoctorPage({ member }: { member: FamilyMember }) {
           </tbody>
         </table>
       </Panel>
-      <Panel title="Care actions" description="Emergency symptoms always go to local emergency services first.">
+      <Panel title={t('platform.care.doctor.actions')} description="Emergency symptoms always go to local emergency services first.">
         <ul className="doctor-check-details">
           <li>Fill in allergies and chronic conditions before the first consultation.</li>
           <li>Use chat for symptom intake; a clinician reviews anything urgent the same day.</li>
@@ -121,16 +122,17 @@ export function DoctorPage({ member }: { member: FamilyMember }) {
 }
 
 export function MePage({ context, member }: { context: DoctorRuntimeContext; member: FamilyMember }) {
+  const { t } = useTranslation();
   const state = useDiagnosticsReport(context);
   return (
     <div>
       <header className="doctor-page-header">
         <div>
-          <h1 className="doctor-page-title">Me</h1>
-          <p className="doctor-page-subtitle">Family members, privacy controls, and the device environment check.</p>
+          <h1 className="doctor-page-title">{t('platform.care.me.title')}</h1>
+          <p className="doctor-page-subtitle">{t('platform.care.me.subtitle')}</p>
         </div>
       </header>
-      <Panel title="Family members">
+      <Panel title={t('platform.care.me.members')}>
         <ul className="doctor-check-list">
           {CARE_MEMBERS.map((item) => (
             <li className="doctor-check" key={item.id}>
@@ -138,15 +140,15 @@ export function MePage({ context, member }: { context: DoctorRuntimeContext; mem
                 <h3 className="doctor-check-title">{memberLabel(item)}</h3>
                 <p className="doctor-check-summary">Profile completeness: {item.allergies.length + item.chronicConditions.length > 0 ? 'in progress' : 'needs review'}</p>
               </div>
-              <span className="doctor-badge" data-status={item.id === member.id ? 'ok' : 'skipped'}>{item.id === member.id ? 'active' : 'available'}</span>
+              <span className="doctor-badge" data-status={item.id === member.id ? 'ok' : 'skipped'}>{item.id === member.id ? t('platform.care.active') : t('platform.care.available')}</span>
             </li>
           ))}
         </ul>
       </Panel>
-      <Panel title="Device environment" description="Local diagnostics. No health data is included.">
+      <Panel title={t('platform.care.me.device')} description="Local diagnostics. No health data is included.">
         <CheckList outcomes={state.report?.outcomes ?? []} />
         <div style={{ marginTop: 12 }}>
-          <ActionButton onClick={state.run} disabled={state.running}>{state.running ? 'Running...' : 'Re-run checks'}</ActionButton>
+          <ActionButton onClick={state.run} disabled={state.running}>{state.running ? t('platform.care.me.running') : t('platform.care.me.rerun')}</ActionButton>
         </div>
       </Panel>
     </div>
