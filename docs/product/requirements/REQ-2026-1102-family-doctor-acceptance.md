@@ -37,3 +37,19 @@ Scope: 对话 / 医生 / 我的 three-tab family doctor application across four 
 - Provision an agents deployment and IAM credentials, then bind the hosted adapter in `*-core` and record a real conversation transcript.
 - Extend i18n fragments to cover every care page string.
 - Add per-runtime triage equivalence fixtures consumed by TS, Dart, and mini program tests.
+
+## Addendum (rounds 13-20)
+
+Delivered after the first acceptance record:
+
+- `contracts/triage-fixtures.json` executed by three runtimes: TypeScript (Node 24 type stripping), the mini program triage module, and Flutter. 9 fixtures per runtime.
+- Flutter triage defect fixed: raw-string `\u` escapes never matched Chinese red flags; level-name casing normalized in the test.
+- Mini program triage extracted to `src/lib/triage.js` so it is loadable by both WeChat and Node tests.
+- Care i18n became a real pipeline: hand-authored `contracts/care-messages.json` -> `tools/generate-care-i18n.mjs` -> generated `src/i18n/<locale>/platform/care/care.ts` projections with a generated banner. A drift gate compares generated keys/values and placeholder sets with the source contract.
+- PC and H5 now render all three tabs through `platform.care.*` keys (chat, doctor, me).
+
+Still outstanding:
+
+- Hosted `sdkwork-agents` conversation (needs `agentsApiBaseUrl` plus an IAM access token; contract in `specs/agent-integration.contract.json`).
+- Flutter and mini program UI copy is not driven by the i18n pipeline.
+- "Profile completeness" copy and the two static care-action bullets on the me/doctor tabs remain English literals.
