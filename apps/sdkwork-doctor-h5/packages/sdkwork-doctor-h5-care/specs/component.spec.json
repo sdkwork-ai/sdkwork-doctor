@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "kind": "sdkwork.component.spec",
+  "component": {
+    "name": "@sdkwork/doctor-h5-care",
+    "displayName": "SDKWork Doctor H5 Care Tabs",
+    "version": "0.1.0",
+    "type": "react-package",
+    "root": "apps/sdkwork-doctor-h5/packages/sdkwork-doctor-h5-care",
+    "domain": "platform",
+    "capability": "care",
+    "surface": "h5",
+    "languages": ["typescript"],
+    "generated": false,
+    "manifests": ["package.json"]
+  },
+  "canonicalSpecs": [
+    { "file": "APP_H5_ARCHITECTURE_SPEC.md", "path": "../../../../../sdkwork-specs/APP_H5_ARCHITECTURE_SPEC.md", "purpose": "H5 application root architecture." },
+    { "file": "APP_MOBILE_REACT_UI_SPEC.md", "path": "../../../../../sdkwork-specs/APP_MOBILE_REACT_UI_SPEC.md", "purpose": "Mobile React package rules." },
+    { "file": "APP_CLIENT_ARCHITECTURE_ALIGNMENT_SPEC.md", "path": "../../../../../sdkwork-specs/APP_CLIENT_ARCHITECTURE_ALIGNMENT_SPEC.md", "purpose": "Cross-client route identity." },
+    { "file": "COMPONENT_SPEC.md", "path": "../../../../../sdkwork-specs/COMPONENT_SPEC.md", "purpose": "Component contract." },
+    { "file": "CODE_STYLE_SPEC.md", "path": "../../../../../sdkwork-specs/CODE_STYLE_SPEC.md", "purpose": "Code organization." },
+    { "file": "NAMING_SPEC.md", "path": "../../../../../sdkwork-specs/NAMING_SPEC.md", "purpose": "Naming." },
+    { "file": "TYPESCRIPT_CODE_SPEC.md", "path": "../../../../../sdkwork-specs/TYPESCRIPT_CODE_SPEC.md", "purpose": "TypeScript rules." }
+  ],
+  "contracts": {
+    "layerRole": "frontend-feature",
+    "publicExports": ["."],
+    "providedPorts": [{ "name": "doctorH5CareTabs", "export": "." }],
+    "requiredPorts": [
+      { "name": "doctorAgentConversation", "export": ".", "provider": "@sdkwork/doctor-common-agent" },
+      { "name": "doctorFamilyDomain", "export": ".", "provider": "@sdkwork/doctor-common-doctor" }
+    ],
+    "runtimeEntrypoints": ["ChatPage", "DoctorPage", "MePage"],
+    "routeManifest": null,
+    "sdkClients": [],
+    "sdkDependencies": [],
+    "permissionComposition": {},
+    "dependencyApiExports": [],
+    "dependencyApiSurfaces": [],
+    "events": [],
+    "configKeys": []
+  },
+  "verification": { "commands": ["pnpm --dir apps/sdkwork-doctor-h5 typecheck", "pnpm test"] }
+}

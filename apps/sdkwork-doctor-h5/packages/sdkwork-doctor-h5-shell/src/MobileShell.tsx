@@ -18,7 +18,7 @@ export function MobileShell({ children, profileId, appVersion }: { children: Rea
       <nav className="doctor-tabbar" aria-label={t('platform.diagnostics.nav.label')}>
         {doctorH5Tabs.map((tab) => (
           <NavLink className="doctor-tab" end={tab.end} key={tab.to} to={tab.to}>
-            {t(tab.labelKey)}
+            {tab.label}
           </NavLink>
         ))}
       </nav>

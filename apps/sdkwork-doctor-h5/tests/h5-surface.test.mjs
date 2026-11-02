@@ -15,7 +15,7 @@ test('H5 packages follow the sdkwork-doctor-h5 prefix', () => {
   const names = fs.readdirSync(path.join(appRoot, 'packages'));
   assert.ok(names.length >= 4);
   for (const name of names) {
-    assert.match(name, /^sdkwork-doctor-h5-(core|commons|shell|diagnostics)$/u);
+    assert.match(name, /^sdkwork-doctor-h5-(core|commons|shell|diagnostics|care)$/u);
   }
 });
 

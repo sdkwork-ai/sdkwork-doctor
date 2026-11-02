@@ -1,7 +1,8 @@
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import type { DoctorRuntimeContext } from '@sdkwork/doctor-common-diagnostics';
+import { demoSelfMember } from '@sdkwork/doctor-common-doctor';
 
-import { ChecksPage, EnvironmentPage, OverviewPage, useDiagnosticsReport } from '@sdkwork/doctor-h5-diagnostics';
+import { ChatPage, DoctorPage, MePage } from '@sdkwork/doctor-h5-care';
 
 import { MobileShell } from './MobileShell';
 
@@ -10,14 +11,14 @@ export interface DoctorH5RoutesProps {
   readonly hostPlatform: string;
 }
 
-export function DoctorH5Routes({ runtime, hostPlatform }: DoctorH5RoutesProps) {
-  const state = useDiagnosticsReport(runtime);
+export function DoctorH5Routes({ runtime }: DoctorH5RoutesProps) {
   return (
     <MobileShell appVersion={runtime.appVersion} profileId={runtime.profileId}>
       <Routes>
-        <Route index element={<OverviewPage context={runtime} error={state.error} onRun={state.run} report={state.report} running={state.running} />} />
-        <Route path="checks" element={<ChecksPage report={state.report} />} />
-        <Route path="environment" element={<EnvironmentPage context={runtime} hostPlatform={hostPlatform} />} />
+        <Route index element={<Navigate replace to="chat" />} />
+        <Route path="chat" element={<ChatPage member={demoSelfMember} />} />
+        <Route path="doctor" element={<DoctorPage member={demoSelfMember} />} />
+        <Route path="me" element={<MePage context={runtime} member={demoSelfMember} />} />
       </Routes>
     </MobileShell>
   );

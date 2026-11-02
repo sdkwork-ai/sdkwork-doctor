@@ -23,6 +23,8 @@
     "@sdkwork/doctor-common-diagnostics": "workspace:*",
     "@sdkwork/doctor-h5-commons": "workspace:*",
     "@sdkwork/doctor-h5-diagnostics": "workspace:*",
+    "@sdkwork/doctor-h5-care": "workspace:*",
+    "@sdkwork/doctor-common-doctor": "workspace:*",
     "react-i18next": "^17.0.11"
   },
   "peerDependencies": {
