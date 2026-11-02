@@ -1,15 +1,20 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 import { DoctorH5Routes, DOCTOR_H5_HOME_PATH } from '@sdkwork/doctor-h5-shell';
 
 import { AuthGate } from './AuthGate';
+import { initDoctorH5I18n } from './bootstrap/i18n';
 import { bootstrapDoctorH5, type DoctorH5Runtime } from './bootstrap/runtime';
 
 import './index.css';
 
+initDoctorH5I18n();
+
 export default function App() {
   const [runtime, setRuntime] = useState<DoctorH5Runtime | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     let active = true;
@@ -22,7 +27,7 @@ export default function App() {
   }, []);
 
   if (!runtime) {
-    return <div className="doctor-content">Loading SDKWork Doctor...</div>;
+    return <div className="doctor-content">{t('platform.diagnostics.action.loading')}</div>;
   }
 
   return (

@@ -1,22 +1,25 @@
+import { useTranslation } from 'react-i18next';
 import type { DoctorRuntimeContext } from '@sdkwork/doctor-common-diagnostics';
 import { MobileCard } from '@sdkwork/doctor-h5-commons';
 
 export function EnvironmentPage({ context, hostPlatform }: { context: DoctorRuntimeContext; hostPlatform: string }) {
+  const { t } = useTranslation();
+  const unset = t('platform.diagnostics.value.unset');
   const rows: Array<[string, string]> = [
-    ['Deployment profile', context.deploymentProfile],
-    ['Environment', context.environment],
-    ['Profile id', context.profileId],
-    ['App version', context.appVersion],
-    ['App API base URL', context.apiBaseUrl || '(unset)'],
-    ['Backend API base URL', context.backendApiBaseUrl || '(unset)'],
-    ['Locale', context.locale],
-    ['Host', hostPlatform],
+    [t('platform.diagnostics.fact.deploymentProfile'), context.deploymentProfile],
+    [t('platform.diagnostics.fact.environment'), context.environment],
+    [t('platform.diagnostics.fact.profileId'), context.profileId],
+    [t('platform.diagnostics.fact.appVersion'), context.appVersion],
+    [t('platform.diagnostics.fact.apiBaseUrl'), context.apiBaseUrl || unset],
+    [t('platform.diagnostics.fact.backendApiBaseUrl'), context.backendApiBaseUrl || unset],
+    [t('platform.diagnostics.fact.locale'), context.locale],
+    [t('platform.diagnostics.fact.host'), hostPlatform],
   ];
   return (
     <div>
-      <h1 className="doctor-page-title">Runtime environment</h1>
-      <p className="doctor-page-subtitle">Facts resolved before renderer bootstrap.</p>
-      <MobileCard title="Resolved values">
+      <h1 className="doctor-page-title">{t('platform.diagnostics.page.environment.title')}</h1>
+      <p className="doctor-page-subtitle">{t('platform.diagnostics.page.environment.subtitle')}</p>
+      <MobileCard title={t('platform.diagnostics.panel.environment.title')}>
         <table className="doctor-facts">
           <tbody>
             {rows.map(([label, value]) => (

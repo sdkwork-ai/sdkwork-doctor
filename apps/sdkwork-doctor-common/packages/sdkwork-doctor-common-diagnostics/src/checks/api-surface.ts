@@ -7,7 +7,9 @@ function isLoopbackHost(hostname: string): boolean {
 export const apiSurfaceCheck: DoctorCheck = {
   id: 'configuration.api-surface',
   title: 'API base URLs',
+  titleKey: 'platform.diagnostics.check.apiSurface.title',
   description: 'The browser must resolve same-origin or cloud API base URLs before any SDK client is constructed.',
+  descriptionKey: 'platform.diagnostics.check.apiSurface.description',
   category: 'configuration',
   async run(context) {
     const details = ['appApiBaseUrl=' + (context.apiBaseUrl || '(empty)'), 'backendApiBaseUrl=' + (context.backendApiBaseUrl || '(empty)')];
@@ -15,8 +17,10 @@ export const apiSurfaceCheck: DoctorCheck = {
       return {
         status: 'warn',
         summary: 'No API base URL is configured for this surface.',
+        messageKey: 'platform.diagnostics.check.apiSurface.notConfigured',
         details,
         hint: 'Deploy the runtime-env document or configure the Vite environment for this profile. The scaffold UI is usable without it.',
+        hintKey: 'platform.diagnostics.hint.apiSurface',
       };
     }
     for (const value of [context.apiBaseUrl, context.backendApiBaseUrl]) {
@@ -26,12 +30,19 @@ export const apiSurfaceCheck: DoctorCheck = {
           return {
             status: 'warn',
             summary: 'An API base URL uses plain HTTP outside loopback.',
+            messageKey: 'platform.diagnostics.check.apiSurface.plainHttp',
             details,
             hint: 'Use HTTPS for every non-loopback API origin.',
+            hintKey: 'platform.diagnostics.hint.apiSurfacePlainHttp',
           };
         }
       }
     }
-    return { status: 'ok', summary: 'API base URLs are configured.', details };
+    return {
+      status: 'ok',
+      summary: 'API base URLs are configured.',
+      messageKey: 'platform.diagnostics.check.apiSurface.ok',
+      details,
+    };
   },
 };

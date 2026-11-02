@@ -28,6 +28,7 @@ The PC root is the desktop fallback surface; the H5 root is the mobile fallback 
 - **pnpm workspace** at the repository root; no nested workspace files.
 - **Framework-neutral diagnostics package** with no runtime dependencies, so the same catalog can run in a future Tauri, Electron, Capacitor, or Flutter bridge without importing React.
 - **Plain CSS with custom properties** for the scaffold; Tailwind adoption would follow `TAILWIND_CSS_INTEGRATION_SPEC.md` and is not enabled yet.
+- **i18next + react-i18next** with one app-shell provider. Copy is owned by package-local `src/i18n/<locale>/platform/diagnostics/` fragments; the zh-CN fragment is typed against the en-US keys, so locale parity is a compile error rather than a runtime gap.
 - **Node's built-in test runner** for contract tests; no test framework dependency in the scaffold.
 
 ## 3. System Boundaries And Modules

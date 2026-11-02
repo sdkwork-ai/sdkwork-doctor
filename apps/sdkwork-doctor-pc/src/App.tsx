@@ -1,15 +1,20 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 import { DoctorPcRoutes, DOCTOR_PC_HOME_PATH } from '@sdkwork/doctor-pc-shell';
 
 import { AuthGate } from './AuthGate';
+import { initDoctorPcI18n } from './bootstrap/i18n';
 import { bootstrapDoctorPc, type DoctorPcRuntime } from './bootstrap/runtime';
 
 import './index.css';
 
+initDoctorPcI18n();
+
 export default function App() {
   const [runtime, setRuntime] = useState<DoctorPcRuntime | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     let active = true;
@@ -22,7 +27,7 @@ export default function App() {
   }, []);
 
   if (!runtime) {
-    return <div className="doctor-main">Loading SDKWork Doctor...</div>;
+    return <div className="doctor-main">{t('platform.diagnostics.action.loading')}</div>;
   }
 
   return (

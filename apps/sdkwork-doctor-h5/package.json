@@ -21,8 +21,10 @@
     "@sdkwork/doctor-h5-core": "workspace:*",
     "@sdkwork/doctor-h5-diagnostics": "workspace:*",
     "@sdkwork/doctor-h5-shell": "workspace:*",
+    "i18next": "^26.3.6",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-i18next": "^17.0.11",
     "react-router-dom": "^7.17.0"
   },
   "devDependencies": {

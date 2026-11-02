@@ -56,4 +56,5 @@ The Vite development server serves `/runtime-env.json` from those files and the 
 The repository is initialized as a standards-compliant scaffold:
 
 - Both browser surfaces build and typecheck; the diagnostics catalog is fully implemented locally.
-- Appbase IAM/login, generated app/backend SDK families, native host packages, and the packaging workflow are not wired yet. Each seam is explicit in the component contracts and architecture document, so those integrations add code rather than reshape the layout.
+- The UI is bilingual (`en-US`, `zh-CN`): copy lives in package-owned `src/i18n/<locale>/platform/diagnostics/` fragments, the shell resolves the locale once, and the switch persists in local storage.
+- Appbase IAM/login, generated app/backend SDK families, native host packages, and live packaging are not wired yet. Each seam is explicit in the component contracts and architecture document, so those integrations add code rather than reshape the layout. The packaging GitHub workflow is a thin caller of the shared package workflow.

@@ -31,6 +31,8 @@ const checks = [
   ['check-source-config-standard.mjs', ['--root', '.']],
   ['check-repository-baseline-content.mjs', ['--root', '.']],
   ['check-apps-directory-index.mjs', ['--root', '.']],
+  ['check-i18n-standard.mjs', ['--root', '.']],
+  ['check-locale-gate-wiring.mjs', ['--root', '.']],
   ['check-component-port-bindings.mjs', ['--root', '.']],
   ['check-frontend-composition.mjs', ['--root', '.']],
   ['check-permission-composition.mjs', ['--root', '.']],

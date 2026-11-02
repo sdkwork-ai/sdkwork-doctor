@@ -47,15 +47,17 @@ export async function runDoctorChecks(
     try {
       const result = await withTimeout(check.run(context), timeoutMs, check.id);
       const durationMs = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - checkStarted;
-      outcomes.push({ ...result, checkId: check.id, title: check.title, category: check.category, durationMs });
+      outcomes.push({ ...result, checkId: check.id, title: check.title, titleKey: check.titleKey, category: check.category, durationMs });
     } catch (error) {
       const durationMs = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - checkStarted;
       outcomes.push({
         checkId: check.id,
         title: check.title,
+        titleKey: check.titleKey,
         category: check.category,
         status: 'error',
         summary: 'Check failed to complete.',
+        messageKey: 'platform.diagnostics.runner.failed',
         details: [error instanceof Error ? error.message : String(error)],
         durationMs,
       });

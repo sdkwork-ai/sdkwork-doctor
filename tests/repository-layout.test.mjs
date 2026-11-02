@@ -52,3 +52,20 @@ test('dependency documentation points at the sibling standards checkout', () => 
   assert.match(read('AGENTS.md'), /\.\.\/sdkwork-specs\/README\.md/u);
   assert.equal(fs.existsSync(path.join(repoRoot, '..', 'sdkwork-specs', 'README.md')), true);
 });
+
+test('every authored i18n fragment package ships both active locales', () => {
+  const fragments = [
+    'apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-diagnostics',
+    'apps/sdkwork-doctor-pc/packages/sdkwork-doctor-pc-shell',
+    'apps/sdkwork-doctor-pc/packages/sdkwork-doctor-pc-diagnostics',
+    'apps/sdkwork-doctor-h5/packages/sdkwork-doctor-h5-shell',
+    'apps/sdkwork-doctor-h5/packages/sdkwork-doctor-h5-diagnostics',
+  ];
+  for (const fragmentRoot of fragments) {
+    for (const locale of ['en-US', 'zh-CN']) {
+      const localeRoot = path.join(repoRoot, fragmentRoot, 'src', 'i18n', locale);
+      assert.equal(fs.existsSync(localeRoot), true, fragmentRoot + ' must own src/i18n/' + locale);
+    }
+    assert.equal(fs.existsSync(path.join(repoRoot, fragmentRoot, 'src', 'i18n', 'index.ts')), true);
+  }
+});

@@ -12,12 +12,18 @@
       "types": "./src/index.ts",
       "import": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./i18n": {
+      "types": "./src/i18n/index.ts",
+      "import": "./src/i18n/index.ts",
+      "default": "./src/i18n/index.ts"
     }
   },
   "dependencies": {
     "@sdkwork/doctor-common-diagnostics": "workspace:*",
     "@sdkwork/doctor-h5-commons": "workspace:*",
-    "@sdkwork/doctor-h5-diagnostics": "workspace:*"
+    "@sdkwork/doctor-h5-diagnostics": "workspace:*",
+    "react-i18next": "^17.0.11"
   },
   "peerDependencies": {
     "react": "^19.0.0",
