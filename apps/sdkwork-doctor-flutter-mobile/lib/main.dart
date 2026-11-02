@@ -13,7 +13,11 @@ const String _agentsApiBaseUrl = String.fromEnvironment('AGENTS_API_BASE_URL', d
 void main() => runApp(const DoctorApp());
 
 class DoctorApp extends StatefulWidget {
-  const DoctorApp({super.key});
+  const DoctorApp({super.key, this.initialLocale});
+
+  /// Forces the starting locale (tests and host overrides); otherwise the
+  /// platform locale decides.
+  final String? initialLocale;
 
   @override
   State<DoctorApp> createState() => _DoctorAppState();
@@ -26,7 +30,9 @@ class _DoctorAppState extends State<DoctorApp> {
   @override
   void initState() {
     super.initState();
-    _locale = resolveCareLocale(WidgetsBinding.instance.platformDispatcher.locale.toLanguageTag());
+    _locale = resolveCareLocale(
+      widget.initialLocale ?? WidgetsBinding.instance.platformDispatcher.locale.toLanguageTag(),
+    );
     _agent = createCareAgent(agentsApiBaseUrl: _agentsApiBaseUrl, getAccessToken: _hostAccessToken);
   }
 
@@ -127,6 +133,36 @@ String _levelKey(TriageLevel level) {
   }
 }
 
+/// Page heading shared by the three tabs, so every tab states what it is and
+/// which conversation mode is answering.
+class _PageHeader extends StatelessWidget {
+  const _PageHeader({required this.title, required this.subtitle, this.extra});
+
+  final String title;
+  final String subtitle;
+  final String? extra;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(title, style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 4),
+          Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+          if (extra != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(extra!, style: Theme.of(context).textTheme.bodySmall),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class ChatTab extends StatefulWidget {
   const ChatTab({super.key, required this.locale, required this.agent, required this.member});
 
@@ -169,6 +205,16 @@ class _ChatTabState extends State<ChatTab> {
     final String locale = widget.locale;
     return Column(
       children: <Widget>[
+        _PageHeader(
+          title: careText(locale, 'platform.care.chat.title'),
+          subtitle: careText(locale, 'platform.care.chat.subtitle', params: <String, String>{
+            'member': widget.member.label,
+          }),
+          extra: careText(
+            locale,
+            widget.agent.mode == 'hosted' ? 'platform.care.mode.hosted' : 'platform.care.mode.offline',
+          ),
+        ),
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.all(16),
@@ -244,37 +290,48 @@ class DoctorTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Card(
-          child: ListTile(
-            title: Text(careText(locale, 'platform.care.doctor.panel')),
-            subtitle: Text(member.label),
-          ),
+        _PageHeader(
+          title: careText(locale, 'platform.care.doctor.title'),
+          subtitle: careText(locale, 'platform.care.doctor.subtitle'),
         ),
-        Card(
-          child: ListTile(
-            title: Text(careText(locale, 'platform.care.fact.allergies')),
-            subtitle: Text(_join(member.allergies)),
-          ),
-        ),
-        Card(
-          child: ListTile(
-            title: Text(careText(locale, 'platform.care.fact.conditions')),
-            subtitle: Text(_join(member.chronicConditions)),
-          ),
-        ),
-        Card(
-          child: ListTile(
-            title: Text(careText(locale, 'platform.care.fact.medications')),
-            subtitle: Text(_join(member.medications)),
-          ),
-        ),
-        Card(
-          child: ListTile(
-            title: Text(careText(locale, 'platform.care.doctor.actions')),
-            subtitle: Text(careText(locale, 'platform.care.doctor.actionsHint')),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: <Widget>[
+              Card(
+                child: ListTile(
+                  title: Text(careText(locale, 'platform.care.doctor.panel')),
+                  subtitle: Text(member.label),
+                ),
+              ),
+              Card(
+                child: ListTile(
+                  title: Text(careText(locale, 'platform.care.fact.allergies')),
+                  subtitle: Text(_join(member.allergies)),
+                ),
+              ),
+              Card(
+                child: ListTile(
+                  title: Text(careText(locale, 'platform.care.fact.conditions')),
+                  subtitle: Text(_join(member.chronicConditions)),
+                ),
+              ),
+              Card(
+                child: ListTile(
+                  title: Text(careText(locale, 'platform.care.fact.medications')),
+                  subtitle: Text(_join(member.medications)),
+                ),
+              ),
+              Card(
+                child: ListTile(
+                  title: Text(careText(locale, 'platform.care.doctor.actions')),
+                  subtitle: Text(careText(locale, 'platform.care.doctor.actionsHint')),
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -292,32 +349,43 @@ class MeTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool complete = member.allergies.isNotEmpty || member.chronicConditions.isNotEmpty;
-    return ListView(
-      padding: const EdgeInsets.all(16),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Card(
-          child: ListTile(
-            title: Text(member.label),
-            subtitle: Text(
-              '${careText(locale, 'platform.care.me.completeness')}: '
-              '${careText(locale, complete ? 'platform.care.me.completenessInProgress' : 'platform.care.me.completenessNeedsReview')}',
-            ),
-            trailing: Chip(label: Text(careText(locale, 'platform.care.active'))),
-          ),
+        _PageHeader(
+          title: careText(locale, 'platform.care.me.title'),
+          subtitle: careText(locale, 'platform.care.me.subtitle'),
         ),
-        Card(
-          child: ListTile(
-            title: Text(careText(locale, 'platform.care.me.mode')),
-            subtitle: Text(careText(
-              locale,
-              agent.mode == 'hosted' ? 'platform.care.mode.hosted' : 'platform.care.mode.offline',
-            )),
-          ),
-        ),
-        Card(
-          child: ListTile(
-            title: Text(careText(locale, 'platform.care.me.device')),
-            subtitle: Text(careText(locale, 'platform.care.me.deviceHint')),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: <Widget>[
+              Card(
+                child: ListTile(
+                  title: Text(member.label),
+                  subtitle: Text(
+                    '${careText(locale, 'platform.care.me.completeness')}: '
+                    '${careText(locale, complete ? 'platform.care.me.completenessInProgress' : 'platform.care.me.completenessNeedsReview')}',
+                  ),
+                  trailing: Chip(label: Text(careText(locale, 'platform.care.active'))),
+                ),
+              ),
+              Card(
+                child: ListTile(
+                  title: Text(careText(locale, 'platform.care.me.mode')),
+                  subtitle: Text(careText(
+                    locale,
+                    agent.mode == 'hosted' ? 'platform.care.mode.hosted' : 'platform.care.mode.offline',
+                  )),
+                ),
+              ),
+              Card(
+                child: ListTile(
+                  title: Text(careText(locale, 'platform.care.me.device')),
+                  subtitle: Text(careText(locale, 'platform.care.me.deviceHint')),
+                ),
+              ),
+            ],
           ),
         ),
       ],
