@@ -1,0 +1,35 @@
+{
+  "name": "@sdkwork/doctor-pc",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "SDKWork Doctor PC browser application (Adaptive Web desktop surface).",
+  "scripts": {
+    "dev": "node ../../scripts/dev-surface.mjs --surface pc --mode standalone.development",
+    "dev:standalone": "node ../../scripts/dev-surface.mjs --surface pc --mode standalone.development",
+    "dev:cloud": "node ../../scripts/dev-surface.mjs --surface pc --mode cloud.development",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "node --test tests/pc-surface.test.mjs",
+    "check": "pnpm typecheck && pnpm test",
+    "clean": "node ../../scripts/clean-dist.mjs --surface pc"
+  },
+  "dependencies": {
+    "@sdkwork/doctor-common-diagnostics": "workspace:*",
+    "@sdkwork/doctor-pc-commons": "workspace:*",
+    "@sdkwork/doctor-pc-core": "workspace:*",
+    "@sdkwork/doctor-pc-diagnostics": "workspace:*",
+    "@sdkwork/doctor-pc-shell": "workspace:*",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.17.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "^5.8.2",
+    "vite": "^6.3.0"
+  }
+}

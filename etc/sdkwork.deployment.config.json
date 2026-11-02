@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "kind": "sdkwork.deployment.config",
+  "applicationCode": "sdkwork-doctor",
+  "appKey": "sdkwork-doctor",
+  "supportedDeploymentProfiles": ["standalone", "cloud"],
+  "defaultDeploymentProfile": "standalone",
+  "environments": ["development", "test", "staging", "demo", "production"],
+  "surfaces": [
+    {
+      "architecture": "pc",
+      "appRoot": "apps/sdkwork-doctor-pc",
+      "runtimeTargets": ["browser"],
+      "runtimeConfig": "apps/sdkwork-doctor-pc/config/browser/runtime-env.<deployment-profile>.<environment>.example.json"
+    },
+    {
+      "architecture": "h5",
+      "appRoot": "apps/sdkwork-doctor-h5",
+      "runtimeTargets": ["browser"],
+      "runtimeConfig": "apps/sdkwork-doctor-h5/config/browser/runtime-env.<deployment-profile>.<environment>.example.json"
+    }
+  ]
+}

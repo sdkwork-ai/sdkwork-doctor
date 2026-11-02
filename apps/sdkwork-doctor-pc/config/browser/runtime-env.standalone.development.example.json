@@ -1,0 +1,9 @@
+{
+  "environment": "development",
+  "deploymentProfile": "standalone",
+  "profileId": "standalone.development",
+  "browserOriginMode": "same-origin",
+  "appApiBaseUrl": "/",
+  "backendApiBaseUrl": "/",
+  "openApiBaseUrl": "/"
+}

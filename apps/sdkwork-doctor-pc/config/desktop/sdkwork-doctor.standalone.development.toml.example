@@ -1,0 +1,5 @@
+# Desktop user runtime (CONFIG_SPEC.md). Installed copies live in the user private config root.
+mode = "desktop"
+deployment_profile = "standalone"
+environment = "development"
+local_service_enabled = false

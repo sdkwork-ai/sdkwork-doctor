@@ -1,0 +1,283 @@
+{
+  "schemaVersion": 3,
+  "kind": "agent.app",
+  "app": {
+    "key": "sdkwork-doctor",
+    "name": "sdkwork-doctor",
+    "displayName": "SDKWork Doctor",
+    "description": "Diagnostics console for SDKWork application surfaces: runtime profile, browser capabilities, locale, storage, clock, API base URLs, and runtime-document reachability.",
+    "appType": "APP_REACT",
+    "officialWebsiteUrl": "https://sdkwork.com/apps/sdkwork-doctor",
+    "supportUrl": "https://sdkwork.com/support",
+    "privacyPolicyUrl": "https://sdkwork.com/privacy",
+    "termsOfServiceUrl": "https://sdkwork.com/terms",
+    "vendor": "SDKWork",
+    "versionSource": "package.json",
+    "identifiers": {
+      "packageName": null,
+      "bundleId": null,
+      "desktopAppId": "com.sdkwork.sdkwork-doctor.desktop",
+      "containerImage": "registry.sdkwork.com/apps/sdkwork-doctor"
+    }
+  },
+  "backend": {
+    "domain": "platform",
+    "capabilities": [
+      "diagnostics"
+    ],
+    "apiSurfaces": [],
+    "tenantId": "100001",
+    "organizationId": "0",
+    "accessTokenPermissionScope": [],
+    "apiAuthorities": []
+  },
+  "runtime": {
+    "family": "web",
+    "framework": "react-vite",
+    "runtimes": [
+      "BROWSER"
+    ],
+    "modes": [
+      "saas",
+      "private",
+      "local"
+    ],
+    "rootDirectories": [
+      "apps",
+      "specs",
+      "docs",
+      "scripts",
+      "tests",
+      "etc"
+    ],
+    "supportedDeploymentProfiles": [
+      "standalone",
+      "cloud"
+    ],
+    "defaultDeploymentProfile": "standalone"
+  },
+  "media": {
+    "icons": {
+      "primary": {
+        "id": "sdkwork-doctor-primary-icon",
+        "type": "ICON",
+        "purpose": "PRIMARY",
+        "url": "https://cdn.sdkwork.com/apps/sdkwork-doctor/assets/icon-1024.png",
+        "platform": "APP",
+        "locale": "en-US",
+        "width": 1024,
+        "height": 1024,
+        "format": "PNG",
+        "fileSizeBytes": 524288,
+        "alphaChannel": false,
+        "sortOrder": 0,
+        "enabled": true,
+        "metadata": {
+          "generatedPlaceholder": true
+        }
+      },
+      "platform": [],
+      "metadata": {
+        "generatedPlaceholder": true
+      }
+    },
+    "screenshots": [
+      {
+        "id": "sdkwork-doctor-web-screenshot",
+        "type": "SCREENSHOT",
+        "purpose": "CATALOG_SCREENSHOT",
+        "url": "https://cdn.sdkwork.com/apps/sdkwork-doctor/media/web-screenshot.png",
+        "platform": "WEB",
+        "locale": "en-US",
+        "deviceClass": "BROWSER",
+        "displayType": "WEB_DESKTOP",
+        "width": 1920,
+        "height": 1080,
+        "format": "PNG",
+        "fileSizeBytes": 1048576,
+        "alphaChannel": false,
+        "caption": "SDKWork Doctor PC diagnostics overview.",
+        "sortOrder": 0,
+        "enabled": true,
+        "metadata": {
+          "generatedPlaceholder": true,
+          "altText": "SDKWork Doctor diagnostics overview on a desktop browser."
+        }
+      }
+    ],
+    "previews": [
+      {
+        "id": "sdkwork-doctor-catalog-preview",
+        "type": "PREVIEW_IMAGE",
+        "purpose": "CATALOG_PREVIEW",
+        "url": "https://cdn.sdkwork.com/apps/sdkwork-doctor/media/preview-cover.png",
+        "platform": "WEB",
+        "locale": "en-US",
+        "width": 1600,
+        "height": 900,
+        "format": "PNG",
+        "fileSizeBytes": 786432,
+        "alphaChannel": false,
+        "caption": "SDKWork Doctor catalog preview.",
+        "sortOrder": 0,
+        "enabled": true,
+        "metadata": {
+          "generatedPlaceholder": true,
+          "altText": "SDKWork Doctor preview cover."
+        }
+      }
+    ],
+    "metadata": {
+      "assetVersion": "0.1.0",
+      "defaultLocale": "en-US"
+    }
+  },
+  "publish": {
+    "channels": [
+      "dev"
+    ],
+    "status": "ACTIVE",
+    "platforms": [
+      "WEB",
+      "H5"
+    ],
+    "installPlatforms": [
+      "WEB",
+      "H5"
+    ],
+    "defaultPackageId": "pc-web-browser-standalone-web-url",
+    "installSkill": {
+      "name": "sdkwork-skills-app"
+    },
+    "stores": [],
+    "storeUrl": "https://sdkwork.com/apps/sdkwork-doctor"
+  },
+  "artifacts": {
+    "installConfig": {
+      "defaultPackageId": "pc-web-browser-standalone-web-url",
+      "installCommand": "sdkwork install sdkwork-doctor",
+      "launchCommand": "sdkwork open sdkwork-doctor",
+      "uninstallCommand": "sdkwork uninstall sdkwork-doctor",
+      "packages": [
+        {
+          "id": "pc-web-browser-standalone-web-url",
+          "name": "SDKWork Doctor PC standalone browser bundle",
+          "sourceType": "WEB_URL",
+          "packageFormat": "ZIP",
+          "platform": "WEB",
+          "architecture": "any",
+          "targetPlatform": "web",
+          "clientArchitecture": "pc-web",
+          "runtimeTarget": "browser",
+          "url": "https://cdn.sdkwork.com/apps/sdkwork-doctor/STABLE/0.1.0/pc-web-standalone-0.1.0.zip",
+          "profileBinding": "fixed",
+          "deploymentProfile": "standalone",
+          "enabled": true,
+          "metadata": {
+            "releaseBuildDeferred": true
+          }
+        },
+        {
+          "id": "pc-web-browser-cloud-web-url",
+          "name": "SDKWork Doctor PC cloud browser bundle",
+          "sourceType": "WEB_URL",
+          "packageFormat": "ZIP",
+          "platform": "WEB",
+          "architecture": "any",
+          "targetPlatform": "web",
+          "clientArchitecture": "pc-web",
+          "runtimeTarget": "browser",
+          "url": "https://cdn.sdkwork.com/apps/sdkwork-doctor/STABLE/0.1.0/pc-web-cloud-0.1.0.zip",
+          "profileBinding": "fixed",
+          "deploymentProfile": "cloud",
+          "enabled": true,
+          "metadata": {
+            "releaseBuildDeferred": true
+          }
+        },
+        {
+          "id": "h5-browser-standalone-web-url",
+          "name": "SDKWork Doctor H5 standalone browser bundle",
+          "sourceType": "WEB_URL",
+          "packageFormat": "ZIP",
+          "platform": "H5",
+          "architecture": "any",
+          "targetPlatform": "h5",
+          "clientArchitecture": "h5",
+          "runtimeTarget": "browser",
+          "url": "https://cdn.sdkwork.com/apps/sdkwork-doctor/STABLE/0.1.0/h5-standalone-0.1.0.zip",
+          "profileBinding": "fixed",
+          "deploymentProfile": "standalone",
+          "enabled": true,
+          "metadata": {
+            "releaseBuildDeferred": true
+          }
+        },
+        {
+          "id": "h5-browser-cloud-web-url",
+          "name": "SDKWork Doctor H5 cloud browser bundle",
+          "sourceType": "WEB_URL",
+          "packageFormat": "ZIP",
+          "platform": "H5",
+          "architecture": "any",
+          "targetPlatform": "h5",
+          "clientArchitecture": "h5",
+          "runtimeTarget": "browser",
+          "url": "https://cdn.sdkwork.com/apps/sdkwork-doctor/STABLE/0.1.0/h5-cloud-0.1.0.zip",
+          "profileBinding": "fixed",
+          "deploymentProfile": "cloud",
+          "enabled": true,
+          "metadata": {
+            "releaseBuildDeferred": true
+          }
+        }
+      ]
+    }
+  },
+  "release": {
+    "version": "0.1.0",
+    "channel": "dev",
+    "currentVersion": "0.1.0",
+    "defaultChannel": "STABLE",
+    "latest": {
+      "STABLE": "0.1.0"
+    },
+    "notes": [
+      {
+        "version": "0.1.0",
+        "releaseChannel": "STABLE",
+        "title": "SDKWork Doctor 0.1.0",
+        "summary": "Initial standards-compliant scaffold of the SDKWork Doctor PC and H5 surfaces.",
+        "content": "Initial SDKWork App Standard v3 manifest for SDKWork Doctor. Diagnostics checks cover runtime profile, browser capabilities, secure context, storage, locale, clock, API base URLs, and runtime-document reachability.",
+        "highlights": [
+          "Adaptive Web PC and H5 surfaces under one workspace",
+          "Shared diagnostics contract package",
+          "Runtime-env documents per deployment profile and lifecycle environment"
+        ],
+        "packageIds": [
+          "pc-web-browser-standalone-web-url",
+          "pc-web-browser-cloud-web-url",
+          "h5-browser-standalone-web-url",
+          "h5-browser-cloud-web-url"
+        ],
+        "publishedAt": "2026-11-02T00:00:00Z",
+        "current": true,
+        "forceUpdate": false,
+        "minSupportedVersion": "0.1.0",
+        "metadata": {}
+      }
+    ]
+  },
+  "security": {
+    "secretsPolicy": "No credentials, tokens, or private keys are stored in this manifest.",
+    "checksumRequired": false,
+    "signatureRequired": false,
+    "sbomRequired": false
+  },
+  "metadata": {
+    "standardVersion": "2026-06-12",
+    "canonicalSpecs": "../sdkwork-specs/README.md",
+    "deploymentConfig": "etc/sdkwork.deployment.config.json",
+    "standardOwner": "sdkwork-platform"
+  }
+}

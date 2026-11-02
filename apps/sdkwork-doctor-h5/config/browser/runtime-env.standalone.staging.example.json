@@ -1,0 +1,9 @@
+{
+  "environment": "staging",
+  "deploymentProfile": "standalone",
+  "profileId": "standalone.staging",
+  "browserOriginMode": "same-origin",
+  "appApiBaseUrl": "/",
+  "backendApiBaseUrl": "/",
+  "openApiBaseUrl": "/"
+}

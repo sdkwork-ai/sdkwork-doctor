@@ -1,0 +1,9 @@
+{
+  "environment": "production",
+  "deploymentProfile": "standalone",
+  "profileId": "standalone.production",
+  "browserOriginMode": "same-origin",
+  "appApiBaseUrl": "/",
+  "backendApiBaseUrl": "/",
+  "openApiBaseUrl": "/"
+}

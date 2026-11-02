@@ -1,0 +1,40 @@
+{
+  "name": "@sdkwork/doctor-h5-shell",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "SDKWork Doctor H5 mobile shell, tab bar, and route composition.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@sdkwork/doctor-common-diagnostics": "workspace:*",
+    "@sdkwork/doctor-h5-commons": "workspace:*",
+    "@sdkwork/doctor-h5-diagnostics": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-router-dom": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "react": "^19.2.0",
+    "react-router-dom": "^7.17.0",
+    "typescript": "^5.8.2"
+  },
+  "sdkwork": {
+    "workspace": "sdkwork-doctor",
+    "product": "sdkwork-doctor",
+    "architecture": "h5",
+    "domain": "platform",
+    "capability": "shell",
+    "status": "scaffold"
+  }
+}

@@ -1,0 +1,4 @@
+# Server runtime for a locally supervised browser surface. Secrets never belong in this file.
+bind = "127.0.0.1:3911"
+deployment_profile = "standalone"
+environment = "development"

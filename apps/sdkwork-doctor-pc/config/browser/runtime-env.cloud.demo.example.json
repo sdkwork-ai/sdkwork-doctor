@@ -1,0 +1,10 @@
+{
+  "environment": "demo",
+  "deploymentProfile": "cloud",
+  "profileId": "cloud.demo",
+  "browserOriginMode": "same-origin",
+  "appApiBaseUrl": "/",
+  "backendApiBaseUrl": "/",
+  "openApiBaseUrl": "/",
+  "cloudApiBaseUrl": "https://api-demo.sdkwork.com"
+}

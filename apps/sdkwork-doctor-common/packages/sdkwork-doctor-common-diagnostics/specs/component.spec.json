@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "kind": "sdkwork.component.spec",
+  "component": {
+    "name": "@sdkwork/doctor-common-diagnostics",
+    "displayName": "SDKWork Doctor Common Diagnostics",
+    "version": "0.1.0",
+    "type": "node-package",
+    "root": "apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-diagnostics",
+    "domain": "platform",
+    "capability": "diagnostics",
+    "surface": "shared",
+    "languages": [
+      "typescript"
+    ],
+    "generated": false,
+    "manifests": [
+      "package.json"
+    ]
+  },
+  "canonicalSpecs": [
+    {
+      "file": "APPLICATION_SPEC.md",
+      "path": "../../../../../sdkwork-specs/APPLICATION_SPEC.md",
+      "purpose": "Canonical standard for this component."
+    },
+    {
+      "file": "MODULE_SPEC.md",
+      "path": "../../../../../sdkwork-specs/MODULE_SPEC.md",
+      "purpose": "Canonical standard for this component."
+    },
+    {
+      "file": "COMPOSABLE_ARCHITECTURE_SPEC.md",
+      "path": "../../../../../sdkwork-specs/COMPOSABLE_ARCHITECTURE_SPEC.md",
+      "purpose": "Canonical standard for this component."
+    },
+    {
+      "file": "COMPONENT_SPEC.md",
+      "path": "../../../../../sdkwork-specs/COMPONENT_SPEC.md",
+      "purpose": "Canonical standard for this component."
+    },
+    {
+      "file": "CODE_STYLE_SPEC.md",
+      "path": "../../../../../sdkwork-specs/CODE_STYLE_SPEC.md",
+      "purpose": "Canonical standard for this component."
+    },
+    {
+      "file": "NAMING_SPEC.md",
+      "path": "../../../../../sdkwork-specs/NAMING_SPEC.md",
+      "purpose": "Canonical standard for this component."
+    },
+    {
+      "file": "TYPESCRIPT_CODE_SPEC.md",
+      "path": "../../../../../sdkwork-specs/TYPESCRIPT_CODE_SPEC.md",
+      "purpose": "Canonical standard for this component."
+    }
+  ],
+  "contracts": {
+    "layerRole": "frontend-core",
+    "publicExports": [
+      "."
+    ],
+    "providedPorts": [
+      {
+        "name": "doctorCheckCatalog",
+        "export": "."
+      },
+      {
+        "name": "doctorRunner",
+        "export": "."
+      }
+    ],
+    "requiredPorts": [],
+    "runtimeEntrypoints": [
+      "createDoctorRegistry",
+      "runDoctorChecks"
+    ],
+    "routeManifest": null,
+    "sdkClients": [],
+    "sdkDependencies": [],
+    "permissionComposition": {},
+    "dependencyApiExports": [],
+    "dependencyApiSurfaces": [],
+    "events": [],
+    "configKeys": []
+  },
+  "verification": {
+    "commands": [
+      "pnpm --dir apps/sdkwork-doctor-pc typecheck",
+      "pnpm test"
+    ]
+  }
+}

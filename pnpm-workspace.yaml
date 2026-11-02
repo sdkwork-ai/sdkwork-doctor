@@ -1,0 +1,9 @@
+packages:
+  - "apps/sdkwork-doctor-common/packages/*"
+  - "apps/sdkwork-doctor-pc"
+  - "apps/sdkwork-doctor-pc/packages/*"
+  - "apps/sdkwork-doctor-h5"
+  - "apps/sdkwork-doctor-h5/packages/*"
+
+onlyBuiltDependencies:
+  - esbuild

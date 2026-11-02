@@ -1,0 +1,42 @@
+# Build output
+node_modules/
+dist/
+build/
+coverage/
+
+# Local runtime state (RUNTIME_DIRECTORY_SPEC.md)
+.runtime/
+**/.runtime/
+
+# Environment and secret carriers
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# SDKWork workspace local state
+.sdkwork/local/
+.sdkwork/tmp/
+.sdkwork/cache/
+.sdkwork/secrets/
+.sdkwork/manual-backups/
+**/.sdkwork/local/
+**/.sdkwork/tmp/
+**/.sdkwork/cache/
+**/.sdkwork/secrets/
+**/.sdkwork/manual-backups/
+
+# Compiler emit is never tracked beside source; only map files are ignored by pattern.
+*.js.map
+*.d.ts.map
+
+# Logs and OS noise
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Playwright and test artifacts
+test-results/
+playwright-report/

@@ -1,0 +1,31 @@
+{
+  "name": "sdkwork-doctor-workspace",
+  "private": true,
+  "version": "0.1.0",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm dev:standalone",
+    "dev:standalone": "node scripts/dev-session.mjs start --deployment-profile standalone --environment development",
+    "dev:cloud": "node scripts/dev-session.mjs start --deployment-profile cloud --environment development",
+    "stop": "node scripts/dev-session.mjs stop",
+    "build": "pnpm build:pc && pnpm build:h5",
+    "build:pc": "pnpm --dir apps/sdkwork-doctor-pc build",
+    "build:h5": "pnpm --dir apps/sdkwork-doctor-h5 build",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "node --test tests/repository-layout.test.mjs tests/app-manifest.test.mjs tests/package-boundaries.test.mjs",
+    "check": "pnpm typecheck && pnpm test && pnpm check:specs",
+    "check:specs": "node scripts/verify-specs.mjs",
+    "api:assembly:materialize": "node ../sdkwork-specs/tools/materialize-api-assembly.mjs --root .",
+    "api:assembly:validate": "node ../sdkwork-specs/tools/validate-api-assembly.mjs --root .",
+    "verify": "pnpm check && pnpm build",
+    "clean": "node scripts/clean-dist.mjs --all"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

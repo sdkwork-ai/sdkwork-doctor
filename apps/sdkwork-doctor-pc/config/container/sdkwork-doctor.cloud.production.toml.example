@@ -1,0 +1,4 @@
+# Container runtime. Mounted secrets and environment are injected by the host.
+bind = "0.0.0.0:8080"
+deployment_profile = "cloud"
+environment = "production"

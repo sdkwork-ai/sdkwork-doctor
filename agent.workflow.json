@@ -1,0 +1,106 @@
+{
+  "$schema": "../sdkwork-github-workflow/schemas/agent-workflow.schema.json",
+  "schemaVersion": "2026-06-06.agent.workflow.v1",
+  "app": {
+    "id": "sdkwork-doctor",
+    "name": "sdkwork-doctor",
+    "repository": "sdkwork-ai/sdkwork-doctor",
+    "sourcePath": ".",
+    "configPath": "agent.app.config.json"
+  },
+  "release": {
+    "artifactPrefix": "sdkwork-doctor",
+    "defaultVersion": "0.1.0"
+  },
+  "dependencies": [
+    {
+      "id": "sdkwork-specs",
+      "repository": "sdkwork-ai/sdkwork-specs",
+      "refInput": "SDKWORK_SPECS_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    }
+  ],
+  "toolchains": {},
+  "lifecycle": {},
+  "targets": [
+    {
+      "id": "pc-web-browser-standalone-web-url",
+      "packageId": "pc-web-browser-standalone-web-url",
+      "profileBinding": "fixed",
+      "deploymentProfile": "standalone",
+      "runtimeTarget": "browser",
+      "targetPlatform": "web",
+      "clientArchitecture": "pc-web",
+      "profile": "browser",
+      "platform": "web",
+      "architecture": "universal",
+      "formats": [
+        "zip"
+      ],
+      "runner": "ubuntu-24.04",
+      "outputGlobs": [
+        "apps/sdkwork-doctor-pc/dist/**"
+      ]
+    },
+    {
+      "id": "pc-web-browser-cloud-web-url",
+      "packageId": "pc-web-browser-cloud-web-url",
+      "profileBinding": "fixed",
+      "deploymentProfile": "cloud",
+      "runtimeTarget": "browser",
+      "targetPlatform": "web",
+      "clientArchitecture": "pc-web",
+      "profile": "browser",
+      "platform": "web",
+      "architecture": "universal",
+      "formats": [
+        "zip"
+      ],
+      "runner": "ubuntu-24.04",
+      "outputGlobs": [
+        "apps/sdkwork-doctor-pc/dist/**"
+      ]
+    },
+    {
+      "id": "h5-browser-standalone-web-url",
+      "packageId": "h5-browser-standalone-web-url",
+      "profileBinding": "fixed",
+      "deploymentProfile": "standalone",
+      "runtimeTarget": "browser",
+      "targetPlatform": "h5",
+      "clientArchitecture": "h5",
+      "profile": "browser",
+      "platform": "h5",
+      "architecture": "universal",
+      "formats": [
+        "zip"
+      ],
+      "runner": "ubuntu-24.04",
+      "outputGlobs": [
+        "apps/sdkwork-doctor-h5/dist/**"
+      ]
+    },
+    {
+      "id": "h5-browser-cloud-web-url",
+      "packageId": "h5-browser-cloud-web-url",
+      "profileBinding": "fixed",
+      "deploymentProfile": "cloud",
+      "runtimeTarget": "browser",
+      "targetPlatform": "h5",
+      "clientArchitecture": "h5",
+      "profile": "browser",
+      "platform": "h5",
+      "architecture": "universal",
+      "formats": [
+        "zip"
+      ],
+      "runner": "ubuntu-24.04",
+      "outputGlobs": [
+        "apps/sdkwork-doctor-h5/dist/**"
+      ]
+    }
+  ],
+  "security": {},
+  "publish": {},
+  "deployments": []
+}
