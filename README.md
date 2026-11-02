@@ -44,6 +44,34 @@ Public runtime values are checked in per `<deployment-profile>.<environment>`:
 
 The Vite development server serves `/runtime-env.json` from those files and the production build emits the same document, so a static artifact carries its deploy-time configuration. Deployment bindings live in `etc/sdkwork.deployment.config.json`.
 
+
+## Family Doctor Capability
+
+The product is now a family private-doctor agent application with three tabs on every client:
+
+| Tab | PC / H5 | Flutter | Mini program |
+| --- | --- | --- | --- |
+| Chat | `/doctor/chat` | `ChatTab` | `pages/conversation` |
+| Doctor | `/doctor/doctor` | `DoctorTab` | `pages/doctor` |
+| Me | `/doctor/me` | `MeTab` | `pages/profile` |
+
+Shared contracts:
+
+- `@sdkwork/doctor-common-doctor` owns family members, health summary, and emergency-first triage.
+- `contracts/triage-rules.json` is the single red-flag vocabulary; a parity test fails when any client drifts.
+- `@sdkwork/doctor-common-agent` owns `AgentConversationPort`, the offline care adapter, and `resolveCareAgentMode()` (hosted vs offline is explicit, never a silent fallback).
+
+### Verified
+
+- `pnpm verify` (typecheck, 24 contract tests, canonical validators, PC/H5 builds).
+- `flutter analyze` clean and `flutter test` 3/3.
+- `agent.app.config.json` covers WEB, H5, MP_WEIXIN, APP_IOS, APP_ANDROID with 7 install packages.
+
+### Known limits
+
+- The hosted `sdkwork-agents` conversation path is selected and specified but not constructed: it needs a deployed agents API base URL plus an IAM access token. Until then only the offline adapter runs.
+- Care page body copy is still English literals; only tab labels are localized.
+- Mini program and Flutter mirror triage rules instead of binding the hosted transport.
 ## Documentation
 
 - [Documentation index](docs/README.md)
