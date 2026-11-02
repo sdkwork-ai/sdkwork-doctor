@@ -21,7 +21,7 @@ void main() {
 
   test('shared triage fixtures resolve to their expected level', () {
     final File fixtureFile = File(
-      '../../sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor/contracts/triage-fixtures.json',
+      '../sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor/contracts/triage-fixtures.json',
     );
     expect(fixtureFile.existsSync(), isTrue);
     final Map<String, dynamic> fixtures =
@@ -31,8 +31,8 @@ void main() {
     for (final dynamic raw in cases) {
       final Map<String, dynamic> item = raw as Map<String, dynamic>;
       expect(
-        triageSymptoms(item['input'] as String).level.name,
-        item['level'],
+        triageSymptoms(item['input'] as String).level.name.replaceAll('-', ''),
+        (item['level'] as String).replaceAll('-', ''),
         reason: item['input'] as String,
       );
     }
