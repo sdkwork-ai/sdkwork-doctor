@@ -31,8 +31,8 @@ void main() {
     for (final dynamic raw in cases) {
       final Map<String, dynamic> item = raw as Map<String, dynamic>;
       expect(
-        triageSymptoms(item['input'] as String).level.name.replaceAll('-', ''),
-        (item['level'] as String).replaceAll('-', ''),
+        triageSymptoms(item['input'] as String).level.name.replaceAll('-', '').toLowerCase(),
+        (item['level'] as String).replaceAll('-', '').toLowerCase(),
         reason: item['input'] as String,
       );
     }
