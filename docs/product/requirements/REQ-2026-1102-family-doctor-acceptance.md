@@ -28,21 +28,21 @@ Scope: 对话 / 医生 / 我的 three-tab family doctor application across four 
 
 Commands run from the repository root on 2026-11-02:
 
-- `pnpm typecheck` — 16 workspace projects, no errors.
-- `pnpm test` — 86 tests, 86 pass, 0 fail.
-- `pnpm check:i18n` — i18n standard check passed, locale gate wired.
-- `pnpm check:specs` — all canonical validators pass: baseline, workspace layout,
+- `pnpm typecheck` �?16 workspace projects, no errors.
+- `pnpm test` �?86 tests, 86 pass, 0 fail.
+- `pnpm check:i18n` �?i18n standard check passed, locale gate wired.
+- `pnpm check:specs` �?all canonical validators pass: baseline, workspace layout,
   gitignore, docs, agent/workflow, pnpm scripts, app manifest + deployment, source
   config, repository baseline content gate, apps index, i18n, component ports,
   frontend/permission composition, layering, workspace protocol, Vite aliases,
   verify-repo.
-- `pnpm build` — PC and H5 production bundles built.
-- `pnpm check` — typecheck + tests + i18n + specs, all green.
+- `pnpm build` �?PC and H5 production bundles built.
+- `pnpm check` �?typecheck + tests + i18n + specs, all green.
 
 Flutter surface (`apps/sdkwork-doctor-flutter-mobile`):
 
-- `flutter analyze` — no issues.
-- `flutter test` — 36 tests, all pass (triage fixtures, catalog drift, fingerprint
+- `flutter analyze` �?no issues.
+- `flutter test` �?36 tests, all pass (triage fixtures, catalog drift, fingerprint
   vectors, hosted transport, visit-record store, and seven widget tests covering
   the four tabs, the emergency lead, and the recorded consultation).
 
@@ -209,7 +209,7 @@ advice text (see "Not delivered").
   as CSS variables before the first paint. Invalid values fall back one by one.
 - **Reuse boundary per spec**: `COMPOSABLE_ARCHITECTURE_SPEC.md` section 4 requires
   cross-architecture reuse through tokens, i18n keys, page identity, and ports
-  rather than UI/runtime imports — which is exactly what the earlier
+  rather than UI/runtime imports �?which is exactly what the earlier
   `design-tokens.contract.json` plus this block catalogue provide. Mobile surfaces
   keep their native tab bars and satisfy the contract through the same block ids
   and label keys.
@@ -217,3 +217,26 @@ advice text (see "Not delivered").
   build` both surfaces, `pnpm check:specs` all validators, Flutter 36 tests and
   `flutter analyze` clean, and visual checks of the PC rail/home at 1440×900 and
   the H5 home/tabs at 390×844.
+
+## Addendum (rounds 35-36): mobile home chrome aligned with sdkwork-agents
+
+- **Navbar**: the Flutter home now uses the same chrome as the sdkwork-agents
+  surface �?light app bar, menu button on the left, centered page title (the
+  active block label), and a single "+" action on the right. The translate icon
+  moved into the drawer.
+- **Drawer**: a left drawer repeats the block navigation (chat / doctor / records
+  / me) with an active pill, shows the household member and the active
+  conversation mode, and carries the locale switch and the device-privacy note.
+  Labels come from the care catalog; the drawer no longer displays raw i18n keys.
+- **"+" capability**: the right-hand action opens a sheet with two entries �?  "新建问诊" starts a fresh consultation (new agent instance, empty transcript,
+  landing restored) and "看病记录" jumps to the records block. Visit records are
+  never cleared by this action.
+- **Chat-first landing**: the empty chat state mirrors the agents home: a single
+  question ("今天哪里不舒服？"), one hint line, and four symptom suggestions that
+  prefill the composer instead of sending immediately. The page header (member +
+  mode) appears only after the first exchange.
+- **Evidence**: Flutter `flutter analyze` clean and `flutter test` 50 passed (4
+  new widget tests: navbar affordances, drawer contents, suggestion prefill,
+  new-consultation reset with records preserved); repository `pnpm test` 103
+  passed and `pnpm check:specs` green; verified on the Android emulator with
+  screenshots of the zh home, drawer, and "+" sheet.

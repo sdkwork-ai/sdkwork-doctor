@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
 import 'agent/care_agent.dart';
+import 'bootstrap/sdkwork_tls_trust.dart';
 import 'family.dart';
 import 'i18n/care_i18n.dart';
 import 'records/visit_store.dart';
 import 'theme/doctor_theme.dart';
 import 'triage.dart';
+import 'ui/care_shell.dart';
 
 /// Agents API base URL injected by the host build; empty selects the offline
 /// adapter. The access token is never a build-time value: a host shell injects
@@ -13,6 +15,10 @@ import 'triage.dart';
 const String _agentsApiBaseUrl = String.fromEnvironment('AGENTS_API_BASE_URL', defaultValue: '');
 
 Future<void> main() async {
+  // The HTTPS trust layer must be installed before any HTTP client is
+  // created, so it runs ahead of binding initialization and services.
+  SdkworkTlsTrust.installForApp();
+
   WidgetsFlutterBinding.ensureInitialized();
   final VisitRecordStore records = await VisitRecordStore.load(SharedPreferencesVisitRecordStorage());
   runApp(DoctorApp(records: records));
@@ -35,6 +41,7 @@ class DoctorApp extends StatefulWidget {
 class _DoctorAppState extends State<DoctorApp> {
   late String _locale;
   late CareAgent _agent;
+  int _consultation = 0;
 
   @override
   void initState() {
@@ -42,14 +49,26 @@ class _DoctorAppState extends State<DoctorApp> {
     _locale = resolveCareLocale(
       widget.initialLocale ?? WidgetsBinding.instance.platformDispatcher.locale.toLanguageTag(),
     );
-    _agent = createCareAgent(agentsApiBaseUrl: _agentsApiBaseUrl, getAccessToken: _hostAccessToken);
+    _agent = _newAgent();
   }
+
+  CareAgent _newAgent() =>
+      createCareAgent(agentsApiBaseUrl: _agentsApiBaseUrl, getAccessToken: _hostAccessToken);
 
   /// Replaced by the platform host once IAM sign-in exists; null means offline.
   String? _hostAccessToken() => null;
 
   void _toggleLocale() {
     setState(() => _locale = _locale == 'zh-CN' ? 'en-US' : 'zh-CN');
+  }
+
+  /// Starts a fresh consultation: a new agent instance and an empty transcript.
+  /// Visit records are owned by the store and survive this action.
+  void _startNewConsultation() {
+    setState(() {
+      _agent = _newAgent();
+      _consultation += 1;
+    });
   }
 
   @override
@@ -61,6 +80,8 @@ class _DoctorAppState extends State<DoctorApp> {
         locale: _locale,
         agent: _agent,
         records: widget.records,
+        consultation: _consultation,
+        onNewConsultation: _startNewConsultation,
         onToggleLocale: _toggleLocale,
       ),
     );
@@ -73,12 +94,16 @@ class DoctorHome extends StatefulWidget {
     required this.locale,
     required this.agent,
     required this.records,
+    required this.consultation,
+    required this.onNewConsultation,
     required this.onToggleLocale,
   });
 
   final String locale;
   final CareAgent agent;
   final VisitRecordStore records;
+  final int consultation;
+  final VoidCallback onNewConsultation;
   final VoidCallback onToggleLocale;
 
   @override
@@ -88,24 +113,76 @@ class DoctorHome extends StatefulWidget {
 class _DoctorHomeState extends State<DoctorHome> {
   int _index = 0;
 
+  static const List<String> _tabLabelKeys = <String>[
+    'platform.care.nav.chat',
+    'platform.care.nav.doctor',
+    'platform.care.nav.records',
+    'platform.care.nav.me',
+  ];
+
+  Future<void> _openActions() async {
+    final String? action = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: kSurface,
+      builder: (BuildContext sheetContext) => NewConsultationSheet(
+        locale: widget.locale,
+        onNewConsultation: () => Navigator.pop(sheetContext, 'new'),
+        onOpenRecords: () => Navigator.pop(sheetContext, 'records'),
+      ),
+    );
+    if (!mounted || action == null) return;
+    if (action == 'records') {
+      setState(() => _index = 2);
+      return;
+    }
+    widget.onNewConsultation();
+    setState(() => _index = 0);
+  }
+
   @override
   Widget build(BuildContext context) {
     final String locale = widget.locale;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SDKWork Doctor'),
+        centerTitle: true,
+        leading: Builder(
+          builder: (BuildContext buttonContext) => IconButton(
+            tooltip: careText(locale, 'platform.care.nav.menu'),
+            icon: const Icon(Icons.menu),
+            onPressed: () => Scaffold.of(buttonContext).openDrawer(),
+          ),
+        ),
+        title: Text(careText(locale, _tabLabelKeys[_index])),
         actions: <Widget>[
           IconButton(
-            tooltip: careText(locale, 'platform.care.me.title'),
-            icon: const Icon(Icons.translate),
-            onPressed: widget.onToggleLocale,
+            tooltip: careText(locale, 'platform.care.action.newConsultation'),
+            icon: const Icon(Icons.add),
+            onPressed: _openActions,
           ),
         ],
+      ),
+      drawer: CareDrawer(
+        agent: widget.agent,
+        index: _index,
+        locale: locale,
+        member: demoSelfMember,
+        onSelect: (int value) {
+          Navigator.of(context).maybePop();
+          setState(() => _index = value);
+        },
+        onToggleLocale: widget.onToggleLocale,
       ),
       body: IndexedStack(
         index: _index,
         children: <Widget>[
-          ChatTab(locale: locale, agent: widget.agent, records: widget.records, member: demoSelfMember),
+          ChatTab(
+            key: ValueKey<int>(widget.consultation),
+            locale: locale,
+            agent: widget.agent,
+            records: widget.records,
+            member: demoSelfMember,
+          ),
           DoctorTab(locale: locale, member: demoSelfMember),
           RecordsTab(locale: locale, records: widget.records),
           MeTab(locale: locale, agent: widget.agent, member: demoSelfMember),
@@ -121,7 +198,7 @@ class _DoctorHomeState extends State<DoctorHome> {
           ),
           NavigationDestination(
             icon: const Icon(Icons.medical_information_outlined),
-            label: careText(locale, 'platform.care.doctor.title'),
+            label: careText(locale, 'platform.care.nav.doctor'),
           ),
           NavigationDestination(
             icon: const Icon(Icons.receipt_long_outlined),
@@ -129,7 +206,7 @@ class _DoctorHomeState extends State<DoctorHome> {
           ),
           NavigationDestination(
             icon: const Icon(Icons.person_outline),
-            label: careText(locale, 'platform.care.me.title'),
+            label: careText(locale, 'platform.care.nav.me'),
           ),
         ],
       ),
@@ -264,45 +341,45 @@ class _ChatTabState extends State<ChatTab> {
     final String locale = widget.locale;
     return Column(
       children: <Widget>[
-        _PageHeader(
-          title: careText(locale, 'platform.care.chat.title'),
-          subtitle: careText(locale, 'platform.care.chat.subtitle', params: <String, String>{
-            'member': widget.member.label,
-          }),
-          extra: careText(
-            locale,
-            widget.agent.mode == 'hosted' ? 'platform.care.mode.hosted' : 'platform.care.mode.offline',
+        // The landing owns the first screen, mirroring the sdkwork-agents home.
+        // Once a consultation starts, the page header carries the member and mode.
+        if (_messages.isNotEmpty)
+          _PageHeader(
+            title: careText(locale, 'platform.care.chat.title'),
+            subtitle: careText(locale, 'platform.care.chat.subtitle', params: <String, String>{
+              'member': widget.member.label,
+            }),
+            extra: careText(
+              locale,
+              widget.agent.mode == 'hosted' ? 'platform.care.mode.hosted' : 'platform.care.mode.offline',
+            ),
           ),
-        ),
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: _messages.isEmpty ? 1 : _messages.length,
-            itemBuilder: (BuildContext context, int index) {
-              if (_messages.isEmpty) {
-                return Card(
-                  child: ListTile(
-                    title: Text(careText(locale, 'platform.care.chat.panel')),
-                    subtitle: Text(careText(locale, 'platform.care.chat.empty')),
-                  ),
-                );
-              }
-              final CareMessage message = _messages[index];
-              return Card(
-                child: ListTile(
-                  title: Text(careText(
-                    locale,
-                    message.isUser ? 'platform.care.chat.you' : 'platform.care.chat.doctor',
-                  )),
-                  subtitle: Text(message.text),
-                  trailing: _LevelChip(
-                    label: careText(locale, _levelKey(message.level)),
-                    warn: message.level == TriageLevel.emergency || message.level == TriageLevel.urgent,
-                  ),
+          child: _messages.isEmpty
+              ? CareChatLanding(
+                  locale: locale,
+                  onPick: (String suggestion) => setState(() => _controller.text = suggestion),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _messages.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    final CareMessage message = _messages[index];
+                    return Card(
+                      child: ListTile(
+                        title: Text(careText(
+                          locale,
+                          message.isUser ? 'platform.care.chat.you' : 'platform.care.chat.doctor',
+                        )),
+                        subtitle: Text(message.text),
+                        trailing: _LevelChip(
+                          label: careText(locale, _levelKey(message.level)),
+                          warn: message.level == TriageLevel.emergency || message.level == TriageLevel.urgent,
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
         ),
         if (_error != null)
           Padding(

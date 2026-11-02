@@ -58,6 +58,9 @@
     ],
     "requiredPorts": [],
     "runtimeEntrypoints": [
+      "CareChatLanding",
+      "CareDrawer",
+      "NewConsultationSheet",
       "ChatTab",
       "DoctorTab",
       "RecordsTab",

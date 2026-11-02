@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Tech-blue, flat, borderless theme.
 ///
@@ -12,6 +13,7 @@ const Color kTechCyan = Color(0xFF00D2FF);
 const Color kChromeNavy = Color(0xFF061A3A);
 const Color kChromeInk = Color(0xFFDCE8FF);
 const Color kCanvas = Color(0xFFF2F5FA);
+const Color kSurface = Color(0xFFFFFFFF);
 const Color kSurfaceAlt = Color(0xFFE6EDF8);
 const Color kInk = Color(0xFF0A1324);
 const Color kMuted = Color(0xFF5A6B85);
@@ -42,13 +44,20 @@ ThemeData buildDoctorTheme() {
     colorScheme: scheme,
     scaffoldBackgroundColor: kCanvas,
     appBarTheme: const AppBarTheme(
-      backgroundColor: kChromeNavy,
-      foregroundColor: Colors.white,
+      // Aligned with the sdkwork-agents surface: light chrome, centered page
+      // title, a menu button on the left and one primary action on the right.
+      backgroundColor: Colors.white,
+      foregroundColor: kInk,
       elevation: 0,
       scrolledUnderElevation: 0,
-      centerTitle: false,
-      titleTextStyle: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
-      iconTheme: IconThemeData(color: kChromeInk),
+      centerTitle: true,
+      titleTextStyle: TextStyle(color: kInk, fontSize: 17, fontWeight: FontWeight.w600),
+      iconTheme: IconThemeData(color: kInk),
+      systemOverlayStyle: SystemUiOverlayStyle.dark,
+    ),
+    drawerTheme: const DrawerThemeData(
+      backgroundColor: Colors.white,
+      elevation: 0,
     ),
     cardTheme: const CardThemeData(
       color: Colors.white,

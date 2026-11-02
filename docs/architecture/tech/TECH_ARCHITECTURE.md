@@ -95,6 +95,13 @@ paint. The app root stays a thin composition root; blocks, tokens, and page
 identities are the cross-client reuse surface (`COMPOSABLE_ARCHITECTURE_SPEC.md`
 section 4).
 
+On Flutter the same block ids render as a bottom tab bar, and the home surface
+adopts the sdkwork-agents chrome: a light app bar with a menu button, a centered
+page title, and one primary "+" action; a left drawer that repeats the block
+navigation, locale, and active mode; and a chat-first landing with symptom
+prompts that prefill the composer. The "+" sheet starts a new consultation
+(new agent instance, empty transcript) while visit records stay untouched.
+
 ## 2. Technology Choices
 
 - **React 19 + Vite 6 + TypeScript 5.8 (strict)** for PC and H5.

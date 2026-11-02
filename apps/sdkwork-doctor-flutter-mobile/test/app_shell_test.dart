@@ -17,12 +17,65 @@ void main() {
   testWidgets('renders the four care tabs from the generated catalog', (WidgetTester tester) async {
     await pumpApp(tester);
 
-    expect(find.text('SDKWork Doctor'), findsOneWidget);
     expect(find.text(careText('zh-CN', 'platform.care.nav.chat')), findsWidgets);
     expect(find.text(careText('zh-CN', 'platform.care.doctor.title')), findsWidgets);
     expect(find.text(careText('zh-CN', 'platform.care.nav.records')), findsWidgets);
-    expect(find.text(careText('zh-CN', 'platform.care.me.title')), findsWidgets);
-    expect(find.text(careText('zh-CN', 'platform.care.chat.title')), findsOneWidget);
+    expect(find.text(careText('zh-CN', 'platform.care.nav.me')), findsWidgets);
+    expect(find.text(careText('zh-CN', 'platform.care.home.prompt')), findsOneWidget);
+  });
+
+  testWidgets('the navbar has the drawer button, centered title, and plus action', (WidgetTester tester) async {
+    await pumpApp(tester);
+
+    expect(find.byTooltip(careText('zh-CN', 'platform.care.nav.menu')), findsOneWidget);
+    expect(find.byTooltip(careText('zh-CN', 'platform.care.action.newConsultation')), findsOneWidget);
+    expect(find.widgetWithText(AppBar, careText('zh-CN', 'platform.care.nav.chat')), findsOneWidget);
+  });
+
+  testWidgets('the drawer lists the blocks and the active mode', (WidgetTester tester) async {
+    await pumpApp(tester);
+
+    await tester.tap(find.byTooltip(careText('zh-CN', 'platform.care.nav.menu')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('SDKWork Doctor'), findsOneWidget);
+    expect(find.text(careText('zh-CN', 'platform.care.mode.offline')), findsWidgets);
+    expect(find.text(careText('zh-CN', 'platform.care.nav.records')), findsWidgets);
+
+    await tester.tap(find.text(careText('zh-CN', 'platform.care.nav.records')).last);
+    await tester.pumpAndSettle();
+    expect(find.text(careText('zh-CN', 'platform.care.records.title')), findsWidgets);
+  });
+
+  testWidgets('the chat landing suggests symptoms and prefills the composer', (WidgetTester tester) async {
+    await pumpApp(tester);
+
+    expect(find.text(careText('zh-CN', 'platform.care.home.prompt')), findsOneWidget);
+    final String suggestion = careText('zh-CN', 'platform.care.suggest.chestPain');
+    await tester.tap(find.text(suggestion));
+    await tester.pumpAndSettle();
+
+    final TextField composer = tester.widget<TextField>(find.byType(TextField));
+    expect(composer.controller?.text, suggestion);
+  });
+
+  testWidgets('the plus action starts a new consultation and keeps records', (WidgetTester tester) async {
+    final VisitRecordStore records = await pumpApp(tester);
+
+    await tester.enterText(find.byType(TextField), 'chest pain for 10 minutes');
+    await tester.tap(find.text(careText('zh-CN', 'platform.care.chat.send')));
+    await tester.pumpAndSettle();
+    expect(find.text('chest pain for 10 minutes'), findsWidgets);
+    expect(records.records.length, 1);
+
+    await tester.tap(find.byTooltip(careText('zh-CN', 'platform.care.action.newConsultation')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(careText('zh-CN', 'platform.care.action.newConsultation')).last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('chest pain for 10 minutes'), findsNothing);
+    expect(find.text(careText('zh-CN', 'platform.care.home.prompt')), findsOneWidget);
+    expect(records.records.length, 1, reason: 'visit records survive a new consultation');
   });
 
   testWidgets('switching to the doctor tab shows the household record', (WidgetTester tester) async {
@@ -101,6 +154,6 @@ void main() {
 
     expect(find.text(careText('en-US', 'platform.care.nav.chat')), findsWidgets);
     expect(find.text(careText('en-US', 'platform.care.nav.records')), findsWidgets);
-    expect(find.text(careText('en-US', 'platform.care.chat.title')), findsOneWidget);
+    expect(find.text(careText('en-US', 'platform.care.home.prompt')), findsOneWidget);
   });
 }
