@@ -13,6 +13,8 @@ final List<RegExp> _emergency = <RegExp>[
   RegExp(r'chest pain|\u80f8\u75db', caseSensitive: false),
   RegExp(r'cannot breathe|\u547c\u5438\u56f0\u96be', caseSensitive: false),
   RegExp(r'unconscious|\u660f\u8ff7', caseSensitive: false),
+  RegExp(r'severe bleeding', caseSensitive: false),
+  RegExp(r'slurred speech', caseSensitive: false),
 ];
 
 TriageResult triageSymptoms(String text) {

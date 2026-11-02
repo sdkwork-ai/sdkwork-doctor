@@ -9,6 +9,7 @@ const read = (relativePath) => fs.readFileSync(path.join(repoRoot, relativePath)
 const CHAT = '\u5bf9\u8bdd';
 const DOCTOR = '\u533b\u751f';
 const ME = '\u6211\u7684';
+const RULES = 'apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor/contracts/triage-rules.json';
 
 test('every client exposes the same three care tabs', () => {
   const pc = read('apps/sdkwork-doctor-pc/packages/sdkwork-doctor-pc-shell/src/navigation.ts');
@@ -26,20 +27,30 @@ test('every client exposes the same three care tabs', () => {
   assert.equal(flutter.split('NavigationDestination(').length - 1, 3);
 });
 
+test('the shared triage rule contract is the single source of the red-flag vocabulary', () => {
+  const rules = JSON.parse(read(RULES));
+  assert.equal(rules.kind, 'sdkwork.doctor.triage-rules');
+  assert.deepEqual(rules.levels, ['emergency', 'urgent', 'routine', 'self-care']);
+  const names = rules.redFlags.map((flag) => flag.name);
+  assert.equal(new Set(names).size, names.length, 'red-flag names must be unique');
+  assert.ok(rules.redFlags.length >= 6);
+});
+
 test('red-flag tokens match across the four triage implementations', () => {
+  const rules = JSON.parse(read(RULES));
   const sources = {
     shared: read('apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor/src/index.ts'),
     flutter: read('apps/sdkwork-doctor-flutter-mobile/lib/triage.dart'),
     miniProgram: read('apps/sdkwork-doctor-mini-program/src/pages/conversation/index.js'),
   };
-  const tokens = ['chest pain', '\\u80f8\\u75db', 'cannot breathe', '\\u547c\\u5438\\u56f0\\u96be', 'unconscious', '\\u660f\\u8ff7'];
-  for (const token of tokens) {
+  for (const flag of rules.redFlags) {
+    const literal = flag.pattern;
+    const escaped = [...literal].map((char) => char.charCodeAt(0) > 127 ? '\\u' + char.charCodeAt(0).toString(16).padStart(4, '0') : char).join('');
     for (const [name, source] of Object.entries(sources)) {
-      const needle = token.startsWith('\\u') ? String.fromCharCode(parseInt(token.slice(2), 16)) : token;
       const haystack = source.toLowerCase();
       assert.ok(
-        haystack.includes(needle.toLowerCase()) || haystack.includes(token.toLowerCase()),
-        name + ' must keep red-flag token ' + token,
+        haystack.includes(literal.toLowerCase()) || haystack.includes(escaped.toLowerCase()),
+        name + ' must keep red-flag token ' + flag.name,
       );
     }
   }

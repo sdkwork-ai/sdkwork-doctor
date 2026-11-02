@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "kind": "sdkwork.doctor.triage-rules",
+  "levels": ["emergency", "urgent", "routine", "self-care"],
+  "redFlags": [
+    { "name": "chest-pain", "pattern": "chest pain" },
+    { "name": "chest-pain-zh", "pattern": "\u80f8\u75db" },
+    { "name": "breathing", "pattern": "cannot breathe" },
+    { "name": "breathing-zh", "pattern": "\u547c\u5438\u56f0\u96be" },
+    { "name": "consciousness", "pattern": "unconscious" },
+    { "name": "consciousness-zh", "pattern": "\u660f\u8ff7" },
+    { "name": "bleeding", "pattern": "severe bleeding" },
+    { "name": "stroke", "pattern": "slurred speech" }
+  ],
+  "rules": [
+    "An emergency red flag escalates before any conversational reply is produced.",
+    "Every surface must use the same red-flag vocabulary; the parity contract test enforces it.",
+    "Emergency guidance names local emergency services and never offers self-treatment advice."
+  ]
+}
