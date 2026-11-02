@@ -40,3 +40,8 @@ Thumbs.db
 # Playwright and test artifacts
 test-results/
 playwright-report/
+
+# Flutter
+.dart_tool/
+**/.dart_tool/
+**/build/

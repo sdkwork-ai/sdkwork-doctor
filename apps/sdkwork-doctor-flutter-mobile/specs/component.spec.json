@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "kind": "sdkwork.component.spec",
+  "component": {
+    "name": "sdkwork_doctor_flutter_mobile",
+    "displayName": "SDKWork Doctor Flutter Mobile",
+    "version": "0.1.0",
+    "type": "flutter-app",
+    "root": "apps/sdkwork-doctor-flutter-mobile",
+    "domain": "platform",
+    "capability": "app",
+    "surface": "flutter",
+    "languages": [
+      "dart"
+    ],
+    "generated": false,
+    "manifests": [
+      "pubspec.yaml"
+    ]
+  },
+  "canonicalSpecs": [
+    {
+      "file": "FLUTTER_APP_MOBILE_ARCHITECTURE_SPEC.md",
+      "path": "../../../../sdkwork-specs/FLUTTER_APP_MOBILE_ARCHITECTURE_SPEC.md",
+      "purpose": "Flutter root architecture."
+    },
+    {
+      "file": "APP_FLUTTER_UI_SPEC.md",
+      "path": "../../../../sdkwork-specs/APP_FLUTTER_UI_SPEC.md",
+      "purpose": "Flutter UI rules."
+    },
+    {
+      "file": "APP_CLIENT_ARCHITECTURE_ALIGNMENT_SPEC.md",
+      "path": "../../../../sdkwork-specs/APP_CLIENT_ARCHITECTURE_ALIGNMENT_SPEC.md",
+      "purpose": "Cross-client route identity."
+    },
+    {
+      "file": "DART_CODE_SPEC.md",
+      "path": "../../../../sdkwork-specs/DART_CODE_SPEC.md",
+      "purpose": "Dart code rules."
+    },
+    {
+      "file": "COMPONENT_SPEC.md",
+      "path": "../../../../sdkwork-specs/COMPONENT_SPEC.md",
+      "purpose": "Component contract."
+    }
+  ],
+  "contracts": {
+    "layerRole": "runtime-composition",
+    "publicExports": [
+      "."
+    ],
+    "providedPorts": [
+      {
+        "name": "doctorFlutterApp",
+        "export": "."
+      }
+    ],
+    "requiredPorts": [],
+    "runtimeEntrypoints": [
+      "ChatTab",
+      "DoctorTab",
+      "MeTab"
+    ],
+    "routeManifest": null,
+    "sdkClients": [],
+    "sdkDependencies": [],
+    "permissionComposition": {},
+    "dependencyApiExports": [],
+    "dependencyApiSurfaces": [],
+    "events": [],
+    "configKeys": []
+  },
+  "verification": {
+    "commands": [
+      "flutter analyze",
+      "flutter test"
+    ]
+  }
+}
