@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "kind": "sdkwork.component.spec",
+  "component": {
+    "name": "@sdkwork/doctor-pc-care",
+    "displayName": "SDKWork Doctor PC Care Tabs",
+    "version": "0.1.0",
+    "type": "react-package",
+    "root": "apps/sdkwork-doctor-pc/packages/sdkwork-doctor-pc-care",
+    "domain": "platform",
+    "capability": "care",
+    "surface": "pc",
+    "languages": ["typescript"],
+    "generated": false,
+    "manifests": ["package.json"]
+  },
+  "canonicalSpecs": [
+    { "file": "APP_PC_ARCHITECTURE_SPEC.md", "path": "../../../../../sdkwork-specs/APP_PC_ARCHITECTURE_SPEC.md", "purpose": "PC application root architecture." },
+    { "file": "APP_PC_REACT_UI_SPEC.md", "path": "../../../../../sdkwork-specs/APP_PC_REACT_UI_SPEC.md", "purpose": "PC React package rules." },
+    { "file": "FRONTEND_SPEC.md", "path": "../../../../../sdkwork-specs/FRONTEND_SPEC.md", "purpose": "UI-service-SDK layering." },
+    { "file": "COMPONENT_SPEC.md", "path": "../../../../../sdkwork-specs/COMPONENT_SPEC.md", "purpose": "Component contract." },
+    { "file": "CODE_STYLE_SPEC.md", "path": "../../../../../sdkwork-specs/CODE_STYLE_SPEC.md", "purpose": "Code organization." },
+    { "file": "NAMING_SPEC.md", "path": "../../../../../sdkwork-specs/NAMING_SPEC.md", "purpose": "Naming." },
+    { "file": "TYPESCRIPT_CODE_SPEC.md", "path": "../../../../../sdkwork-specs/TYPESCRIPT_CODE_SPEC.md", "purpose": "TypeScript rules." }
+  ],
+  "contracts": {
+    "layerRole": "frontend-feature",
+    "publicExports": ["."],
+    "providedPorts": [{ "name": "doctorPcCareTabs", "export": "." }],
+    "requiredPorts": [
+      { "name": "doctorAgentConversation", "export": ".", "provider": "@sdkwork/doctor-common-agent" },
+      { "name": "doctorFamilyDomain", "export": ".", "provider": "@sdkwork/doctor-common-doctor" }
+    ],
+    "runtimeEntrypoints": ["ChatPage", "DoctorPage", "MePage"],
+    "routeManifest": null,
+    "sdkClients": [],
+    "sdkDependencies": [],
+    "permissionComposition": {},
+    "dependencyApiExports": [],
+    "dependencyApiSurfaces": [],
+    "events": [],
+    "configKeys": []
+  },
+  "verification": { "commands": ["pnpm --dir apps/sdkwork-doctor-pc typecheck", "pnpm test"] }
+}

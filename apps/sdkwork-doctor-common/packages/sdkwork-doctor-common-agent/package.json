@@ -1,0 +1,20 @@
+{
+  "name": "@sdkwork/doctor-common-agent",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Agent conversation port for SDKWork Doctor, with an offline deterministic care adapter.",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@sdkwork/doctor-common-doctor": "workspace:*"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  }
+}

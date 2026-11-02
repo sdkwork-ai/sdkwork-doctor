@@ -16,7 +16,7 @@ test('PC packages follow the sdkwork-doctor-pc prefix', () => {
   const names = fs.readdirSync(packagesDir);
   assert.ok(names.length >= 4, 'expected core, commons, shell, and diagnostics packages');
   for (const name of names) {
-    assert.match(name, /^sdkwork-doctor-pc-(core|commons|shell|diagnostics)$/u);
+    assert.match(name, /^sdkwork-doctor-pc-(core|commons|shell|diagnostics|care)$/u);
   }
 });
 

@@ -12,7 +12,15 @@ importers:
         specifier: ^5.8.2
         version: 5.9.3
 
+  apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-agent:
+    dependencies:
+      '@sdkwork/doctor-common-doctor':
+        specifier: workspace:*
+        version: link:../sdkwork-doctor-common-doctor
+
   apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-diagnostics: {}
+
+  apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor: {}
 
   apps/sdkwork-doctor-h5:
     dependencies:
@@ -137,9 +145,18 @@ importers:
 
   apps/sdkwork-doctor-pc:
     dependencies:
+      '@sdkwork/doctor-common-agent':
+        specifier: workspace:*
+        version: link:../sdkwork-doctor-common/packages/sdkwork-doctor-common-agent
       '@sdkwork/doctor-common-diagnostics':
         specifier: workspace:*
         version: link:../sdkwork-doctor-common/packages/sdkwork-doctor-common-diagnostics
+      '@sdkwork/doctor-common-doctor':
+        specifier: workspace:*
+        version: link:../sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor
+      '@sdkwork/doctor-pc-care':
+        specifier: workspace:*
+        version: link:packages/sdkwork-doctor-pc-care
       '@sdkwork/doctor-pc-commons':
         specifier: workspace:*
         version: link:packages/sdkwork-doctor-pc-commons
@@ -183,6 +200,34 @@ importers:
       vite:
         specifier: ^6.3.0
         version: 6.4.5
+
+  apps/sdkwork-doctor-pc/packages/sdkwork-doctor-pc-care:
+    dependencies:
+      '@sdkwork/doctor-common-agent':
+        specifier: workspace:*
+        version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-agent
+      '@sdkwork/doctor-common-diagnostics':
+        specifier: workspace:*
+        version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-diagnostics
+      '@sdkwork/doctor-common-doctor':
+        specifier: workspace:*
+        version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor
+      '@sdkwork/doctor-pc-commons':
+        specifier: workspace:*
+        version: link:../sdkwork-doctor-pc-commons
+      '@sdkwork/doctor-pc-diagnostics':
+        specifier: workspace:*
+        version: link:../sdkwork-doctor-pc-diagnostics
+      react:
+        specifier: ^19.0.0
+        version: 19.3.1
+    devDependencies:
+      '@types/react':
+        specifier: ^19.2.0
+        version: 19.3.0
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
 
   apps/sdkwork-doctor-pc/packages/sdkwork-doctor-pc-commons:
     dependencies:
@@ -240,6 +285,12 @@ importers:
       '@sdkwork/doctor-common-diagnostics':
         specifier: workspace:*
         version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-diagnostics
+      '@sdkwork/doctor-common-doctor':
+        specifier: workspace:*
+        version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor
+      '@sdkwork/doctor-pc-care':
+        specifier: workspace:*
+        version: link:../sdkwork-doctor-pc-care
       '@sdkwork/doctor-pc-commons':
         specifier: workspace:*
         version: link:../sdkwork-doctor-pc-commons

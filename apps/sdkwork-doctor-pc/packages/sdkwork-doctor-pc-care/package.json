@@ -1,0 +1,31 @@
+{
+  "name": "@sdkwork/doctor-pc-care",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "SDKWork Doctor PC care tabs: chat, doctor, and me.",
+  "exports": {
+    ".": {
+      "types": "./src/index.tsx",
+      "import": "./src/index.tsx",
+      "default": "./src/index.tsx"
+    }
+  },
+  "dependencies": {
+    "@sdkwork/doctor-common-agent": "workspace:*",
+    "@sdkwork/doctor-common-diagnostics": "workspace:*",
+    "@sdkwork/doctor-common-doctor": "workspace:*",
+    "@sdkwork/doctor-pc-commons": "workspace:*",
+    "@sdkwork/doctor-pc-diagnostics": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "typescript": "^5.8.2"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  }
+}

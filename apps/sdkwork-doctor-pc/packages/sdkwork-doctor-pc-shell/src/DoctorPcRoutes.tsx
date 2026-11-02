@@ -1,7 +1,8 @@
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import type { DoctorRuntimeContext } from '@sdkwork/doctor-common-diagnostics';
 
-import { ChecksPage, EnvironmentPage, OverviewPage, useDiagnosticsReport } from '@sdkwork/doctor-pc-diagnostics';
+import { ChatPage, DoctorPage, MePage } from '@sdkwork/doctor-pc-care';
+import { demoSelfMember } from '@sdkwork/doctor-common-doctor';
 
 import { AppShell } from './AppShell';
 
@@ -10,14 +11,14 @@ export interface DoctorPcRoutesProps {
   readonly hostLabel: string;
 }
 
-export function DoctorPcRoutes({ runtime, hostLabel }: DoctorPcRoutesProps) {
-  const state = useDiagnosticsReport(runtime);
+export function DoctorPcRoutes({ runtime }: DoctorPcRoutesProps) {
   return (
     <AppShell appVersion={runtime.appVersion} profileId={runtime.profileId}>
       <Routes>
-        <Route index element={<OverviewPage context={runtime} error={state.error} onRun={state.run} report={state.report} running={state.running} />} />
-        <Route path="checks" element={<ChecksPage report={state.report} />} />
-        <Route path="environment" element={<EnvironmentPage context={runtime} hostPlatform={hostLabel} />} />
+        <Route index element={<Navigate replace to="chat" />} />
+        <Route path="chat" element={<ChatPage member={demoSelfMember} />} />
+        <Route path="doctor" element={<DoctorPage member={demoSelfMember} />} />
+        <Route path="me" element={<MePage context={runtime} member={demoSelfMember} />} />
       </Routes>
     </AppShell>
   );

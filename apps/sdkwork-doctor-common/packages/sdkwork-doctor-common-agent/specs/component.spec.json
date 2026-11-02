@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "kind": "sdkwork.component.spec",
+  "component": {
+    "name": "@sdkwork/doctor-common-agent",
+    "displayName": "SDKWork Doctor Common Agent Port",
+    "version": "0.1.0",
+    "type": "node-package",
+    "root": "apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-agent",
+    "domain": "platform",
+    "capability": "agent-conversation",
+    "surface": "shared",
+    "languages": ["typescript"],
+    "generated": false,
+    "manifests": ["package.json"]
+  },
+  "canonicalSpecs": [
+    { "file": "APPLICATION_SPEC.md", "path": "../../../../../../sdkwork-specs/APPLICATION_SPEC.md", "purpose": "Application composition." },
+    { "file": "COMPONENT_SPEC.md", "path": "../../../../../../sdkwork-specs/COMPONENT_SPEC.md", "purpose": "Component contract." },
+    { "file": "CODE_STYLE_SPEC.md", "path": "../../../../../../sdkwork-specs/CODE_STYLE_SPEC.md", "purpose": "Code organization." },
+    { "file": "NAMING_SPEC.md", "path": "../../../../../../sdkwork-specs/NAMING_SPEC.md", "purpose": "Naming." },
+    { "file": "TYPESCRIPT_CODE_SPEC.md", "path": "../../../../../../sdkwork-specs/TYPESCRIPT_CODE_SPEC.md", "purpose": "TypeScript rules." }
+  ],
+  "contracts": {
+    "layerRole": "frontend-core",
+    "publicExports": ["."],
+    "providedPorts": [{ "name": "doctorAgentConversation", "export": "." }],
+    "requiredPorts": [{ "name": "doctorFamilyDomain", "export": ".", "provider": "@sdkwork/doctor-common-doctor" }],
+    "runtimeEntrypoints": ["createLocalCareAgent"],
+    "routeManifest": null,
+    "sdkClients": [],
+    "sdkDependencies": [],
+    "permissionComposition": {},
+    "dependencyApiExports": [],
+    "dependencyApiSurfaces": [],
+    "events": [],
+    "configKeys": []
+  },
+  "verification": { "commands": ["pnpm --dir apps/sdkwork-doctor-pc typecheck", "pnpm test"] }
+}

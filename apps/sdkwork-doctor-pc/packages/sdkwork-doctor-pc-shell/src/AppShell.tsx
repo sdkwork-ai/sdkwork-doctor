@@ -17,7 +17,7 @@ export function AppShell({ children, profileId, appVersion }: { children: ReactN
         <nav className="doctor-nav" aria-label={t('platform.diagnostics.nav.label')}>
           {doctorPcNavigation.map((item) => (
             <NavLink className="doctor-nav-link" end={item.end} key={item.to} to={item.to}>
-              {t(item.labelKey)}
+              {item.label}
             </NavLink>
           ))}
         </nav>
