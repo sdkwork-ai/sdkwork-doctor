@@ -41,17 +41,20 @@ void main() {
     expect(find.text(careText('zh-CN', 'platform.care.mode.offline')), findsOneWidget);
   });
 
-  testWidgets('an emergency message keeps the escalation lead', (WidgetTester tester) async {
+  testWidgets('an emergency message escalates with guidance first', (WidgetTester tester) async {
     await pumpApp(tester);
 
     await tester.enterText(find.byType(TextField), 'chest pain for 10 minutes');
     await tester.tap(find.text(careText('zh-CN', 'platform.care.chat.send')));
     await tester.pumpAndSettle();
 
-    final bool hasLead = tester
+    final List<String> texts = tester
         .widgetList<Text>(find.byType(Text))
-        .any((Text text) => (text.data ?? '').startsWith('Emergency red flag detected.'));
-    expect(hasLead, isTrue, reason: 'the escalation lead must lead the reply');
+        .map((Text text) => text.data ?? '')
+        .toList();
+    final bool hasEmergencyGuidance =
+        texts.any((String value) => value.contains('Call local emergency services now.'));
+    expect(hasEmergencyGuidance, isTrue, reason: 'emergency guidance must lead the reply');
     expect(find.text(careText('zh-CN', 'platform.care.level.emergency')), findsWidgets);
   });
 

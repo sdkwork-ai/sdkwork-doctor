@@ -423,9 +423,9 @@ export function resolveReplyTriage(userText: string, replyText: string): TriageR
 export function composeSafeReply(triage: TriageResult, replyText: string, member: FamilyMember): string {
   const who = member.displayName === 'Me' ? 'you' : member.displayName;
   const lead = triage.level === 'emergency'
-    ? EMERGENCY_LEAD + ' (' + who + ')'
+    ? EMERGENCY_LEAD
     : triage.level === 'urgent'
-      ? URGENT_LEAD + ' (' + who + ') ' + triage.actions.join(' ')
+      ? URGENT_LEAD + ' for ' + who + ' ' + triage.actions.join(' ')
       : '';
   const body = replyText.includes(SAFETY_LINE) ? replyText : replyText + ' ' + SAFETY_LINE;
   return lead ? lead + ' ' + body : body;

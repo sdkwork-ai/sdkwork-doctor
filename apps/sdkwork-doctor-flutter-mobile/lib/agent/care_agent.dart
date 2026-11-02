@@ -65,9 +65,11 @@ class OfflineCareAgent implements CareAgent {
     if (text.isEmpty) throw const CareAgentException('message must not be empty');
     final TriageResult triage = triageSymptoms(text);
     _history.add(CareMessage(role: 'user', text: text, level: triage.level));
+    // Offline answers already carry their own actions and safety line; adding the
+    // escalation lead here would duplicate them (TypeScript behaves the same way).
     final CareMessage reply = CareMessage(
       role: 'assistant',
-      text: _composeReply(triage, _offlineAnswer(triage), member),
+      text: _offlineAnswer(triage),
       level: triage.level,
     );
     _history.add(reply);
@@ -110,9 +112,9 @@ TriageResult resolveReplyTriage(String userText, String replyText) {
 String _composeReply(TriageResult triage, String replyText, FamilyMember member) {
   final String who = member.displayName == 'Me' ? 'you' : member.displayName;
   final String lead = triage.level == TriageLevel.emergency
-      ? '$_emergencyLead ($who)'
+      ? _emergencyLead
       : triage.level == TriageLevel.urgent
-          ? 'This needs a same-day clinician review ($who). ${triage.actions.join(' ')}'
+          ? 'This needs a same-day clinician review for $who. ${triage.actions.join(' ')}'
           : '';
   final String body = replyText.contains(_safetyLine) ? replyText : '$replyText $_safetyLine';
   return lead.isEmpty ? body : '$lead $body';
