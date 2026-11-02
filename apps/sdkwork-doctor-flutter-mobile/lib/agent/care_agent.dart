@@ -221,7 +221,12 @@ class HostedCareAgent implements CareAgent {
   String _turnPath(String sessionId) => '$_sessionsPath/${Uri.encodeComponent(sessionId)}/turns';
 
   Future<String> _ensureSession(String token) {
-    return _sessionFuture ??= _createSession(token);
+    // A failed create must not poison later sends: clear the cached future so
+    // the next attempt can establish the session.
+    return _sessionFuture ??= _createSession(token).catchError((Object error) {
+      _sessionFuture = null;
+      throw error;
+    });
   }
 
   Future<String> _createSession(String token) async {

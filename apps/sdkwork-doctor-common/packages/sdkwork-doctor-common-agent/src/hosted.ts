@@ -252,12 +252,17 @@ export function createHostedCareAgent(options: HostedCareAgentOptions): AgentCon
     return normalized;
   }
 
-  async function request(token: string, path: string, body: unknown): Promise<CareAgentHttpResponse> {
+  async function request(
+    token: string,
+    path: string,
+    body: unknown,
+    accept = 'application/json',
+  ): Promise<CareAgentHttpResponse> {
     return httpFetch(baseUrl + path, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Accept: 'application/json',
+        Accept: accept,
         Authorization: 'Bearer ' + token,
       },
       body: JSON.stringify(body),
@@ -287,7 +292,12 @@ export function createHostedCareAgent(options: HostedCareAgentOptions): AgentCon
 
   async function ensureSession(token: string): Promise<string> {
     if (!sessionPromise) {
-      sessionPromise = createSession(token);
+      // A failed create must not poison every later send: clear the cached
+      // promise so the next attempt can establish the session.
+      sessionPromise = createSession(token).catch((error: unknown) => {
+        sessionPromise = null;
+        throw error;
+      });
     }
     return sessionPromise;
   }
@@ -319,7 +329,7 @@ export function createHostedCareAgent(options: HostedCareAgentOptions): AgentCon
   }
 
   async function streamTurn(token: string, sessionId: string, body: CareAgentCreateTurnRequest): Promise<CareAgentTurnExecutionItem> {
-    const response = await request(token, careAgentsTurnPath(agentId, sessionId) + CARE_AGENT_STREAM_QUERY, body);
+    const response = await request(token, careAgentsTurnPath(agentId, sessionId) + CARE_AGENT_STREAM_QUERY, body, 'text/event-stream');
     if (!response.ok) {
       throw new CareAgentHttpError(response.status, problemFromText(await response.text()));
     }

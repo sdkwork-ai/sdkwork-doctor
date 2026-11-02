@@ -213,12 +213,20 @@ function createHostedAgent(options) {
         payloadHash: careSessionPayloadHash(SESSION_TITLE, entrySurface),
         requestedAt: now().toISOString(),
       };
-      sessionPromise = post(sessionsPath, body, accessToken).then((response) => {
-        if (response.status < 200 || response.status >= 300) throw problem(response.status, response.body);
-        const sessionId = envelopeItem(response.body).sessionId;
-        if (typeof sessionId !== 'string' || !sessionId) throw careAgentError('agents API session response is missing sessionId');
-        return sessionId;
-      });
+      sessionPromise = post(sessionsPath, body, accessToken)
+        .then((response) => {
+          if (response.status < 200 || response.status >= 300) throw problem(response.status, response.body);
+          const sessionId = envelopeItem(response.body).sessionId;
+          if (typeof sessionId !== 'string' || !sessionId) {
+            throw careAgentError('agents API session response is missing sessionId');
+          }
+          return sessionId;
+        })
+        .catch((error) => {
+          // A failed create must not poison later sends.
+          sessionPromise = null;
+          throw error;
+        });
     }
     return sessionPromise;
   }

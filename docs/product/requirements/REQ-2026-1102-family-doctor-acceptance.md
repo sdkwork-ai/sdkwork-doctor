@@ -27,7 +27,7 @@ Scope: 对话 / 医生 / 我的 three-tab family doctor application across four 
 Commands run from the repository root on 2026-11-02:
 
 - `pnpm typecheck` — 16 workspace projects, no errors.
-- `pnpm test` — 69 tests, 69 pass, 0 fail.
+- `pnpm test` — 71 tests, 71 pass, 0 fail.
 - `pnpm check:i18n` — i18n standard check passed (229 files), locale gate wired.
 - `pnpm check:specs` — all canonical validators pass: baseline, workspace layout,
   gitignore, docs, agent/workflow, pnpm scripts, app manifest + deployment, source
@@ -42,12 +42,13 @@ Flutter surface (`apps/sdkwork-doctor-flutter-mobile`):
 - `flutter analyze` — no issues.
 - `flutter test` — 23 tests, all pass (triage fixtures, 5 catalog drift checks,
   5 fingerprint vector checks, 9 hosted-transport checks).
-
-What the 69 Node tests actually assert:
+What the 71 Node tests actually assert:
 
 - The hosted path performs one session create plus one turn, sends the documented
   fields, reuses the session, parses both the non-streaming envelope and the SSE
   frames, and maps a `ProblemDetail` to `status`/`code`/`traceId`.
+- A failed session create is retried on the next send instead of poisoning the
+  port, in TypeScript and in the mini program.
 - An emergency red flag is never softened: the leading sentence is the emergency
   instruction whether the user text or the hosted answer contained the flag, in
   TypeScript, Dart, and the mini program.

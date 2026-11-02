@@ -261,6 +261,24 @@ test('a failed durable turn becomes a typed turn error', async () => {
   );
 });
 
+test('a failed session create is retried instead of poisoning the port', async () => {
+  received = [];
+  let attempts = 0;
+  const port = newPort({
+    stream: false,
+    fetchImpl: async (url, init) => {
+      attempts += 1;
+      if (attempts === 1) throw new Error('network down');
+      return fetch(url, init);
+    },
+  });
+  await assert.rejects(() => port.send('LEGACY_OK first', { member: MEMBER }), /network down/u);
+  const reply = await port.send('LEGACY_OK second', { member: MEMBER });
+  assert.match(reply.text, /Rest and fluids/u);
+  assert.ok(attempts >= 2, 'the second send must attempt a fresh session');
+  assert.equal(received.filter((entry) => entry.path === SESSIONS_PATH).length, 1);
+});
+
 test('a hosted configuration without a token is rejected, never downgraded', async () => {
   const port = newPort({ accessTokens: { getAccessToken: () => null } });
   await assert.rejects(() => port.send('LEGACY_OK hi', { member: MEMBER }), CareAgentAuthError);

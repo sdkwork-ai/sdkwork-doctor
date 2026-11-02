@@ -162,6 +162,25 @@ test('a failed durable turn rejects', async () => {
   await assert.rejects(() => care.send('FAIL_TURN headache', MEMBER), /agent turn failed|provider/u);
 });
 
+test('a failed session create is retried instead of poisoning the port', async () => {
+  const fake = transport();
+  let attempts = 0;
+  const flaky = (call) => {
+    attempts += 1;
+    if (attempts === 1) return Promise.reject(new Error('network down'));
+    return fake.request(call);
+  };
+  const care = agent.createCareAgent({
+    agentsApiBaseUrl: 'https://agents.example.com',
+    getAccessToken: () => 'test-token',
+    request: flaky,
+  });
+  await assert.rejects(() => care.send('LEGACY_OK first', MEMBER), /network down/u);
+  const reply = await care.send('LEGACY_OK second', MEMBER);
+  assert.match(reply.text, /Rest and fluids/u);
+  assert.ok(attempts >= 2);
+});
+
 test('a hosted configuration without a token is rejected, never downgraded', async () => {
   const fake = transport();
   const care = agent.createCareAgent({
