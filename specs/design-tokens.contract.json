@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "kind": "sdkwork.doctor.design-tokens",
+  "style": {
+    "name": "tech-blue-flat",
+    "principles": [
+      "tech blue as the single action colour",
+      "flat surfaces: no shadows and no elevation anywhere",
+      "borderless: separation comes from tonal background layers, never 1px borders"
+    ]
+  },
+  "colors": {
+    "canvas": "#F2F5FA",
+    "surface": "#FFFFFF",
+    "surfaceAlt": "#E6EDF8",
+    "nav": "#061A3A",
+    "navInk": "#DCE8FF",
+    "navMuted": "#8FA6CC",
+    "primary": "#0A5CFF",
+    "primaryStrong": "#0747C9",
+    "primarySoft": "#E7EFFF",
+    "accent": "#00D2FF",
+    "ink": "#0A1324",
+    "muted": "#5A6B85",
+    "ok": "#0E9F6E",
+    "okSoft": "#E3F7EF",
+    "warn": "#B26A00",
+    "warnSoft": "#FFF4E0",
+    "danger": "#E5484D",
+    "dangerSoft": "#FDECEC",
+    "neutral": "#5A6B85",
+    "neutralSoft": "#EEF1F6"
+  },
+  "shape": {
+    "radiusCard": 14,
+    "radiusControl": 10,
+    "radiusPill": 999,
+    "borderWidth": 0,
+    "elevation": 0
+  },
+  "typography": {
+    "family": "'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif",
+    "titleSize": 24,
+    "titleSizeMobile": 20
+  },
+  "surfaces": {
+    "pc": {
+      "sidebar": "nav",
+      "canvas": "canvas",
+      "card": "surface",
+      "nestedItem": "surfaceAlt",
+      "navActive": "primary"
+    },
+    "h5": {
+      "appbar": "nav",
+      "canvas": "canvas",
+      "card": "surface",
+      "nestedItem": "surfaceAlt",
+      "tabbar": "surface",
+      "tabActive": "primary"
+    },
+    "flutter": {
+      "appBar": "nav",
+      "scaffold": "canvas",
+      "card": "surface",
+      "chip": "primarySoft",
+      "navigationIndicator": "primarySoft"
+    },
+    "miniProgram": {
+      "navigationBar": "nav",
+      "canvas": "canvas",
+      "card": "surface",
+      "nestedItem": "surfaceAlt",
+      "tabSelected": "primary"
+    }
+  },
+  "rules": {
+    "forbiddenDeclarations": ["box-shadow", "border:", "border-top", "border-right", "border-bottom", "border-left"],
+    "allowedBorders": ["OutlinedBorder with BorderSide.none", "focus outline only"],
+    "focusRing": "2px primary outline with 2px offset"
+  }
+}

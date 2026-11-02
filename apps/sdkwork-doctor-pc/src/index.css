@@ -1,20 +1,36 @@
 :root {
   color-scheme: light;
-  --doctor-bg: #f5f7fb;
+
+  /* Tech-blue, flat, borderless. Values pinned by specs/design-tokens.contract.json. */
+  --doctor-bg: #f2f5fa;
   --doctor-surface: #ffffff;
-  --doctor-border: #dde3ee;
-  --doctor-text: #101828;
-  --doctor-muted: #5a6478;
-  --doctor-accent: #2563eb;
-  --doctor-ok: #067647;
-  --doctor-ok-bg: #ecfdf3;
-  --doctor-warn: #b54708;
-  --doctor-warn-bg: #fffaeb;
-  --doctor-error: #b42318;
-  --doctor-error-bg: #fef3f2;
-  --doctor-skipped: #475467;
-  --doctor-skipped-bg: #f2f4f7;
+  --doctor-surface-alt: #e6edf8;
+  --doctor-nav: #061a3a;
+  --doctor-nav-ink: #dce8ff;
+  --doctor-nav-muted: #8fa6cc;
+
+  --doctor-accent: #0a5cff;
+  --doctor-accent-strong: #0747c9;
+  --doctor-accent-soft: #e7efff;
+  --doctor-accent-cyan: #00d2ff;
+
+  --doctor-text: #0a1324;
+  --doctor-muted: #5a6b85;
+
+  --doctor-ok: #0e9f6e;
+  --doctor-ok-bg: #e3f7ef;
+  --doctor-warn: #b26a00;
+  --doctor-warn-bg: #fff4e0;
+  --doctor-error: #e5484d;
+  --doctor-error-bg: #fdecec;
+  --doctor-skipped: #5a6b85;
+  --doctor-skipped-bg: #eef1f6;
+
+  --doctor-radius: 14px;
+  --doctor-radius-sm: 10px;
+
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --doctor-font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
 * {
@@ -38,40 +54,48 @@ button {
   font: inherit;
 }
 
+:focus-visible {
+  outline: 2px solid var(--doctor-accent);
+  outline-offset: 2px;
+}
+
 .doctor-layout {
   display: grid;
-  grid-template-columns: 248px 1fr;
+  grid-template-columns: 252px 1fr;
   min-height: 100vh;
 }
 
+/* Chrome: deep navy, flat, no divider. */
 .doctor-sidebar {
-  border-right: 1px solid var(--doctor-border);
-  background: var(--doctor-surface);
-  padding: 24px 16px;
+  background: var(--doctor-nav);
+  padding: 28px 18px 24px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 26px;
+  color: var(--doctor-nav-ink);
 }
 
 .doctor-brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 8px;
+  padding: 0 6px;
 }
 
 .doctor-brand-mark {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 10px;
   background: var(--doctor-accent);
   color: #fff;
   display: grid;
   place-items: center;
   font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .doctor-brand-name {
+  color: #fff;
   font-weight: 650;
   letter-spacing: -0.01em;
 }
@@ -84,35 +108,46 @@ button {
 
 .doctor-nav-link {
   display: block;
-  padding: 9px 12px;
-  border-radius: 8px;
-  color: var(--doctor-muted);
+  padding: 10px 14px;
+  border-radius: var(--doctor-radius-sm);
+  color: var(--doctor-nav-muted);
   text-decoration: none;
   font-size: 14px;
+  font-weight: 500;
 }
 
 .doctor-nav-link:hover {
-  background: #eff3fb;
-  color: var(--doctor-text);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
 }
 
 .doctor-nav-link[aria-current='page'] {
-  background: #e7efff;
-  color: var(--doctor-accent);
+  background: var(--doctor-accent);
+  color: #fff;
   font-weight: 600;
 }
 
 .doctor-sidebar-footer {
   margin-top: auto;
-  padding: 0 8px;
+  padding: 0 6px;
   font-size: 12px;
-  color: var(--doctor-muted);
-  line-height: 1.6;
+  color: var(--doctor-nav-muted);
+  line-height: 1.7;
+}
+
+.doctor-sidebar-footer .doctor-button {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--doctor-nav-ink);
+}
+
+.doctor-sidebar-footer .doctor-button:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
 }
 
 .doctor-main {
-  padding: 32px 40px 56px;
-  max-width: 1080px;
+  padding: 36px 44px 60px;
+  max-width: 1120px;
 }
 
 .doctor-page-header {
@@ -126,26 +161,32 @@ button {
 .doctor-page-title {
   margin: 0 0 6px;
   font-size: 24px;
+  font-weight: 650;
   letter-spacing: -0.02em;
+  color: var(--doctor-text);
 }
 
 .doctor-page-subtitle {
   margin: 0;
   color: var(--doctor-muted);
   font-size: 14px;
+  line-height: 1.55;
 }
 
+/* Flat card: white on canvas, no border, no shadow. */
 .doctor-card {
   background: var(--doctor-surface);
-  border: 1px solid var(--doctor-border);
-  border-radius: 14px;
-  padding: 20px;
+  border: 0;
+  border-radius: var(--doctor-radius);
+  padding: 22px;
   margin-bottom: 16px;
 }
 
 .doctor-card-title {
   margin: 0 0 4px;
   font-size: 16px;
+  font-weight: 650;
+  color: var(--doctor-text);
 }
 
 .doctor-card-body {
@@ -163,9 +204,9 @@ button {
 }
 
 .doctor-stat {
-  background: var(--doctor-surface);
-  border: 1px solid var(--doctor-border);
-  border-radius: 12px;
+  background: var(--doctor-surface-alt);
+  border: 0;
+  border-radius: var(--doctor-radius-sm);
   padding: 16px;
 }
 
@@ -186,8 +227,9 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  border: 0;
   border-radius: 999px;
-  padding: 2px 10px;
+  padding: 3px 10px;
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
@@ -201,33 +243,42 @@ button {
 .doctor-check-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+/* Nested rows use the tonal layer instead of a border. */
 .doctor-check {
-  background: var(--doctor-surface);
-  border: 1px solid var(--doctor-border);
-  border-radius: 12px;
+  background: var(--doctor-surface-alt);
+  border: 0;
+  border-radius: var(--doctor-radius-sm);
   padding: 16px 18px;
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 8px 16px;
 }
 
-.doctor-check-title {
+.doctor-check > .doctor-badge { align-self: start; }\n\n.doctor-check-title {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
+  color: var(--doctor-text);
 }
 
 .doctor-check-summary {
   margin: 4px 0 0;
   color: var(--doctor-muted);
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.55;
+}
+
+.doctor-check-detail {
+  grid-column: 1 / -1;
+  margin: 6px 0 0;
+  color: var(--doctor-muted);
+  font-size: 12px;
 }
 
 .doctor-check-meta {
@@ -242,7 +293,7 @@ button {
   padding-left: 18px;
   color: var(--doctor-muted);
   font-size: 12px;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 .doctor-facts {
@@ -254,9 +305,23 @@ button {
 .doctor-facts th,
 .doctor-facts td {
   text-align: left;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--doctor-border);
+  padding: 11px 12px;
+  border: 0;
   vertical-align: top;
+}
+
+.doctor-facts tbody tr:nth-child(odd) {
+  background: var(--doctor-surface-alt);
+}
+
+.doctor-facts tbody tr:first-child th {
+  border-top-left-radius: var(--doctor-radius-sm);
+  border-bottom-left-radius: var(--doctor-radius-sm);
+}
+
+.doctor-facts tbody tr:first-child td {
+  border-top-right-radius: var(--doctor-radius-sm);
+  border-bottom-right-radius: var(--doctor-radius-sm);
 }
 
 .doctor-facts th {
@@ -265,27 +330,43 @@ button {
   font-weight: 500;
 }
 
+/* Flat controls: tonal fill, no border; hover deepens the fill. */
 .doctor-button {
-  border: 1px solid var(--doctor-border);
-  background: var(--doctor-surface);
+  border: 0;
+  background: var(--doctor-surface-alt);
   color: var(--doctor-text);
-  border-radius: 9px;
-  padding: 9px 14px;
+  border-radius: var(--doctor-radius-sm);
+  padding: 10px 16px;
   font-size: 14px;
   font-weight: 550;
   cursor: pointer;
 }
 
-.doctor-button:hover { border-color: var(--doctor-accent); color: var(--doctor-accent); }
-.doctor-button[data-tone='primary'] { background: var(--doctor-accent); border-color: var(--doctor-accent); color: #fff; }
-.doctor-button[data-tone='primary']:hover { filter: brightness(1.05); color: #fff; }
-.doctor-button:disabled { opacity: 0.6; cursor: progress; }
+.doctor-button:hover {
+  background: var(--doctor-accent-soft);
+  color: var(--doctor-accent-strong);
+}
+
+.doctor-button[data-tone='primary'] {
+  background: var(--doctor-accent);
+  color: #fff;
+}
+
+.doctor-button[data-tone='primary']:hover {
+  background: var(--doctor-accent-strong);
+  color: #fff;
+}
+
+.doctor-button:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
 
 .doctor-error-banner {
-  border: 1px solid var(--doctor-error);
+  border: 0;
   background: var(--doctor-error-bg);
   color: var(--doctor-error);
-  border-radius: 10px;
+  border-radius: var(--doctor-radius-sm);
   padding: 14px 16px;
   font-size: 13px;
   margin-bottom: 16px;

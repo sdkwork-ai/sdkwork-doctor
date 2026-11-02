@@ -4,6 +4,7 @@ import 'agent/care_agent.dart';
 import 'family.dart';
 import 'i18n/care_i18n.dart';
 import 'records/visit_store.dart';
+import 'theme/doctor_theme.dart';
 import 'triage.dart';
 
 /// Agents API base URL injected by the host build; empty selects the offline
@@ -55,7 +56,7 @@ class _DoctorAppState extends State<DoctorApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'SDKWork Doctor',
-      theme: ThemeData(colorSchemeSeed: const Color(0xFF2563EB), useMaterial3: true),
+      theme: buildDoctorTheme(),
       home: DoctorHome(
         locale: _locale,
         agent: _agent,
@@ -179,6 +180,34 @@ class _PageHeader extends StatelessWidget {
   }
 }
 
+/// Flat level pill: emergency and urgent keep the warm semantic tone, every
+/// other level uses the tech-blue tone. No border, no elevation.
+class _LevelChip extends StatelessWidget {
+  const _LevelChip({required this.label, required this.warn});
+
+  final String label;
+  final bool warn;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: warn ? const Color(0xFFFFF4E0) : kTechBlueSoft,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: warn ? const Color(0xFFB26A00) : kTechBlueStrong,
+        ),
+      ),
+    );
+  }
+}
+
 class ChatTab extends StatefulWidget {
   const ChatTab({
     super.key,
@@ -266,7 +295,10 @@ class _ChatTabState extends State<ChatTab> {
                     message.isUser ? 'platform.care.chat.you' : 'platform.care.chat.doctor',
                   )),
                   subtitle: Text(message.text),
-                  trailing: Chip(label: Text(careText(locale, _levelKey(message.level)))),
+                  trailing: _LevelChip(
+                    label: careText(locale, _levelKey(message.level)),
+                    warn: message.level == TriageLevel.emergency || message.level == TriageLevel.urgent,
+                  ),
                 ),
               );
             },
@@ -451,7 +483,10 @@ class RecordsTab extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            trailing: Chip(label: Text(careText(locale, _levelKey(record.level)))),
+                            trailing: _LevelChip(
+                              label: careText(locale, _levelKey(record.level)),
+                              warn: record.level == TriageLevel.emergency || record.level == TriageLevel.urgent,
+                            ),
                           ),
                         );
                       },
@@ -460,6 +495,11 @@ class RecordsTab extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(12),
               child: FilledButton.tonal(
+                style: FilledButton.styleFrom(
+                  backgroundColor: kSurfaceAlt,
+                  foregroundColor: kTechBlueStrong,
+                  elevation: 0,
+                ),
                 onPressed: items.isEmpty ? null : () => _confirmClear(context),
                 child: Text(careText(locale, 'platform.care.records.clear')),
               ),

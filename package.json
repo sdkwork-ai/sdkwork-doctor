@@ -17,7 +17,7 @@
     "build:pc": "pnpm --dir apps/sdkwork-doctor-pc build",
     "build:h5": "pnpm --dir apps/sdkwork-doctor-h5 build",
     "typecheck": "pnpm -r --if-present typecheck",
-    "test": "node --test tests/repository-layout.test.mjs tests/app-manifest.test.mjs tests/package-boundaries.test.mjs tests/cross-client-parity.test.mjs tests/care-agent-mode.test.mjs tests/triage-fixtures.test.mjs tests/ts-triage-fixtures.test.mjs tests/care-i18n-consistency.test.mjs tests/hosted-agent-transport.test.mjs tests/care-agent-wiring.test.mjs tests/mini-program-agent.test.mjs tests/care-fingerprint-vectors.test.mjs tests/flutter-parity.test.mjs tests/agents-upstream-contract.test.mjs tests/visit-records.test.mjs tests/mini-program-records.test.mjs",
+    "test": "node --test tests/repository-layout.test.mjs tests/app-manifest.test.mjs tests/package-boundaries.test.mjs tests/cross-client-parity.test.mjs tests/care-agent-mode.test.mjs tests/triage-fixtures.test.mjs tests/ts-triage-fixtures.test.mjs tests/care-i18n-consistency.test.mjs tests/hosted-agent-transport.test.mjs tests/care-agent-wiring.test.mjs tests/mini-program-agent.test.mjs tests/care-fingerprint-vectors.test.mjs tests/flutter-parity.test.mjs tests/agents-upstream-contract.test.mjs tests/visit-records.test.mjs tests/mini-program-records.test.mjs tests/design-tokens.test.mjs",
     "check": "pnpm typecheck && pnpm test && pnpm check:i18n && pnpm check:specs",
     "check:i18n": "node ../sdkwork-specs/tools/check-i18n-standard.mjs --root . && node ../sdkwork-specs/tools/check-locale-gate-wiring.mjs --root .",
     "check:specs": "node scripts/verify-specs.mjs",

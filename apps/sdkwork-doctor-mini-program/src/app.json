@@ -7,14 +7,15 @@
   ],
   "window": {
     "navigationBarTitleText": "SDKWork Doctor",
-    "navigationBarBackgroundColor": "#2563eb",
+    "navigationBarBackgroundColor": "#061A3A",
     "navigationBarTextStyle": "white",
-    "backgroundColor": "#f3f6fc"
+    "backgroundColor": "#F2F5FA"
   },
   "tabBar": {
-    "color": "#5a6478",
-    "selectedColor": "#2563eb",
-    "backgroundColor": "#ffffff",
+    "color": "#5A6B85",
+    "selectedColor": "#0A5CFF",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
     "list": [
       {
         "pagePath": "pages/conversation/index",

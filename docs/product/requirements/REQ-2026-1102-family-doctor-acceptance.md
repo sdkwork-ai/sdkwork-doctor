@@ -17,6 +17,7 @@ Scope: 对话 / 医生 / 我的 three-tab family doctor application across four 
 | Flutter client | `apps/sdkwork-doctor-flutter-mobile`: hosted + offline agents, generated catalog, 23 tests |
 | Mini program | `apps/sdkwork-doctor-mini-program`: four pages, hosted + offline agent, generated catalog |
 | Visit records | `@sdkwork/doctor-common-doctor` record contract + store; chat writes, records tab reads, device-local per client |
+| Visual system | `specs/design-tokens.contract.json`: tech-blue, flat, borderless tokens bound by CSS, Flutter `ThemeData`, and WXSS |
 | Care copy pipeline | `contracts/care-messages.json` -> `tools/generate-care-i18n.mjs` -> TS, Dart, and JS projections |
 | Cross-runtime fingerprint | `contracts/care-fingerprint-vectors.json` reproduced by TS, Dart, and the mini program |
 | Upstream contract pin | `specs/agents-app-api.contract.json` compared with the sdkwork-agents OpenAPI |
@@ -159,3 +160,25 @@ Remaining English literals: none in the four tabs of any client. The only
 untranslated strings are brand names, transport error details returned by the
 server, the generated system prompt sent to the agent, and the offline agent's
 advice text (see "Not delivered").
+
+## Addendum (rounds 31-32): tech-blue, flat, borderless visual system
+
+- **One token contract**: `specs/design-tokens.contract.json` fixes the palette
+  (canvas `#F2F5FA`, surface `#FFFFFF`, tonal `#E6EDF8`, chrome navy `#061A3A`,
+  primary `#0A5CFF`), the radius scale, elevation `0`, and border width `0`.
+- **Four bindings, no fork**: PC and H5 declare CSS variables, Flutter builds one
+  `ThemeData` in `lib/theme/doctor_theme.dart`, and the mini program keeps the
+  same values in `app.wxss` plus its `app.json` chrome colours. Separation is
+  tonal (navy chrome, white cards, tonal rows and inputs), never a 1px stroke and
+  never a shadow.
+- **Semantic colour survives**: the triage pill keeps the warm tone for emergency
+  and urgent instead of inheriting the brand blue, and the flat record rows keep
+  the chip compact via `align-self: start`.
+- **Evidence**: `tests/design-tokens.test.mjs` (5 tests) fails on a drifted token,
+  a non-zero CSS border, or any `box-shadow`. Verified visually on the Android
+  emulator (four tabs) and in headless Chrome at 390×844 (H5) and 1440×900 (PC),
+  where `document.documentElement.scrollWidth === innerWidth` confirmed the H5
+  layout no longer overflows.
+- **Two defects fixed on the way**: the H5 chat row overflowed horizontally
+  because the global button rule forced `width: 100%`; the app bar title wrapped
+  on narrow screens until the meta line was hidden below 480px.

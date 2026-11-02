@@ -36,7 +36,6 @@ native mobile surface, and the mini program the WeChat surface. All four expose
 the same four tabs in the same order: 对话 / 医生 / 记录 / 我的.
 
 ## 2.1 Visit Records
-
 `@sdkwork/doctor-common-doctor` owns the record shape
 (`contracts/visit-record.schema.json`), the append/parse/serialize rules, and a
 storage-port store. Each client supplies only the adapter:
@@ -52,6 +51,21 @@ corrupt entries dropped instead of throwing, and a storage failure degrading to 
 session copy. The chat tab writes one record per completed exchange (never for a
 failed turn), and the records tab subscribes to the store so the new entry is
 visible immediately.
+
+## 2.2 Visual System
+
+`specs/design-tokens.contract.json` pins one tech-blue, flat, borderless system:
+canvas `#F2F5FA`, surface `#FFFFFF`, tonal layer `#E6EDF8`, chrome navy `#061A3A`,
+primary `#0A5CFF`, radius 14/10, **elevation 0** and **border width 0**. Each
+client binds those tokens in its own medium — CSS variables for PC/H5, a single
+`ThemeData` for Flutter, WXSS for the mini program — and
+`tests/design-tokens.test.mjs` fails when a surface drifts, when CSS draws a
+non-zero border, or when a shadow appears.
+
+Separation comes from tonal layers, never strokes: navy chrome above the canvas,
+white cards on the canvas, and tonal rows/inputs inside cards. Emergency and
+urgent keep the warm semantic tone so triage colour is never lost to the brand
+blue.
 
 ## 2. Technology Choices
 
