@@ -1,6 +1,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
+import { doctorCareI18n } from '@sdkwork/doctor-pc-care/i18n';
 import { doctorCommonDiagnosticsI18n } from '@sdkwork/doctor-common-diagnostics/i18n';
 import { doctorPcDiagnosticsI18n } from '@sdkwork/doctor-pc-diagnostics/i18n';
 import { doctorPcShellI18n } from '@sdkwork/doctor-pc-shell/i18n';
@@ -35,6 +36,7 @@ function localeResources() {
     'en-US': {
       doctor: {
         ...doctorCommonDiagnosticsI18n['en-US'],
+        ...doctorCareI18n['en-US'],
         ...doctorPcShellI18n['en-US'],
         ...doctorPcDiagnosticsI18n['en-US'],
       },
@@ -42,6 +44,7 @@ function localeResources() {
     'zh-CN': {
       doctor: {
         ...doctorCommonDiagnosticsI18n['zh-CN'],
+        ...doctorCareI18n['zh-CN'],
         ...doctorPcShellI18n['zh-CN'],
         ...doctorPcDiagnosticsI18n['zh-CN'],
       },
