@@ -10,7 +10,8 @@ import '../theme/doctor_theme.dart';
 /// chrome (menu / centered title / single primary action) while keeping the
 /// Doctor copy and care-specific actions.
 class CareChatLanding extends StatelessWidget {
-  const CareChatLanding({super.key, required this.locale, required this.onPick});
+  const CareChatLanding(
+      {super.key, required this.locale, required this.onPick});
 
   final String locale;
   final ValueChanged<String> onPick;
@@ -55,14 +56,16 @@ class CareChatLanding extends StatelessWidget {
                     style: TextButton.styleFrom(
                       backgroundColor: kTechBlueSoft,
                       foregroundColor: kTechBlueStrong,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 15),
                       shape: const StadiumBorder(),
                       alignment: Alignment.center,
                     ),
                     child: Text(
                       careText(locale, key),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w500),
                     ),
                   ),
                 ),
@@ -93,18 +96,29 @@ class CareDrawer extends StatelessWidget {
   final ValueChanged<int> onSelect;
   final VoidCallback onToggleLocale;
 
-  static const List<(IconData, String)> _items = <(IconData, String)>[
-    (Icons.chat_bubble_outline, 'platform.care.nav.chat'),
-    (Icons.medical_information_outlined, 'platform.care.nav.doctor'),
-    (Icons.receipt_long_outlined, 'platform.care.nav.records'),
-    (Icons.person_outline, 'platform.care.nav.me'),
+  static const List<(IconData, IconData, String)> _items =
+      <(IconData, IconData, String)>[
+    (Icons.chat_bubble_outline, Icons.chat_bubble, 'platform.care.nav.chat'),
+    (
+      Icons.medical_information_outlined,
+      Icons.medical_information,
+      'platform.care.nav.doctor',
+    ),
+    (
+      Icons.receipt_long_outlined,
+      Icons.receipt_long,
+      'platform.care.nav.records'
+    ),
+    (Icons.person_outline, Icons.person, 'platform.care.nav.me'),
   ];
 
   @override
   Widget build(BuildContext context) {
     final String modeLabel = careText(
       locale,
-      agent.mode == 'hosted' ? 'platform.care.mode.hosted' : 'platform.care.mode.offline',
+      agent.mode == 'hosted'
+          ? 'platform.care.mode.hosted'
+          : 'platform.care.mode.offline',
     );
     return Drawer(
       backgroundColor: kSurface,
@@ -119,17 +133,25 @@ class CareDrawer extends StatelessWidget {
                   Container(
                     width: 40,
                     height: 40,
-                    decoration: BoxDecoration(color: kTechBlue, borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(
+                        color: kTechBlue,
+                        borderRadius: BorderRadius.circular(12)),
                     alignment: Alignment.center,
-                    child: const Text('D', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                    child: const Text('D',
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.w700)),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        const Text('SDKWork Doctor', style: TextStyle(fontWeight: FontWeight.w600, color: kInk)),
-                        Text(member.label, style: const TextStyle(fontSize: 12, color: kMuted)),
+                        const Text('SDKWork Doctor',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w600, color: kInk)),
+                        Text(member.label,
+                            style:
+                                const TextStyle(fontSize: 12, color: kMuted)),
                       ],
                     ),
                   ),
@@ -141,11 +163,17 @@ class CareDrawer extends StatelessWidget {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(color: kTechBlueSoft, borderRadius: BorderRadius.circular(999)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                      color: kTechBlueSoft,
+                      borderRadius: BorderRadius.circular(999)),
                   child: Text(
                     modeLabel,
-                    style: const TextStyle(fontSize: 12, color: kTechBlueStrong, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                        fontSize: 12,
+                        color: kTechBlueStrong,
+                        fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -157,13 +185,18 @@ class CareDrawer extends StatelessWidget {
                 child: ListTile(
                   selected: index == i,
                   selectedTileColor: kTechBlueSoft,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  leading: Icon(_items[i].$1, color: index == i ? kTechBlueStrong : kMuted),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  leading: Icon(
+                    index == i ? _items[i].$2 : _items[i].$1,
+                    color: index == i ? kTechBlueStrong : kMuted,
+                  ),
                   title: Text(
-                    careText(locale, _items[i].$2),
+                    careText(locale, _items[i].$3),
                     style: TextStyle(
                       color: index == i ? kTechBlueStrong : kInk,
-                      fontWeight: index == i ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight:
+                          index == i ? FontWeight.w600 : FontWeight.w500,
                     ),
                   ),
                   onTap: () => onSelect(i),
@@ -218,7 +251,10 @@ class NewConsultationSheet extends StatelessWidget {
           children: <Widget>[
             Text(
               careText(locale, 'platform.care.action.newConsultation'),
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600, color: kInk),
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w600, color: kInk),
             ),
             const SizedBox(height: 6),
             Text(
@@ -229,11 +265,14 @@ class NewConsultationSheet extends StatelessWidget {
             FilledButton.icon(
               onPressed: onNewConsultation,
               icon: const Icon(Icons.add_comment_outlined),
-              label: Text(careText(locale, 'platform.care.action.newConsultation')),
+              label: Text(
+                  careText(locale, 'platform.care.action.newConsultation')),
             ),
             const SizedBox(height: 8),
             FilledButton.tonalIcon(
-              style: FilledButton.styleFrom(backgroundColor: kSurfaceAlt, foregroundColor: kTechBlueStrong),
+              style: FilledButton.styleFrom(
+                  backgroundColor: kSurfaceAlt,
+                  foregroundColor: kTechBlueStrong),
               onPressed: onOpenRecords,
               icon: const Icon(Icons.receipt_long_outlined),
               label: Text(careText(locale, 'platform.care.records.title')),

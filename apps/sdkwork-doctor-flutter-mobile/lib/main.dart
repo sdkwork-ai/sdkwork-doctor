@@ -12,7 +12,8 @@ import 'ui/care_shell.dart';
 /// Agents API base URL injected by the host build; empty selects the offline
 /// adapter. The access token is never a build-time value: a host shell injects
 /// it after appbase IAM sign-in through [_hostAccessToken].
-const String _agentsApiBaseUrl = String.fromEnvironment('AGENTS_API_BASE_URL', defaultValue: '');
+const String _agentsApiBaseUrl =
+    String.fromEnvironment('AGENTS_API_BASE_URL', defaultValue: '');
 
 Future<void> main() async {
   // The HTTPS trust layer must be installed before any HTTP client is
@@ -20,7 +21,8 @@ Future<void> main() async {
   SdkworkTlsTrust.installForApp();
 
   WidgetsFlutterBinding.ensureInitialized();
-  final VisitRecordStore records = await VisitRecordStore.load(SharedPreferencesVisitRecordStorage());
+  final VisitRecordStore records =
+      await VisitRecordStore.load(SharedPreferencesVisitRecordStorage());
   runApp(DoctorApp(records: records));
 }
 
@@ -47,13 +49,14 @@ class _DoctorAppState extends State<DoctorApp> {
   void initState() {
     super.initState();
     _locale = resolveCareLocale(
-      widget.initialLocale ?? WidgetsBinding.instance.platformDispatcher.locale.toLanguageTag(),
+      widget.initialLocale ??
+          WidgetsBinding.instance.platformDispatcher.locale.toLanguageTag(),
     );
     _agent = _newAgent();
   }
 
-  CareAgent _newAgent() =>
-      createCareAgent(agentsApiBaseUrl: _agentsApiBaseUrl, getAccessToken: _hostAccessToken);
+  CareAgent _newAgent() => createCareAgent(
+      agentsApiBaseUrl: _agentsApiBaseUrl, getAccessToken: _hostAccessToken);
 
   /// Replaced by the platform host once IAM sign-in exists; null means offline.
   String? _hostAccessToken() => null;
@@ -194,18 +197,22 @@ class _DoctorHomeState extends State<DoctorHome> {
         destinations: <NavigationDestination>[
           NavigationDestination(
             icon: const Icon(Icons.chat_bubble_outline),
+            selectedIcon: const Icon(Icons.chat_bubble),
             label: careText(locale, 'platform.care.nav.chat'),
           ),
           NavigationDestination(
             icon: const Icon(Icons.medical_information_outlined),
+            selectedIcon: const Icon(Icons.medical_information),
             label: careText(locale, 'platform.care.nav.doctor'),
           ),
           NavigationDestination(
             icon: const Icon(Icons.receipt_long_outlined),
+            selectedIcon: const Icon(Icons.receipt_long),
             label: careText(locale, 'platform.care.nav.records'),
           ),
           NavigationDestination(
             icon: const Icon(Icons.person_outline),
+            selectedIcon: const Icon(Icons.person),
             label: careText(locale, 'platform.care.nav.me'),
           ),
         ],
@@ -346,19 +353,23 @@ class _ChatTabState extends State<ChatTab> {
         if (_messages.isNotEmpty)
           _PageHeader(
             title: careText(locale, 'platform.care.chat.title'),
-            subtitle: careText(locale, 'platform.care.chat.subtitle', params: <String, String>{
-              'member': widget.member.label,
-            }),
+            subtitle: careText(locale, 'platform.care.chat.subtitle',
+                params: <String, String>{
+                  'member': widget.member.label,
+                }),
             extra: careText(
               locale,
-              widget.agent.mode == 'hosted' ? 'platform.care.mode.hosted' : 'platform.care.mode.offline',
+              widget.agent.mode == 'hosted'
+                  ? 'platform.care.mode.hosted'
+                  : 'platform.care.mode.offline',
             ),
           ),
         Expanded(
           child: _messages.isEmpty
               ? CareChatLanding(
                   locale: locale,
-                  onPick: (String suggestion) => setState(() => _controller.text = suggestion),
+                  onPick: (String suggestion) =>
+                      setState(() => _controller.text = suggestion),
                 )
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
@@ -369,12 +380,15 @@ class _ChatTabState extends State<ChatTab> {
                       child: ListTile(
                         title: Text(careText(
                           locale,
-                          message.isUser ? 'platform.care.chat.you' : 'platform.care.chat.doctor',
+                          message.isUser
+                              ? 'platform.care.chat.you'
+                              : 'platform.care.chat.doctor',
                         )),
                         subtitle: Text(message.text),
                         trailing: _LevelChip(
                           label: careText(locale, _levelKey(message.level)),
-                          warn: message.level == TriageLevel.emergency || message.level == TriageLevel.urgent,
+                          warn: message.level == TriageLevel.emergency ||
+                              message.level == TriageLevel.urgent,
                         ),
                       ),
                     );
@@ -385,7 +399,8 @@ class _ChatTabState extends State<ChatTab> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              careText(locale, 'platform.care.chat.error', params: <String, String>{'message': _error!}),
+              careText(locale, 'platform.care.chat.error',
+                  params: <String, String>{'message': _error!}),
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ),
@@ -397,8 +412,10 @@ class _ChatTabState extends State<ChatTab> {
                 child: TextField(
                   controller: _controller,
                   decoration: InputDecoration(
-                    labelText: careText(locale, 'platform.care.chat.inputLabel'),
-                    hintText: careText(locale, 'platform.care.chat.placeholder'),
+                    labelText:
+                        careText(locale, 'platform.care.chat.inputLabel'),
+                    hintText:
+                        careText(locale, 'platform.care.chat.placeholder'),
                   ),
                   onSubmitted: (_) => _send(),
                 ),
@@ -408,7 +425,9 @@ class _ChatTabState extends State<ChatTab> {
                 onPressed: _busy ? null : _send,
                 child: Text(careText(
                   locale,
-                  _busy ? 'platform.care.chat.sending' : 'platform.care.chat.send',
+                  _busy
+                      ? 'platform.care.chat.sending'
+                      : 'platform.care.chat.send',
                 )),
               ),
             ],
@@ -425,7 +444,9 @@ class DoctorTab extends StatelessWidget {
   final String locale;
   final FamilyMember member;
 
-  String _join(List<String> values) => values.isEmpty ? careText(locale, 'platform.care.value.none') : values.join(', ');
+  String _join(List<String> values) => values.isEmpty
+      ? careText(locale, 'platform.care.value.none')
+      : values.join(', ');
 
   @override
   Widget build(BuildContext context) {
@@ -454,20 +475,23 @@ class DoctorTab extends StatelessWidget {
               ),
               Card(
                 child: ListTile(
-                  title: Text(careText(locale, 'platform.care.fact.conditions')),
+                  title:
+                      Text(careText(locale, 'platform.care.fact.conditions')),
                   subtitle: Text(_join(member.chronicConditions)),
                 ),
               ),
               Card(
                 child: ListTile(
-                  title: Text(careText(locale, 'platform.care.fact.medications')),
+                  title:
+                      Text(careText(locale, 'platform.care.fact.medications')),
                   subtitle: Text(_join(member.medications)),
                 ),
               ),
               Card(
                 child: ListTile(
                   title: Text(careText(locale, 'platform.care.doctor.actions')),
-                  subtitle: Text(careText(locale, 'platform.care.doctor.actionsHint')),
+                  subtitle: Text(
+                      careText(locale, 'platform.care.doctor.actionsHint')),
                 ),
               ),
             ],
@@ -562,7 +586,8 @@ class RecordsTab extends StatelessWidget {
                             ),
                             trailing: _LevelChip(
                               label: careText(locale, _levelKey(record.level)),
-                              warn: record.level == TriageLevel.emergency || record.level == TriageLevel.urgent,
+                              warn: record.level == TriageLevel.emergency ||
+                                  record.level == TriageLevel.urgent,
                             ),
                           ),
                         );
@@ -589,7 +614,11 @@ class RecordsTab extends StatelessWidget {
 }
 
 class MeTab extends StatelessWidget {
-  const MeTab({super.key, required this.locale, required this.agent, required this.member});
+  const MeTab(
+      {super.key,
+      required this.locale,
+      required this.agent,
+      required this.member});
 
   final String locale;
   final CareAgent agent;
@@ -597,7 +626,8 @@ class MeTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool complete = member.allergies.isNotEmpty || member.chronicConditions.isNotEmpty;
+    final bool complete =
+        member.allergies.isNotEmpty || member.chronicConditions.isNotEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -616,7 +646,8 @@ class MeTab extends StatelessWidget {
                     '${careText(locale, 'platform.care.me.completeness')}: '
                     '${careText(locale, complete ? 'platform.care.me.completenessInProgress' : 'platform.care.me.completenessNeedsReview')}',
                   ),
-                  trailing: Chip(label: Text(careText(locale, 'platform.care.active'))),
+                  trailing: Chip(
+                      label: Text(careText(locale, 'platform.care.active'))),
                 ),
               ),
               Card(
@@ -624,14 +655,17 @@ class MeTab extends StatelessWidget {
                   title: Text(careText(locale, 'platform.care.me.mode')),
                   subtitle: Text(careText(
                     locale,
-                    agent.mode == 'hosted' ? 'platform.care.mode.hosted' : 'platform.care.mode.offline',
+                    agent.mode == 'hosted'
+                        ? 'platform.care.mode.hosted'
+                        : 'platform.care.mode.offline',
                   )),
                 ),
               ),
               Card(
                 child: ListTile(
                   title: Text(careText(locale, 'platform.care.me.device')),
-                  subtitle: Text(careText(locale, 'platform.care.me.deviceHint')),
+                  subtitle:
+                      Text(careText(locale, 'platform.care.me.deviceHint')),
                 ),
               ),
             ],
