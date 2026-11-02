@@ -45,3 +45,21 @@ playwright-report/
 .dart_tool/
 **/.dart_tool/
 **/build/
+
+# ---- auto-audited: local artifacts that must never be committed ----
+.turbo/
+**/.turbo/
+.pnpm-store/
+**/.pnpm-store/
+*.tsbuildinfo
+**/.cache/
+.sdkwork/preview/
+**/.sdkwork/preview/
+__pycache__/
+**/__pycache__/
+*.pyc
+.workbuddy/
+tmp/
+temp/
+*.tmp
+*.temp
