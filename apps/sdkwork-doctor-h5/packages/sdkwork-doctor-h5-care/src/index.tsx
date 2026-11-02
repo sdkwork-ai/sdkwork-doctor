@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ChatMessage } from '@sdkwork/doctor-common-agent';
 import { createLocalCareAgent } from '@sdkwork/doctor-common-agent';
 import type { DoctorRuntimeContext } from '@sdkwork/doctor-common-diagnostics';
@@ -13,6 +14,7 @@ function who(member: FamilyMember): string {
 }
 
 export function ChatPage({ member }: { member: FamilyMember }) {
+  const { t } = useTranslation();
   const agentRef = useRef(createLocalCareAgent());
   const [messages, setMessages] = useState<readonly ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
@@ -36,19 +38,19 @@ export function ChatPage({ member }: { member: FamilyMember }) {
 
   return (
     <div>
-      <h1 className="doctor-page-title">Family doctor chat</h1>
-      <p className="doctor-page-subtitle">Talking about {who(member)}. Emergency red flags are escalated before any reply.</p>
+      <h1 className="doctor-page-title">{t('platform.care.chat.title')}</h1>
+      <p className="doctor-page-subtitle">{t('platform.care.chat.subtitle', { member: who(member) })}</p>
 
       {error ? <div className="doctor-error-banner">{error}</div> : null}
 
-      <MobileCard title="Conversation">
+      <MobileCard title={t('platform.care.chat.panel')}>
         <ul className="doctor-check-list" aria-live="polite">
           {messages.length === 0 ? (
-            <li className="doctor-check"><p className="doctor-check-summary">Describe a symptom, when it started, and how severe it is.</p></li>
+            <li className="doctor-check"><p className="doctor-check-summary">{t('platform.care.chat.empty')}</p></li>
           ) : messages.map((message) => (
             <li className="doctor-check" key={message.id}>
               <div>
-                <h3 className="doctor-check-title">{message.role === 'user' ? 'You' : 'Doctor'}</h3>
+                <h3 className="doctor-check-title">{message.role === 'user' ? t('platform.care.chat.you') : t('platform.care.chat.doctor')}</h3>
                 <p className="doctor-check-summary">{message.text}</p>
               </div>
               {message.triage ? <span className="doctor-badge" data-status={message.triage.escalate ? 'warn' : 'ok'}>{message.triage.level}</span> : <span />}
@@ -65,9 +67,9 @@ export function ChatPage({ member }: { member: FamilyMember }) {
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={(event) => { if (event.key === 'Enter') send(); }}
-          placeholder="e.g. child fever 39C since last night"
+          placeholder={t('platform.care.chat.placeholder')}
         />
-        <ActionButton tone="primary" onClick={send} disabled={busy}>{busy ? 'Sending...' : 'Send'}</ActionButton>
+        <ActionButton tone="primary" onClick={send} disabled={busy}>{busy ? t('platform.care.chat.sending') : t('platform.care.chat.send')}</ActionButton>
       </div>
     </div>
   );
