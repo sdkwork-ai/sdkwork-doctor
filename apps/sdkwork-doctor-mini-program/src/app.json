@@ -19,19 +19,27 @@
     "list": [
       {
         "pagePath": "pages/conversation/index",
-        "text": "对话"
+        "text": "对话",
+        "iconPath": "assets/tabbar/conversation-outline.png",
+        "selectedIconPath": "assets/tabbar/conversation-filled.png"
       },
       {
         "pagePath": "pages/doctor/index",
-        "text": "医生"
+        "text": "医生",
+        "iconPath": "assets/tabbar/doctor-outline.png",
+        "selectedIconPath": "assets/tabbar/doctor-filled.png"
       },
       {
         "pagePath": "pages/records/index",
-        "text": "记录"
+        "text": "记录",
+        "iconPath": "assets/tabbar/records-outline.png",
+        "selectedIconPath": "assets/tabbar/records-filled.png"
       },
       {
         "pagePath": "pages/profile/index",
-        "text": "我的"
+        "text": "我的",
+        "iconPath": "assets/tabbar/profile-outline.png",
+        "selectedIconPath": "assets/tabbar/profile-filled.png"
       }
     ]
   },
