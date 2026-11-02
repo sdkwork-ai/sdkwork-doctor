@@ -128,7 +128,7 @@
       }
     ],
     "metadata": {
-      "assetVersion": "0.1.0",
+      "assetVersion": "0.2.0",
       "defaultLocale": "en-US"
     }
   },
@@ -139,11 +139,17 @@
     "status": "ACTIVE",
     "platforms": [
       "WEB",
-      "H5"
+      "H5",
+      "MP_WEIXIN",
+      "APP_IOS",
+      "APP_ANDROID"
     ],
     "installPlatforms": [
       "WEB",
-      "H5"
+      "H5",
+      "MP_WEIXIN",
+      "APP_IOS",
+      "APP_ANDROID"
     ],
     "defaultPackageId": "pc-web-browser-standalone-web-url",
     "installSkill": {
@@ -230,6 +236,60 @@
           "metadata": {
             "releaseBuildDeferred": true
           }
+        },
+        {
+          "id": "mp-weixin-mini-program-standalone-binary",
+          "name": "SDKWork Doctor WeChat mini program",
+          "sourceType": "BINARY_URL",
+          "packageFormat": "MINI_PROGRAM_PACKAGE",
+          "platform": "MP_WEIXIN",
+          "architecture": "any",
+          "targetPlatform": "mp-weixin",
+          "clientArchitecture": "mini-program",
+          "runtimeTarget": "mini-program",
+          "url": "https://cdn.sdkwork.com/apps/sdkwork-doctor/STABLE/0.1.0/sdkwork-doctor-mp-weixin-0.1.0.zip",
+          "profileBinding": "fixed",
+          "deploymentProfile": "standalone",
+          "enabled": true,
+          "metadata": {
+            "releaseBuildDeferred": true
+          }
+        },
+        {
+          "id": "flutter-ios-standalone-binary",
+          "name": "SDKWork Doctor Flutter iOS app",
+          "sourceType": "BINARY_URL",
+          "packageFormat": "IPA",
+          "platform": "APP_IOS",
+          "architecture": "arm64",
+          "targetPlatform": "ios",
+          "clientArchitecture": "flutter",
+          "runtimeTarget": "flutter-ios",
+          "url": "https://cdn.sdkwork.com/apps/sdkwork-doctor/STABLE/0.1.0/sdkwork-doctor-flutter-ios-0.1.0.ipa",
+          "profileBinding": "fixed",
+          "deploymentProfile": "standalone",
+          "enabled": true,
+          "metadata": {
+            "releaseBuildDeferred": true
+          }
+        },
+        {
+          "id": "flutter-android-standalone-binary",
+          "name": "SDKWork Doctor Flutter Android app",
+          "sourceType": "BINARY_URL",
+          "packageFormat": "APK",
+          "platform": "APP_ANDROID",
+          "architecture": "universal",
+          "targetPlatform": "android",
+          "clientArchitecture": "flutter",
+          "runtimeTarget": "flutter-android",
+          "url": "https://cdn.sdkwork.com/apps/sdkwork-doctor/STABLE/0.1.0/sdkwork-doctor-flutter-android-0.1.0.apk",
+          "profileBinding": "fixed",
+          "deploymentProfile": "standalone",
+          "enabled": true,
+          "metadata": {
+            "releaseBuildDeferred": true
+          }
         }
       ]
     }
@@ -258,7 +318,10 @@
           "pc-web-browser-standalone-web-url",
           "pc-web-browser-cloud-web-url",
           "h5-browser-standalone-web-url",
-          "h5-browser-cloud-web-url"
+          "h5-browser-cloud-web-url",
+          "mp-weixin-mini-program-standalone-binary",
+          "flutter-ios-standalone-binary",
+          "flutter-android-standalone-binary"
         ],
         "publishedAt": "2026-11-02T00:00:00Z",
         "current": true,

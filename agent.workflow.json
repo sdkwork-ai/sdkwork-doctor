@@ -98,6 +98,63 @@
       "outputGlobs": [
         "apps/sdkwork-doctor-h5/dist/**"
       ]
+    },
+    {
+      "id": "mp-weixin-mini-program-standalone-binary",
+      "packageId": "mp-weixin-mini-program-standalone-binary",
+      "profileBinding": "fixed",
+      "deploymentProfile": "standalone",
+      "runtimeTarget": "mini-program",
+      "targetPlatform": "mp-weixin",
+      "clientArchitecture": "mini-program",
+      "profile": "mobile",
+      "platform": "mp-weixin",
+      "architecture": "any",
+      "formats": [
+        "zip"
+      ],
+      "runner": "ubuntu-24.04",
+      "outputGlobs": [
+        "apps/sdkwork-doctor-mini-program/dist/**"
+      ]
+    },
+    {
+      "id": "flutter-ios-standalone-binary",
+      "packageId": "flutter-ios-standalone-binary",
+      "profileBinding": "fixed",
+      "deploymentProfile": "standalone",
+      "runtimeTarget": "flutter-ios",
+      "targetPlatform": "ios",
+      "clientArchitecture": "flutter",
+      "profile": "mobile",
+      "platform": "ios",
+      "architecture": "arm64",
+      "formats": [
+        "ipa"
+      ],
+      "runner": "ubuntu-24.04",
+      "outputGlobs": [
+        "apps/sdkwork-doctor-flutter-mobile/build/**"
+      ]
+    },
+    {
+      "id": "flutter-android-standalone-binary",
+      "packageId": "flutter-android-standalone-binary",
+      "profileBinding": "fixed",
+      "deploymentProfile": "standalone",
+      "runtimeTarget": "flutter-android",
+      "targetPlatform": "android",
+      "clientArchitecture": "flutter",
+      "profile": "mobile",
+      "platform": "android",
+      "architecture": "universal",
+      "formats": [
+        "apk"
+      ],
+      "runner": "ubuntu-24.04",
+      "outputGlobs": [
+        "apps/sdkwork-doctor-flutter-mobile/build/**"
+      ]
     }
   ],
   "security": {},
