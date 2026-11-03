@@ -21,7 +21,8 @@ const Color kMuted = Color(0xFF5A6B85);
 const Color kDanger = Color(0xFFE5484D);
 
 /// Tokens of the care session drawer, so the package never forks the contract.
-const CareSessionsDrawerStyle doctorSessionsDrawerStyle = CareSessionsDrawerStyle(
+const CareSessionsDrawerStyle doctorSessionsDrawerStyle =
+    CareSessionsDrawerStyle(
   background: kSurface,
   primary: kTechBlue,
   primarySoft: kTechBlueSoft,
@@ -32,7 +33,9 @@ const CareSessionsDrawerStyle doctorSessionsDrawerStyle = CareSessionsDrawerStyl
 );
 
 ThemeData buildDoctorTheme() {
-  final ColorScheme scheme = ColorScheme.fromSeed(seedColor: kTechBlue, brightness: Brightness.light).copyWith(
+  final ColorScheme scheme =
+      ColorScheme.fromSeed(seedColor: kTechBlue, brightness: Brightness.light)
+          .copyWith(
     primary: kTechBlue,
     onPrimary: Colors.white,
     primaryContainer: kTechBlueSoft,
@@ -48,8 +51,10 @@ ThemeData buildDoctorTheme() {
     onError: Colors.white,
   );
 
-  final RoundedRectangleBorder controlShape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(10));
-  const RoundedRectangleBorder cardShape = RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(14)));
+  final RoundedRectangleBorder controlShape =
+      RoundedRectangleBorder(borderRadius: BorderRadius.circular(10));
+  const RoundedRectangleBorder cardShape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.all(Radius.circular(14)));
 
   return ThemeData(
     useMaterial3: true,
@@ -63,7 +68,8 @@ ThemeData buildDoctorTheme() {
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: true,
-      titleTextStyle: TextStyle(color: kInk, fontSize: 17, fontWeight: FontWeight.w600),
+      titleTextStyle:
+          TextStyle(color: kInk, fontSize: 17, fontWeight: FontWeight.w600),
       iconTheme: IconThemeData(color: kInk),
       systemOverlayStyle: SystemUiOverlayStyle.dark,
     ),
@@ -82,21 +88,31 @@ ThemeData buildDoctorTheme() {
       elevation: 0,
       height: 70,
       indicatorColor: kTechBlueSoft,
-      labelTextStyle: WidgetStateProperty.resolveWith((Set<WidgetState> states) => TextStyle(
-            fontSize: 12,
-            fontWeight: states.contains(WidgetState.selected) ? FontWeight.w700 : FontWeight.w500,
-            color: states.contains(WidgetState.selected) ? kTechBlueStrong : kMuted,
-          )),
-      iconTheme: WidgetStateProperty.resolveWith((Set<WidgetState> states) => IconThemeData(
-            color: states.contains(WidgetState.selected) ? kTechBlueStrong : kMuted,
-          )),
+      labelTextStyle: WidgetStateProperty.resolveWith(
+          (Set<WidgetState> states) => TextStyle(
+                fontSize: 12,
+                fontWeight: states.contains(WidgetState.selected)
+                    ? FontWeight.w700
+                    : FontWeight.w500,
+                color: states.contains(WidgetState.selected)
+                    ? kTechBlueStrong
+                    : kMuted,
+              )),
+      iconTheme: WidgetStateProperty.resolveWith(
+          (Set<WidgetState> states) => IconThemeData(
+                color: states.contains(WidgetState.selected)
+                    ? kTechBlueStrong
+                    : kMuted,
+              )),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: kSurfaceAlt,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+      border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+      enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide: const BorderSide(color: kTechBlue, width: 2),
@@ -109,7 +125,8 @@ ThemeData buildDoctorTheme() {
       backgroundColor: kTechBlueSoft,
       side: BorderSide.none,
       shape: const StadiumBorder(),
-      labelStyle: const TextStyle(color: kTechBlueStrong, fontSize: 12, fontWeight: FontWeight.w600),
+      labelStyle: const TextStyle(
+          color: kTechBlueStrong, fontSize: 12, fontWeight: FontWeight.w600),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
     ),
     filledButtonTheme: FilledButtonThemeData(
@@ -123,14 +140,17 @@ ThemeData buildDoctorTheme() {
       ),
     ),
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(foregroundColor: kTechBlueStrong, shape: controlShape),
+      style: TextButton.styleFrom(
+          foregroundColor: kTechBlueStrong, shape: controlShape),
     ),
     dialogTheme: const DialogThemeData(
       backgroundColor: Colors.white,
       elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(16))),
     ),
-    dividerTheme: const DividerThemeData(color: kSurfaceAlt, thickness: 1, space: 1),
+    dividerTheme:
+        const DividerThemeData(color: kSurfaceAlt, thickness: 1, space: 1),
     listTileTheme: const ListTileThemeData(iconColor: kMuted, textColor: kInk),
   );
 }

@@ -194,8 +194,7 @@ class SdkworkTlsTrustConfig {
 
   /// One-line description used by startup diagnostics.
   String describe() {
-    final hosts =
-        allowedHosts.isEmpty ? '<any-host>' : allowedHosts.join('|');
+    final hosts = allowedHosts.isEmpty ? '<any-host>' : allowedHosts.join('|');
     return 'mode=${mode.name} release=$isReleaseMode hosts=$hosts '
         'extraCa=${extraCaPem == null ? 'none' : 'configured'} source=$modeSource';
   }
@@ -241,7 +240,8 @@ abstract final class SdkworkTlsTrust {
   ///
   /// Kept Flutter-free so the application entrypoint only needs one line and
   /// one relative import.
-  static SdkworkTlsTrustConfig installForApp({Map<String, String>? environment}) {
+  static SdkworkTlsTrustConfig installForApp(
+      {Map<String, String>? environment}) {
     return installFromEnvironment(
       isReleaseMode: const bool.fromEnvironment('dart.vm.product'),
       environment: environment,
@@ -304,7 +304,8 @@ abstract final class SdkworkTlsTrust {
   }) {
     final pem = config.extraCaPem;
     if (pem == null) {
-      return _securityContext ??= baseContext ?? SecurityContext(withTrustedRoots: true);
+      return _securityContext ??=
+          baseContext ?? SecurityContext(withTrustedRoots: true);
     }
     if (baseContext != null) {
       baseContext.setTrustedCertificatesBytes(utf8.encode(pem));

@@ -11,7 +11,14 @@ const {
   patientProfileCompleteness,
   splitProfileField,
 } = require('../../lib/patient-profiles.js');
-const { CATALOG_DOCTOR_ROSTER, isDoctorEmploymentType, primaryAffiliation, resolvePrimaryDoctor } = require('../../lib/doctors.js');
+const {
+  CATALOG_DOCTOR_ROSTER,
+  doctorInitial,
+  isDoctorEmploymentType,
+  primaryAffiliation,
+  resolveDoctorAvatarSrc,
+  resolvePrimaryDoctor,
+} = require('../../lib/doctors.js');
 
 function profileLabel(profile) {
   return careText('platform.care.profile.relation.' + profile.relation) + ' · ' + profile.displayName;
@@ -178,6 +185,8 @@ Page({
       })),
       activeName: active ? profileLabel(active) : careText('platform.care.profile.empty'),
       doctorEmpty: careText('platform.care.me.noDoctor'),
+      doctorAvatar: primary && primary.avatarUrl ? resolveDoctorAvatarSrc(primary.avatarUrl) : '',
+      doctorInitial: primary ? doctorInitial(primary.displayName) : '',
       doctorName: primary
         ? primary.displayName + (primarySite && primarySite.department ? ' · ' + primarySite.department : '')
         : '',

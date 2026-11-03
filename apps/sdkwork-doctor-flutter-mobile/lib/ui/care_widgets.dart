@@ -69,6 +69,59 @@ class CareLevelChip extends StatelessWidget {
   }
 }
 
+/// Round doctor portrait: the roster's bundled portrait, a directory URL, or the
+/// doctor's initial when neither is available. Flat and borderless like every
+/// other surface element.
+class CareDoctorAvatar extends StatelessWidget {
+  const CareDoctorAvatar({
+    super.key,
+    required this.name,
+    required this.avatarUrl,
+    this.size = 48,
+  });
+
+  final String name;
+
+  /// Portrait reference from the roster: a bundle-relative asset path such as
+  /// `avatars/doctor-lin-qinghe.png`, or an absolute http(s) URL.
+  final String avatarUrl;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final String reference = avatarUrl.trim();
+    final Widget fallback = Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration:
+          const BoxDecoration(color: kSurfaceAlt, shape: BoxShape.circle),
+      child: Text(
+        doctorInitial(name),
+        style: TextStyle(
+          fontSize: size * 0.4,
+          fontWeight: FontWeight.w700,
+          color: kTechBlueStrong,
+        ),
+      ),
+    );
+    if (reference.isEmpty) return fallback;
+    final ImageProvider<Object> provider = isRemoteDoctorAvatar(reference)
+        ? NetworkImage(reference)
+        : AssetImage(doctorAvatarAssetPath(reference));
+    return ClipOval(
+      child: Image(
+        image: provider,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (BuildContext context, Object error, StackTrace? stack) =>
+            fallback,
+      ),
+    );
+  }
+}
+
 /// Small flat badge for non-triage states such as verified or accepting.
 class CareBadge extends StatelessWidget {
   const CareBadge({
@@ -84,11 +137,11 @@ class CareBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color background =
-        warn ? const Color(0xFFFFF4E0) : (neutral ? kSurfaceAlt : kTechBlueSoft);
-    final Color foreground = warn
-        ? const Color(0xFFB26A00)
-        : (neutral ? kMuted : kTechBlueStrong);
+    final Color background = warn
+        ? const Color(0xFFFFF4E0)
+        : (neutral ? kSurfaceAlt : kTechBlueSoft);
+    final Color foreground =
+        warn ? const Color(0xFFB26A00) : (neutral ? kMuted : kTechBlueStrong);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(

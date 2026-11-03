@@ -12,8 +12,10 @@ const {
   DOCTOR_SELECTION_LIMIT,
   createDoctorDirectoryPort,
   doctorRecordLabel,
+  doctorInitial,
   preferredDoctorChannel,
   primaryAffiliation,
+  resolveDoctorAvatarSrc,
   resolvePrimaryDoctor,
   resolveSelectedDoctors,
 } = require('../../lib/doctors.js');
@@ -217,6 +219,8 @@ Page({
         return {
           id: doctor.id,
           name: doctor.displayName,
+          avatar: doctor.avatarUrl ? resolveDoctorAvatarSrc(doctor.avatarUrl) : '',
+          initial: doctorInitial(doctor.displayName),
           site: site ? site.hospitalName + ' · ' + site.department : '',
           primary: Boolean(primary && primary.id === doctor.id),
           primaryLabel: careText('platform.care.doctors.primary'),
@@ -230,6 +234,8 @@ Page({
         return {
           id: doctor.id,
           name: doctor.displayName,
+          avatar: doctor.avatarUrl ? resolveDoctorAvatarSrc(doctor.avatarUrl) : '',
+          initial: doctorInitial(doctor.displayName),
           rank: site ? site.title : '',
           department: site ? site.department : '',
           hospital: site ? site.hospitalName : '',

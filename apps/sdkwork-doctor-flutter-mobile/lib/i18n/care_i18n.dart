@@ -1,9 +1,12 @@
 import 'care_messages.dart';
 
 /// Reads one care string for [locale], falling back to en-US and then the key.
-String careText(String locale, String key, {Map<String, String> params = const <String, String>{}}) {
-  final Map<String, String> primary = careMessages[locale] ?? const <String, String>{};
-  final Map<String, String> fallback = careMessages['en-US'] ?? const <String, String>{};
+String careText(String locale, String key,
+    {Map<String, String> params = const <String, String>{}}) {
+  final Map<String, String> primary =
+      careMessages[locale] ?? const <String, String>{};
+  final Map<String, String> fallback =
+      careMessages['en-US'] ?? const <String, String>{};
   String resolved = primary[key] ?? fallback[key] ?? key;
   params.forEach((String name, String value) {
     resolved = resolved.replaceAll('{{$name}}', value);
@@ -21,4 +24,5 @@ String resolveCareLocale(String? preferred) {
 }
 
 /// Every key the catalog ships, for drift tests.
-Set<String> careKeys(String locale) => (careMessages[locale] ?? const <String, String>{}).keys.toSet();
+Set<String> careKeys(String locale) =>
+    (careMessages[locale] ?? const <String, String>{}).keys.toSet();

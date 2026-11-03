@@ -218,3 +218,45 @@ test('resolving doctors preserves selection order and the primary', () => {
   assert.equal(domain.resolvePrimaryDoctor(roster, selection)?.id, second);
   assert.equal(domain.resolvePrimaryDoctor(roster, domain.parseDoctorSelection({ selectedIds: [], primaryId: null })), null);
 });
+
+
+const PORTRAIT_CLIENTS = [
+  'apps/sdkwork-doctor-pc/public/avatars',
+  'apps/sdkwork-doctor-h5/public/avatars',
+  'apps/sdkwork-doctor-mini-program/src/assets/avatars',
+  'apps/sdkwork-doctor-flutter-mobile/assets/avatars',
+];
+
+test('every authored doctor ships the portrait its roster names', () => {
+  for (const doctor of rosterContract.doctors) {
+    assert.match(doctor.avatarUrl, /^avatars\/[a-z0-9-]+\.png$/u, doctor.id);
+    const canonical = path.join(repoRoot, contractRoot, 'assets', doctor.avatarUrl);
+    assert.ok(fs.existsSync(canonical), doctor.id + ' portrait must exist in the contract package');
+    const bytes = fs.readFileSync(canonical);
+    assert.equal(bytes.subarray(1, 4).toString('latin1'), 'PNG', doctor.id + ' portrait must be a PNG');
+    for (const directory of PORTRAIT_CLIENTS) {
+      const copy = path.join(repoRoot, directory, path.basename(doctor.avatarUrl));
+      assert.ok(fs.existsSync(copy), doctor.id + ' portrait missing from ' + directory);
+      assert.deepEqual(fs.readFileSync(copy), bytes, doctor.id + ' portraits must be byte-identical across clients');
+    }
+  }
+});
+
+test('a portrait reference cannot use a foreign scheme or escape the bundle', () => {
+  const base = rosterContract.doctors[0];
+  const [remote] = domain.parseDoctorRoster([{ ...base, avatarUrl: 'https://care.sdkwork.com/avatars/doctor-a.png' }]);
+  assert.equal(remote.avatarUrl, 'https://care.sdkwork.com/avatars/doctor-a.png', 'a directory may publish an absolute URL');
+
+  for (const rejected of ['javascript:alert(1)', 'data:image/svg+xml;base64,AA==', '../../etc/passwd', '/absolute.png', '  ']) {
+    const [doctor] = domain.parseDoctorRoster([{ ...base, avatarUrl: rejected }]);
+    assert.equal(doctor.avatarUrl, '', JSON.stringify(rejected) + ' must be dropped');
+  }
+
+  assert.equal(domain.doctorAvatarHref('avatars/doctor-lin-qinghe.png'), '/avatars/doctor-lin-qinghe.png');
+  assert.equal(domain.doctorAvatarHref('https://care.example.com/a.png'), 'https://care.example.com/a.png');
+  assert.equal(domain.doctorAvatarHref(''), '');
+  assert.equal(domain.isRemoteDoctorAvatar('https://care.example.com/a.png'), true);
+  assert.equal(domain.isRemoteDoctorAvatar('avatars/doctor-lin-qinghe.png'), false);
+  assert.equal(domain.doctorInitial('Lin Qinghe'), 'L');
+  assert.equal(domain.doctorInitial('  '), '');
+});

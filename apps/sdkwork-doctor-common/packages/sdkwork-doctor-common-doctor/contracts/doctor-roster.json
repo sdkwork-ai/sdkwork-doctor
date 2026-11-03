@@ -11,10 +11,17 @@
     "companyId": "Optional sdkwork-company id for the commercial contract beside the clinical relationship. Never the clinical employer."
   },
   "employmentTypes": ["full_time", "part_time", "contract", "visiting"],
+  "portraits": {
+    "field": "avatarUrl",
+    "authored": "avatars/<doctor-id>.png — the same file every client bundles (browser public dir, mini program src/assets, Flutter assets).",
+    "source": "assets/avatars/<doctor-id>.svg in this package is the editable artwork; tools/render-doctor-avatars.mjs renders the PNG.",
+    "directory": "A deployment directory may publish an absolute http(s) URL instead; any other scheme is dropped and the UI shows the doctor's initial."
+  },
   "doctors": [
     {
       "id": "doctor-lin-qinghe",
       "displayName": "Lin Qinghe",
+      "avatarUrl": "avatars/doctor-lin-qinghe.png",
       "specialties": ["Hypertension", "Coronary heart disease", "Arrhythmia"],
       "languages": ["zh-CN", "en-US"],
       "yearsOfExperience": 22,
@@ -67,6 +74,7 @@
     {
       "id": "doctor-su-wanning",
       "displayName": "Su Wanning",
+      "avatarUrl": "avatars/doctor-su-wanning.png",
       "specialties": ["Child fever", "Childhood asthma", "Vaccination planning"],
       "languages": ["zh-CN"],
       "yearsOfExperience": 15,
@@ -100,6 +108,7 @@
     {
       "id": "doctor-he-zhiyuan",
       "displayName": "He Zhiyuan",
+      "avatarUrl": "avatars/doctor-he-zhiyuan.png",
       "specialties": ["Respiratory infection", "Gastroenteritis", "Chronic disease follow-up"],
       "languages": ["zh-CN", "en-US"],
       "yearsOfExperience": 9,

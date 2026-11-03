@@ -41,5 +41,4 @@ class FamilyMember {
 
 /// The seeded self profile as agent context, retained for callers that have not
 /// loaded the household store yet.
-final FamilyMember demoSelfMember =
-    FamilyMember.fromPatient(kDemoSelfPatient);
+final FamilyMember demoSelfMember = FamilyMember.fromPatient(kDemoSelfPatient);

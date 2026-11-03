@@ -68,7 +68,8 @@ DoctorSelectionState parseDoctorSelection(Object? value) {
     rawSelected = List<Object?>.from(parsed);
   } else if (parsed is Map) {
     final Object? selected = parsed['selectedIds'];
-    rawSelected = selected is List ? List<Object?>.from(selected) : const <Object?>[];
+    rawSelected =
+        selected is List ? List<Object?>.from(selected) : const <Object?>[];
     rawPrimary = parsed['primaryId'];
   } else {
     return const DoctorSelectionState();
@@ -82,8 +83,9 @@ DoctorSelectionState parseDoctorSelection(Object? value) {
     selectedIds.add(normalized);
   }
   final String requested = rawPrimary is String ? rawPrimary.trim() : '';
-  final String? primaryId =
-      selectedIds.contains(requested) ? requested : (selectedIds.isEmpty ? null : selectedIds.first);
+  final String? primaryId = selectedIds.contains(requested)
+      ? requested
+      : (selectedIds.isEmpty ? null : selectedIds.first);
   return DoctorSelectionState(
     selectedIds: List<String>.unmodifiable(selectedIds),
     primaryId: primaryId,
@@ -106,7 +108,8 @@ abstract class DoctorSelectionStorage {
   Future<void> write(String value);
 }
 
-class SharedPreferencesDoctorSelectionStorage implements DoctorSelectionStorage {
+class SharedPreferencesDoctorSelectionStorage
+    implements DoctorSelectionStorage {
   @override
   Future<String?> read() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -180,7 +183,8 @@ class DoctorSelectionStore extends ChangeNotifier {
     if (_state.selectedIds.length >= kDoctorSelectionLimit) return _state;
     return _commit(
       DoctorSelectionState(
-        selectedIds: List<String>.unmodifiable(<String>[..._state.selectedIds, id]),
+        selectedIds:
+            List<String>.unmodifiable(<String>[..._state.selectedIds, id]),
         primaryId: _state.primaryId ?? id,
       ),
     );
@@ -214,7 +218,8 @@ class DoctorSelectionStore extends ChangeNotifier {
       if (_state.selectedIds.length >= kDoctorSelectionLimit) return _state;
       return _commit(
         DoctorSelectionState(
-          selectedIds: List<String>.unmodifiable(<String>[..._state.selectedIds, id]),
+          selectedIds:
+              List<String>.unmodifiable(<String>[..._state.selectedIds, id]),
           primaryId: id,
         ),
       );
@@ -235,14 +240,13 @@ class DoctorSelectionStore extends ChangeNotifier {
         .map((String id) => id.trim())
         .where((String id) => id.isNotEmpty)
         .toSet();
-    final List<String> selectedIds = _state.selectedIds
-        .where(available.contains)
-        .toList(growable: false);
+    final List<String> selectedIds =
+        _state.selectedIds.where(available.contains).toList(growable: false);
     if (selectedIds.length == _state.selectedIds.length) return _state;
-    final String? primaryId = _state.primaryId != null &&
-            available.contains(_state.primaryId)
-        ? _state.primaryId
-        : (selectedIds.isEmpty ? null : selectedIds.first);
+    final String? primaryId =
+        _state.primaryId != null && available.contains(_state.primaryId)
+            ? _state.primaryId
+            : (selectedIds.isEmpty ? null : selectedIds.first);
     return _commit(
       DoctorSelectionState(
         selectedIds: List<String>.unmodifiable(selectedIds),

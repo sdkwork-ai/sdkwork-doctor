@@ -82,7 +82,8 @@ class _PatientEditorScreenState extends State<PatientEditorScreen> {
   Future<void> _save() async {
     final String name = _name.text.trim();
     if (name.isEmpty) {
-      setState(() => _error = careText(_locale, 'platform.care.profile.required.name'));
+      setState(() =>
+          _error = careText(_locale, 'platform.care.profile.required.name'));
       return;
     }
     final int currentYear = DateTime.now().year;
@@ -90,8 +91,8 @@ class _PatientEditorScreenState extends State<PatientEditorScreen> {
     if (birthYear == null ||
         birthYear < kMinPatientBirthYear ||
         birthYear > currentYear) {
-      setState(() =>
-          _error = careText(_locale, 'platform.care.profile.invalid.birthYear'));
+      setState(() => _error =
+          careText(_locale, 'platform.care.profile.invalid.birthYear'));
       return;
     }
     final PatientProfileInput input = PatientProfileInput(
@@ -259,16 +260,15 @@ class _PatientEditorScreenState extends State<PatientEditorScreen> {
               Expanded(
                 child: FilledButton(
                   onPressed: _saving ? null : _save,
-                  child: Text(
-                      careText(_locale, 'platform.care.profile.save')),
+                  child: Text(careText(_locale, 'platform.care.profile.save')),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: TextButton(
                   onPressed: () => Navigator.of(context).maybePop(),
-                  child: Text(
-                      careText(_locale, 'platform.care.profile.cancel')),
+                  child:
+                      Text(careText(_locale, 'platform.care.profile.cancel')),
                 ),
               ),
             ],

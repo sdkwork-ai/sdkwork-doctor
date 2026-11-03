@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../agent/care_agent.dart' show kFamilyDoctorAgentId;
+import '../doctors/doctor_browse.dart';
 import '../doctors/doctor_directory.dart';
 import '../doctors/doctor_labels.dart';
 import '../doctors/doctor_selection.dart';
@@ -11,13 +12,111 @@ import '../records/visit_store.dart';
 import '../theme/doctor_theme.dart';
 import 'care_widgets.dart';
 
-/// 医生: the AI family doctor status, the family's selected human doctors, and
-/// the deployment's doctor directory.
+/// The category strip the doctor tab puts in the navbar (AppBar bottom).
 ///
-/// A family selects one or more doctors and names a primary doctor. A human
-/// consultation is started from one practice site's configured channel and is
-/// always recorded against the active patient with `mode: 'human'`, naming the
-/// organization, site, and engagement that was used.
+/// It is 全部 plus one tab per department the published roster actually
+/// practises in, so a deployment document adds its own category without a code
+/// change. The tab scrolls horizontally like the WeChat mobile service tabs and
+/// keeps the active one underlined in tech blue.
+class DoctorCategoryBar extends StatelessWidget {
+  const DoctorCategoryBar({
+    super.key,
+    required this.locale,
+    required this.doctors,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final String locale;
+  final List<DoctorProfile> doctors;
+
+  /// Selected category key; `null` is 全部.
+  final String? selected;
+
+  final ValueChanged<String?> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<String> keys = doctorCategoryKeys(doctors);
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        children: <Widget>[
+          _CategoryTab(
+            label: careText(locale, 'platform.care.doctors.category.all'),
+            selected: selected == null,
+            onTap: () => onSelected(null),
+          ),
+          for (final String key in keys)
+            _CategoryTab(
+              label: doctorCategoryLabel(locale, doctors, key),
+              selected: selected == key,
+              onTap: () => onSelected(key),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryTab extends StatelessWidget {
+  const _CategoryTab({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected ? kTechBlueStrong : kMuted,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              height: 3,
+              width: 18,
+              decoration: BoxDecoration(
+                color: selected ? kTechBlue : Colors.transparent,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 医生: the deployment's doctor directory, the AI family-doctor status, and the
+/// family's selected human doctors.
+///
+/// Search and the category tabs live in the navbar (`main.dart`), not in this
+/// page: tapping the navbar search icon opens [DoctorSearchScreen], and the
+/// category the navbar selected filters this list. A family selects one or more
+/// doctors and names a primary doctor; a human consultation is started from one
+/// practice site's configured channel and is always recorded against the active
+/// patient with `mode: 'human'`, naming the organization, site, and engagement
+/// that was used.
 class DoctorTab extends StatefulWidget {
   const DoctorTab({
     super.key,
@@ -27,6 +126,9 @@ class DoctorTab extends StatefulWidget {
     required this.records,
     required this.selection,
     required this.roster,
+    this.category,
+    this.focusDoctorId,
+    this.focusNonce = 0,
   });
 
   final String locale;
@@ -41,6 +143,16 @@ class DoctorTab extends StatefulWidget {
   /// The roster the shell loaded once for every tab that shows doctors.
   final DoctorRosterController roster;
 
+  /// Category key chosen in the navbar; `null` means 全部.
+  final String? category;
+
+  /// Doctor the search page returned, expanded and scrolled into view.
+  final String? focusDoctorId;
+
+  /// Bumped by the shell on every search result so the same doctor can be
+  /// focused twice in a row.
+  final int focusNonce;
+
   @override
   State<DoctorTab> createState() => _DoctorTabState();
 }
@@ -51,6 +163,9 @@ class _DoctorTabState extends State<DoctorTab> {
 
   /// The practice site chosen per doctor; absent means the primary affiliation.
   final Map<String, String> _chosenOrganization = <String, String>{};
+
+  /// One key per directory card so a search result can be scrolled into view.
+  final Map<String, GlobalKey> _cardKeys = <String, GlobalKey>{};
 
   String? _expandedId;
   String? _notice;
@@ -64,6 +179,18 @@ class _DoctorTabState extends State<DoctorTab> {
       widget.selection,
       widget.patients,
     ]);
+    _expandedId = widget.focusDoctorId;
+    if (widget.focusDoctorId != null) _revealLater(widget.focusDoctorId);
+  }
+
+  @override
+  void didUpdateWidget(covariant DoctorTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.focusNonce != oldWidget.focusNonce &&
+        widget.focusDoctorId != null) {
+      setState(() => _expandedId = widget.focusDoctorId);
+      _revealLater(widget.focusDoctorId);
+    }
   }
 
   @override
@@ -74,10 +201,28 @@ class _DoctorTabState extends State<DoctorTab> {
 
   String get _locale => widget.locale;
 
+  GlobalKey _cardKey(String doctorId) =>
+      _cardKeys.putIfAbsent(doctorId, () => GlobalKey());
+
+  /// Scrolls the focused doctor card into view after the list rebuilt.
+  void _revealLater(String? doctorId) {
+    if (doctorId == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final BuildContext? card = _cardKeys[doctorId]?.currentContext;
+      if (card == null) return;
+      Scrollable.ensureVisible(
+        card,
+        duration: const Duration(milliseconds: 250),
+        alignment: 0.08,
+      );
+    });
+  }
+
   DoctorAffiliation? _siteFor(DoctorProfile doctor) {
     final String? chosen = _chosenOrganization[doctor.id];
     if (chosen == null) return primaryAffiliation(doctor);
-    return affiliationByOrganization(doctor, chosen) ?? primaryAffiliation(doctor);
+    return affiliationByOrganization(doctor, chosen) ??
+        primaryAffiliation(doctor);
   }
 
   Future<void> _startConsultation(DoctorProfile doctor) async {
@@ -90,16 +235,18 @@ class _DoctorTabState extends State<DoctorTab> {
       _error = null;
     });
     if (reason.isEmpty) {
-      setState(() =>
-          _error = careText(_locale, 'platform.care.doctors.consultReasonRequired'));
+      setState(() => _error =
+          careText(_locale, 'platform.care.doctors.consultReasonRequired'));
       return;
     }
     if (affiliation == null || channel == null) {
-      setState(() => _error = careText(_locale, 'platform.care.doctors.noChannel'));
+      setState(
+          () => _error = careText(_locale, 'platform.care.doctors.noChannel'));
       return;
     }
     if (patient == null) {
-      setState(() => _error = careText(_locale, 'platform.care.chat.noPatient'));
+      setState(
+          () => _error = careText(_locale, 'platform.care.chat.noPatient'));
       return;
     }
     // The channel cannot be opened from this app: the Flutter surface ships no
@@ -117,7 +264,8 @@ class _DoctorTabState extends State<DoctorTab> {
         reason: reason,
         advice: started,
         doctorId: doctor.id,
-        doctorLabel: '${doctor.displayName} · ${careDepartmentLabel(_locale, affiliation)}',
+        doctorLabel:
+            '${doctor.displayName} · ${careDepartmentLabel(_locale, affiliation)}',
         doctorOrganizationId: affiliation.organizationId,
         doctorHospitalLabel: careHospitalLabel(_locale, affiliation),
         doctorEmploymentType: affiliation.employmentType.wireName,
@@ -145,35 +293,35 @@ class _DoctorTabState extends State<DoctorTab> {
       builder: (BuildContext context, Widget? _) {
         final DoctorRoster? roster = widget.roster.roster;
         final DoctorSelectionState selection = widget.selection.state;
-        final List<DoctorProfile> selected =
-            roster == null ? const <DoctorProfile>[] : resolveSelectedDoctors(roster, selection);
+        final List<DoctorProfile> selected = roster == null
+            ? const <DoctorProfile>[]
+            : resolveSelectedDoctors(roster, selection);
         final PatientProfile? active = widget.patients.active;
         return ListView(
           padding: const EdgeInsets.all(16),
           children: <Widget>[
-            CarePageHeader(
-              title: careText(locale, 'platform.care.doctors.title'),
-              subtitle: careText(locale, 'platform.care.doctors.subtitle'),
-            ),
-            const SizedBox(height: 12),
-            // The directory leads: top category tabs plus search are the primary
-            // way to find a doctor. The AI and family-doctor summaries follow.
+            // The directory leads: the navbar carries the title, the search
+            // entry, and the category tabs; the AI and family-doctor summaries
+            // follow it.
             _DirectoryCard(
               locale: locale,
               roster: roster,
               loading: widget.roster.loading,
               selection: selection,
+              category: widget.category,
               expandedId: _expandedId,
               reasonController: _reason,
               notice: _notice,
               error: _error,
               siteFor: _siteFor,
+              cardKey: _cardKey,
               onChooseAffiliation: (String doctorId, String organizationId) =>
-                  setState(() => _chosenOrganization[doctorId] = organizationId),
+                  setState(
+                      () => _chosenOrganization[doctorId] = organizationId),
               onToggleSelect: widget.selection.toggle,
               onSetPrimary: widget.selection.setPrimary,
-              onToggleDetail: (String id) => setState(
-                  () => _expandedId = _expandedId == id ? null : id),
+              onToggleDetail: (String id) =>
+                  setState(() => _expandedId = _expandedId == id ? null : id),
               onConsult: _startConsultation,
             ),
             _AiDoctorCard(locale: locale, mode: widget.mode),
@@ -335,6 +483,12 @@ class _MineRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
+          CareDoctorAvatar(
+            name: doctor.displayName,
+            avatarUrl: doctor.avatarUrl,
+            size: 44,
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -419,11 +573,13 @@ class _DirectoryCard extends StatefulWidget {
     required this.roster,
     required this.loading,
     required this.selection,
+    required this.category,
     required this.expandedId,
     required this.reasonController,
     required this.notice,
     required this.error,
     required this.siteFor,
+    required this.cardKey,
     required this.onChooseAffiliation,
     required this.onToggleSelect,
     required this.onSetPrimary,
@@ -435,12 +591,15 @@ class _DirectoryCard extends StatefulWidget {
   final DoctorRoster? roster;
   final bool loading;
   final DoctorSelectionState selection;
+  final String? category;
   final String? expandedId;
   final TextEditingController reasonController;
   final String? notice;
   final String? error;
   final DoctorAffiliation? Function(DoctorProfile doctor) siteFor;
-  final void Function(String doctorId, String organizationId) onChooseAffiliation;
+  final GlobalKey Function(String doctorId) cardKey;
+  final void Function(String doctorId, String organizationId)
+      onChooseAffiliation;
   final Future<void> Function(String id) onToggleSelect;
   final Future<void> Function(String id) onSetPrimary;
   final ValueChanged<String> onToggleDetail;
@@ -450,92 +609,23 @@ class _DirectoryCard extends StatefulWidget {
   State<_DirectoryCard> createState() => _DirectoryCardState();
 }
 
-/// The directory groups the roster with top category tabs and a search box.
-///
-/// Categories are the departments the published roster actually practises in, so
-/// a deployment document adds its own without a code change: 全部 plus one chip
-/// per department (儿科, 心血管内科, 全科医学科 for the authored roster).
+/// The directory card: the roster filtered by the navbar category. Search is a
+/// navbar action that opens its own page, so this card no longer carries a
+/// search field or a second category strip.
 class _DirectoryCardState extends State<_DirectoryCard> {
-  final TextEditingController _search = TextEditingController();
-
-  /// `null` means the 全部 category.
-  String? _categoryKey;
-
-  @override
-  void dispose() {
-    _search.dispose();
-    super.dispose();
-  }
-
   List<DoctorProfile> get _doctors =>
       widget.roster?.doctors ?? const <DoctorProfile>[];
-
-  /// Category keys in roster order, deduplicated.
-  List<String> get _categoryKeys {
-    final List<String> keys = <String>[];
-    for (final DoctorProfile doctor in _doctors) {
-      for (final DoctorAffiliation affiliation in doctor.affiliations) {
-        final String key = careDepartmentKey(affiliation);
-        if (key.isNotEmpty && !keys.contains(key)) {
-          keys.add(key);
-        }
-      }
-    }
-    return keys;
-  }
-
-  String _categoryLabel(String key) {
-    for (final DoctorProfile doctor in _doctors) {
-      for (final DoctorAffiliation affiliation in doctor.affiliations) {
-        if (careDepartmentKey(affiliation) == key) {
-          return careDepartmentLabel(widget.locale, affiliation);
-        }
-      }
-    }
-    return key;
-  }
-
-  /// Text a search query is matched against.
-  ///
-  /// Name, department, rank, site, and specialty — the facts a family searches
-  /// by. The free-text bio is deliberately excluded: "pressure" must not make a
-  /// cardiologist match a search for "Su".
-  String _haystack(DoctorProfile doctor) {
-    return <String>[
-      doctor.displayName,
-      ...doctor.specialties,
-      ...doctor.specialties
-          .map((String specialty) => careSpecialtyLabel(widget.locale, specialty)),
-      for (final DoctorAffiliation affiliation in doctor.affiliations) ...<String>[
-        affiliation.department,
-        affiliation.title,
-        affiliation.hospitalName,
-        careDepartmentLabel(widget.locale, affiliation),
-        careTitleLabel(widget.locale, affiliation),
-        careHospitalLabel(widget.locale, affiliation),
-      ],
-    ].join(' ').toLowerCase();
-  }
-
-  List<DoctorProfile> _visibleDoctors() {
-    final String query = _search.text.trim().toLowerCase();
-    return <DoctorProfile>[
-      for (final DoctorProfile doctor in _doctors)
-        if ((_categoryKey == null ||
-                doctor.affiliations.any((DoctorAffiliation affiliation) =>
-                    careDepartmentKey(affiliation) == _categoryKey)) &&
-            (query.isEmpty || _haystack(doctor).contains(query)))
-          doctor,
-    ];
-  }
 
   @override
   Widget build(BuildContext context) {
     final List<DoctorProfile> doctors = _doctors;
     final bool fromDirectory =
         widget.roster?.source == DoctorRosterSource.directory;
-    final List<String> categories = _categoryKeys;
-    final List<DoctorProfile> visible = _visibleDoctors();
+    final List<DoctorProfile> visible = browseDoctors(
+      locale: widget.locale,
+      doctors: doctors,
+      category: widget.category,
+    );
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -619,36 +709,6 @@ class _DirectoryCardState extends State<_DirectoryCard> {
                 style: const TextStyle(color: kMuted),
               )
             else ...<Widget>[
-              TextField(
-                controller: _search,
-                onChanged: (String _) => setState(() {}),
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search, size: 20, color: kMuted),
-                  hintText: careText(widget.locale, 'platform.care.doctors.search'),
-                  suffixIcon: _search.text.isEmpty
-                      ? null
-                      : IconButton(
-                          tooltip: careText(widget.locale, 'platform.care.action.cancel'),
-                          icon: const Icon(Icons.close, size: 18, color: kMuted),
-                          onPressed: () => setState(_search.clear),
-                        ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: <Widget>[
-                    _categoryChip(
-                      key: null,
-                      label: careText(widget.locale, 'platform.care.doctors.category.all'),
-                    ),
-                    for (final String key in categories)
-                      _categoryChip(key: key, label: _categoryLabel(key)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 6),
               Text(
                 careText(
                   widget.locale,
@@ -666,6 +726,7 @@ class _DirectoryCardState extends State<_DirectoryCard> {
               else
                 for (final DoctorProfile doctor in visible)
                   _DoctorCard(
+                    key: widget.cardKey(doctor.id),
                     locale: widget.locale,
                     doctor: doctor,
                     site: widget.siteFor(doctor),
@@ -688,22 +749,11 @@ class _DirectoryCardState extends State<_DirectoryCard> {
       ),
     );
   }
-
-  Widget _categoryChip({required String? key, required String label}) {
-    final bool selected = _categoryKey == key;
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ChoiceChip(
-        label: Text(label),
-        selected: selected,
-        onSelected: (bool _) => setState(() => _categoryKey = key),
-      ),
-    );
-  }
 }
 
 class _DoctorCard extends StatelessWidget {
   const _DoctorCard({
+    super.key,
     required this.locale,
     required this.doctor,
     required this.site,
@@ -751,6 +801,12 @@ class _DoctorCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
+              CareDoctorAvatar(
+                name: doctor.displayName,
+                avatarUrl: doctor.avatarUrl,
+                size: 48,
+              ),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -808,7 +864,8 @@ class _DoctorCard extends StatelessWidget {
             children: <Widget>[
               if (site != null)
                 CareBadge(
-                  label: careText(locale, careEmploymentKey(site!.employmentType)),
+                  label:
+                      careText(locale, careEmploymentKey(site!.employmentType)),
                   neutral: true,
                 ),
               if (doctor.affiliations.length > 1)
@@ -832,7 +889,9 @@ class _DoctorCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${careText(locale, 'platform.care.doctors.experience', params: <String, String>{'count': '${doctor.yearsOfExperience}'})}'
+            '${careText(locale, 'platform.care.doctors.experience', params: <String, String>{
+                  'count': '${doctor.yearsOfExperience}'
+                })}'
             ' · ${careText(locale, 'platform.care.doctors.languages')}: '
             '${careListLabel(locale, doctor.languages)}'
             ' · ${careText(locale, 'platform.care.doctors.availability')}: '
@@ -869,8 +928,7 @@ class _DoctorCard extends StatelessWidget {
                 ),
               TextButton(
                 onPressed: onToggleDetail,
-                child:
-                    Text(careText(locale, 'platform.care.doctors.detail')),
+                child: Text(careText(locale, 'platform.care.doctors.detail')),
               ),
             ],
           ),
@@ -982,8 +1040,8 @@ class _AffiliationTile extends StatelessWidget {
                 ),
               ),
               CareBadge(
-                label:
-                    careText(locale, careEmploymentKey(affiliation.employmentType)),
+                label: careText(
+                    locale, careEmploymentKey(affiliation.employmentType)),
                 neutral: true,
               ),
             ],
@@ -1020,7 +1078,8 @@ class _AffiliationTile extends StatelessWidget {
             ),
           const SizedBox(height: 6),
           ChoiceChip(
-            label: Text(careText(locale, 'platform.care.doctors.chooseAffiliation')),
+            label: Text(
+                careText(locale, 'platform.care.doctors.chooseAffiliation')),
             selected: chosen,
             onSelected: (_) => onChoose(),
           ),

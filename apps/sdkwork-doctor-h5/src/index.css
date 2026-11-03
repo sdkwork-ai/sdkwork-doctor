@@ -338,6 +338,49 @@ body { min-height: 100vh; }
   gap: 12px;
 }
 
+/* Doctor portraits. The roster ships a circular PNG, so the frame only sizes
+   and crops it; flat by contract: no border, no shadow. */
+.doctor-card-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.doctor-card-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.doctor-avatar {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--doctor-surface-alt);
+}
+
+.doctor-avatar-lg {
+  width: 56px;
+  height: 56px;
+}
+
+.doctor-avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--doctor-accent-strong);
+}
+
+.doctor-avatar-lg.doctor-avatar-fallback {
+  font-size: 18px;
+}
+
 .doctor-card-actions {
   display: flex;
   flex-wrap: wrap;

@@ -151,11 +151,13 @@ class PatientProfile {
       birthYear: birthYear,
       birthDate: _validBirthDate(value['birthDate']),
       sex: sex,
-      bloodType: isBloodType(value['bloodType']) ? value['bloodType'] as String : '',
+      bloodType:
+          isBloodType(value['bloodType']) ? value['bloodType'] as String : '',
       allergies: _stringList(value['allergies']),
       chronicConditions: _stringList(value['chronicConditions']),
       medications: _stringList(value['medications']),
-      notes: _optionalText(notes is String ? notes : '', kPatientNotesMaxLength),
+      notes:
+          _optionalText(notes is String ? notes : '', kPatientNotesMaxLength),
       createdAt: createdAt is String ? createdAt : null,
       updatedAt: updatedAt is String ? updatedAt : null,
     );
@@ -329,8 +331,8 @@ PatientProfile createPatientProfile(
   DateTime? now,
   String? createdAt,
 }) {
-  final String displayName =
-      _requiredText(input.displayName, 'display name', kPatientDisplayNameMaxLength);
+  final String displayName = _requiredText(
+      input.displayName, 'display name', kPatientDisplayNameMaxLength);
   final int maxYear = DateTime.now().year;
   if (input.birthYear < kMinPatientBirthYear || input.birthYear > maxYear) {
     throw ArgumentError(
@@ -406,7 +408,8 @@ PatientHousehold parsePatientHousehold(Object? value) {
     rawProfiles = List<Object?>.from(parsed);
   } else if (parsed is Map) {
     final Object? profiles = parsed['profiles'];
-    rawProfiles = profiles is List ? List<Object?>.from(profiles) : const <Object?>[];
+    rawProfiles =
+        profiles is List ? List<Object?>.from(profiles) : const <Object?>[];
     rawActiveId = parsed['activeId'];
   } else {
     return _emptyHousehold;
@@ -483,12 +486,14 @@ class PatientProfileStore extends ChangeNotifier {
     final PatientHousehold seeded = seed ?? defaultPatientHousehold();
     try {
       final String? raw = await storage.read();
-      final PatientHousehold household =
-          raw == null || raw.trim().isEmpty ? seeded : parsePatientHousehold(raw);
+      final PatientHousehold household = raw == null || raw.trim().isEmpty
+          ? seeded
+          : parsePatientHousehold(raw);
       return PatientProfileStore._(storage, household);
     } catch (_) {
       // A broken storage backend must not take the patient files down.
-      return PatientProfileStore._(fallback ?? MemoryPatientProfileStorage(), seeded);
+      return PatientProfileStore._(
+          fallback ?? MemoryPatientProfileStorage(), seeded);
     }
   }
 
@@ -501,8 +506,7 @@ class PatientProfileStore extends ChangeNotifier {
         ? defaultPatientHousehold()
         : PatientHousehold(
             profiles: profiles,
-            activeId: activeId ??
-                (profiles.isEmpty ? null : profiles.first.id),
+            activeId: activeId ?? (profiles.isEmpty ? null : profiles.first.id),
           );
     return PatientProfileStore._(
       MemoryPatientProfileStorage(serializePatientHousehold(household)),
@@ -531,7 +535,8 @@ class PatientProfileStore extends ChangeNotifier {
 
   /// Switches the active patient; an unknown id is ignored.
   Future<void> select(String id) async {
-    if (!_household.profiles.any((PatientProfile profile) => profile.id == id)) {
+    if (!_household.profiles
+        .any((PatientProfile profile) => profile.id == id)) {
       return;
     }
     if (_household.activeId == id) return;

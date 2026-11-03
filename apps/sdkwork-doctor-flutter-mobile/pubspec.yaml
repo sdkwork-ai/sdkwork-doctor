@@ -8,6 +8,11 @@ dependencies:
   flutter:
     sdk: flutter
   shared_preferences: ^2.5.6
+  # Voice-call platform capabilities. Every one stays behind a typed adapter in
+  # `lib/voice/`; no widget imports a plugin class or method-channel name.
+  camera: ^0.12.2
+  flutter_tts: ^4.2.5
+  speech_to_text: ^7.5.0
   # Shared SDKWork conversation composer (idle pill / focus-expanded card).
   sdkwork_chat_composer_flutter:
     path: ../../../sdkwork-appbase/packages/mobile-flutter/foundation/sdkwork_chat_composer_flutter
@@ -28,3 +33,8 @@ dependency_overrides:
 
 flutter:
   uses-material-design: true
+  # Doctor portraits. The authored roster names `avatars/<doctor-id>.png`; this
+  # app bundles the same files every other client ships. Rendered from the SVG
+  # sources by `tools/render-doctor-avatars.mjs`.
+  assets:
+    - assets/avatars/

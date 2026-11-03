@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Portrait of Dr. He Zhiyuan">
+  <defs>
+    <linearGradient id="he-bg" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#ECFAF4"/>
+      <stop offset="1" stop-color="#B9E2D1"/>
+    </linearGradient>
+    <linearGradient id="he-coat" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#EDF2F9"/>
+    </linearGradient>
+    <clipPath id="he-frame"><circle cx="256" cy="256" r="256"/></clipPath>
+  </defs>
+  <g clip-path="url(#he-frame)">
+    <rect width="512" height="512" fill="url(#he-bg)"/>
+    <circle cx="256" cy="232" r="188" fill="#FFFFFF" opacity="0.26"/>
+    <circle cx="256" cy="236" r="150" fill="#FFFFFF" opacity="0.2"/>
+
+    <!-- neck -->
+    <path d="M 218 288 h 76 v 100 h -76 Z" fill="#DFAA86"/>
+    <path d="M 218 288 h 76 v 26 c -25 12 -51 12 -76 0 Z" fill="#CE9370" opacity="0.65"/>
+
+    <!-- shirt -->
+    <path d="M 118 512 C 126 430 182 384 256 384 C 330 384 386 430 394 512 Z" fill="#BED4E8"/>
+
+    <!-- white coat -->
+    <path d="M 78 512 C 86 426 158 374 256 374 C 354 374 426 426 434 512 Z" fill="url(#he-coat)"/>
+    <path d="M 210 378 L 256 478 L 302 378 L 286 376 L 256 454 L 226 376 Z" fill="#DCE5F2"/>
+
+    <!-- head -->
+    <path d="M 256 108 C 305 108 344 150 344 212 C 344 270 308 314 256 314 C 204 314 168 270 168 212 C 168 150 207 108 256 108 Z" fill="#EFC09D"/>
+    <!-- ears -->
+    <ellipse cx="168" cy="224" rx="15" ry="23" fill="#E6B08B"/>
+    <ellipse cx="344" cy="224" rx="15" ry="23" fill="#E6B08B"/>
+
+    <!-- short hair, side-parted -->
+    <path d="M 166 216 C 162 146 200 102 256 102 C 312 102 350 146 346 216 C 340 188 330 174 314 164 C 296 152 280 148 256 148 C 232 148 214 152 196 164 C 180 174 172 188 166 216 Z" fill="#262A31"/>
+    <path d="M 200 130 C 226 114 262 112 292 124 C 264 118 230 122 208 142 Z" fill="#3F454F" opacity="0.9"/>
+
+    <!-- brows -->
+    <path d="M 200 188 Q 222 178 242 186" stroke="#41352F" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <path d="M 312 188 Q 290 178 270 186" stroke="#41352F" stroke-width="8" stroke-linecap="round" fill="none"/>
+
+    <!-- eyes -->
+    <ellipse cx="218" cy="222" rx="9" ry="11" fill="#2B2725"/>
+    <ellipse cx="294" cy="222" rx="9" ry="11" fill="#2B2725"/>
+    <circle cx="221" cy="218" r="3" fill="#FFFFFF" opacity="0.85"/>
+    <circle cx="297" cy="218" r="3" fill="#FFFFFF" opacity="0.85"/>
+
+    <!-- nose -->
+    <path d="M 256 228 C 256 244 250 252 244 256" stroke="#D28E67" stroke-width="7" stroke-linecap="round" fill="none"/>
+
+    <!-- mouth -->
+    <path d="M 234 278 Q 256 294 278 278" stroke="#B26650" stroke-width="8" stroke-linecap="round" fill="none"/>
+
+    <!-- stethoscope -->
+    <path d="M 200 386 C 192 436 210 478 256 478 C 302 478 320 436 312 386" stroke="#3D4E68" stroke-width="11" stroke-linecap="round" fill="none"/>
+    <circle cx="256" cy="478" r="20" fill="#516683"/>
+    <circle cx="256" cy="478" r="10" fill="#93A9C6"/>
+  </g>
+</svg>

@@ -28,10 +28,12 @@ const String kAgentsApiPrefix = '/app/v3/api';
 String buildFamilyDoctorSystemPrompt(FamilyMember member) {
   final String allergies =
       member.allergies.isEmpty ? 'none recorded' : member.allergies.join(', ');
-  final String conditions =
-      member.chronicConditions.isEmpty ? 'none recorded' : member.chronicConditions.join(', ');
-  final String medications =
-      member.medications.isEmpty ? 'none recorded' : member.medications.join(', ');
+  final String conditions = member.chronicConditions.isEmpty
+      ? 'none recorded'
+      : member.chronicConditions.join(', ');
+  final String medications = member.medications.isEmpty
+      ? 'none recorded'
+      : member.medications.join(', ');
   return <String>[
     'You are the family private doctor for ${member.displayName} (${member.relation}, born ${member.birthYear}).',
     'Known allergies: $allergies. Chronic conditions: $conditions. Current medications: $medications.',
@@ -44,7 +46,8 @@ String buildFamilyDoctorSystemPrompt(FamilyMember member) {
 
 /// Normalizes an agents API base URL to the gateway root the path builders expect.
 String resolveCareAgentsBaseUrl(String agentsApiBaseUrl) {
-  final String normalized = agentsApiBaseUrl.trim().replaceAll(RegExp(r'/+$'), '');
+  final String normalized =
+      agentsApiBaseUrl.trim().replaceAll(RegExp(r'/+$'), '');
   if (normalized.isEmpty) {
     throw const CareConversationException('agentsApiBaseUrl must not be empty');
   }
@@ -72,7 +75,8 @@ class DoctorCarePayloadSigner implements CarePayloadSigner {
       careSessionPayloadHash(title, entrySurface);
 
   @override
-  String turnPayloadHash(String content, String contentType, String entrySurface) =>
+  String turnPayloadHash(
+          String content, String contentType, String entrySurface) =>
       careTurnPayloadHash(content, contentType, entrySurface);
 }
 

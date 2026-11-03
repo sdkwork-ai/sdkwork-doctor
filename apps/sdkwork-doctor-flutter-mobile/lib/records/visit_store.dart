@@ -116,18 +116,18 @@ class VisitRecord {
       doctorLabel: doctorLabel is String && doctorLabel.trim().isNotEmpty
           ? doctorLabel.trim()
           : null,
-      doctorOrganizationId:
-          doctorOrganizationId is String && doctorOrganizationId.trim().isNotEmpty
-              ? doctorOrganizationId.trim()
-              : null,
+      doctorOrganizationId: doctorOrganizationId is String &&
+              doctorOrganizationId.trim().isNotEmpty
+          ? doctorOrganizationId.trim()
+          : null,
       doctorHospitalLabel:
           doctorHospitalLabel is String && doctorHospitalLabel.trim().isNotEmpty
               ? doctorHospitalLabel.trim()
               : null,
-      doctorEmploymentType:
-          doctorEmploymentType is String && doctorEmploymentType.trim().isNotEmpty
-              ? doctorEmploymentType.trim()
-              : null,
+      doctorEmploymentType: doctorEmploymentType is String &&
+              doctorEmploymentType.trim().isNotEmpty
+          ? doctorEmploymentType.trim()
+          : null,
     );
   }
 }
@@ -192,9 +192,11 @@ VisitRecord createVisitRecord({
   }
   final String trimmedDoctorId = (doctorId ?? '').trim();
   final String trimmedDoctorLabel = (doctorLabel ?? '').trim();
-  final String trimmedDoctorOrganizationId = (doctorOrganizationId ?? '').trim();
+  final String trimmedDoctorOrganizationId =
+      (doctorOrganizationId ?? '').trim();
   final String trimmedDoctorHospitalLabel = (doctorHospitalLabel ?? '').trim();
-  final String trimmedDoctorEmploymentType = (doctorEmploymentType ?? '').trim();
+  final String trimmedDoctorEmploymentType =
+      (doctorEmploymentType ?? '').trim();
   return VisitRecord(
     id: id ?? newVisitRecordId(),
     recordedAt: (recordedAt ?? DateTime.now()).toUtc().toIso8601String(),
@@ -206,12 +208,14 @@ VisitRecord createVisitRecord({
     mode: mode,
     doctorId: trimmedDoctorId.isEmpty ? null : trimmedDoctorId,
     doctorLabel: trimmedDoctorLabel.isEmpty ? null : trimmedDoctorLabel,
-    doctorOrganizationId:
-        trimmedDoctorOrganizationId.isEmpty ? null : trimmedDoctorOrganizationId,
+    doctorOrganizationId: trimmedDoctorOrganizationId.isEmpty
+        ? null
+        : trimmedDoctorOrganizationId,
     doctorHospitalLabel:
         trimmedDoctorHospitalLabel.isEmpty ? null : trimmedDoctorHospitalLabel,
-    doctorEmploymentType:
-        trimmedDoctorEmploymentType.isEmpty ? null : trimmedDoctorEmploymentType,
+    doctorEmploymentType: trimmedDoctorEmploymentType.isEmpty
+        ? null
+        : trimmedDoctorEmploymentType,
   );
 }
 
@@ -346,7 +350,8 @@ class VisitRecordStore extends ChangeNotifier {
   /// In-memory store for tests.
   factory VisitRecordStore.memory(
       [List<VisitRecord> initial = const <VisitRecord>[]]) {
-    return VisitRecordStore._(MemoryVisitRecordStorage(serializeVisitRecords(initial)),
+    return VisitRecordStore._(
+        MemoryVisitRecordStorage(serializeVisitRecords(initial)),
         List<VisitRecord>.of(initial));
   }
 

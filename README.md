@@ -62,11 +62,13 @@ Three tabs on every client; the browser surfaces also keep a workbench landing a
 | 我的 | `/doctor/me` | me destination | `pages/profile` |
 | 记录 (sub-screen of 我的) | `/doctor/me/records` | pushed screen | `pages/records` (not a tab) |
 
+The mobile 医生 tab follows the WeChat search pattern: the title stays in the navbar, a search icon on the right opens a dedicated search page with an auto-focused field and a cancel action, and the department category tabs scroll in the navbar under the title instead of taking a row inside the page. Tapping a search result returns to the tab with that doctor's card expanded, so selection and the consultation form stay in one place.
+
 Shared contracts:
 
 - `@sdkwork/doctor-common-doctor` owns patient files, family members, health summary, emergency-first triage, and the human-doctor roster/selection rules.
 - `contracts/triage-rules.json` is the single red-flag vocabulary; a parity test fails when any client drifts.
-- `contracts/doctor-roster.json` is the authored fallback roster; an operator binds a real directory through `runtime-env.json#careDoctorDirectoryUrl` (`specs/doctor-directory.contract.json`). A doctor is a person; each practice site is an affiliation that names the Appbase `organizationId`, the `med_hospital` code, the department/rank, and the engagement (`full_time` / `part_time` / `contract` / `visiting`). `sdkwork-company` is never the clinical employer.
+- `contracts/doctor-roster.json` is the authored fallback roster; an operator binds a real directory through `runtime-env.json#careDoctorDirectoryUrl` (`specs/doctor-directory.contract.json`). A doctor is a person; each practice site is an affiliation that names the Appbase `organizationId`, the `med_hospital` code, the department/rank, and the engagement (`full_time` / `part_time` / `contract` / `visiting`). `sdkwork-company` is never the clinical employer. Each entry also names its portrait (`avatarUrl`); the contract package keeps the editable SVG and the canonical PNG, every client ships the same PNG bytes, and an operator directory may publish an absolute http(s) URL instead. Re-render the portraits with `node tools/render-doctor-avatars.mjs`.
 - `@sdkwork/doctor-common-agent` owns `AgentConversationPort`, the offline care adapter, the hosted wire adapter, the managed-agent catalogue port, and `resolveCareAgentMode()` (hosted vs offline is explicit, never a silent fallback).
 
 ### Verified

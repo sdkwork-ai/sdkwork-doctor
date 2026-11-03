@@ -26,12 +26,18 @@
   "doctorProfile": {
     "id": "string, stable person id across deployments and organizations",
     "displayName": "string, 1-60 characters",
+    "avatarUrl": "string; the doctor portrait. An operator directory publishes an absolute http(s) URL. The authored roster names a bundle-relative asset (`avatars/<doctor-id>.png`) that every client ships and resolves against its own asset root. Empty means no portrait and the UI shows the doctor's initial. Any other scheme (data:, javascript:, an absolute filesystem path, or a path that climbs out of the bundle) is dropped by every parser.",
     "specialties": "string[]",
     "languages": "string[]",
     "yearsOfExperience": "integer 0-70",
     "bio": "string, <= 600 characters",
     "verified": "boolean; true only when the operator directory vouched for the clinician",
     "affiliations": "DoctorAffiliation[] — at least one; person facts never include a hospital"
+  },
+  "portraits": {
+    "artwork": "apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor/assets/avatars/<doctor-id>.svg is the editable vector source; the canonical <doctor-id>.png beside it is the rendered portrait (RGBA, 256x256, transparent outside the circle).",
+    "generator": "node tools/render-doctor-avatars.mjs renders every SVG headlessly and copies the PNG into each client bundle: apps/sdkwork-doctor-pc/public/avatars, apps/sdkwork-doctor-h5/public/avatars, apps/sdkwork-doctor-mini-program/src/assets/avatars, apps/sdkwork-doctor-flutter-mobile/assets/avatars.",
+    "rule": "Every client ships byte-identical portrait bytes; tests/doctor-directory.test.mjs fails when one copy drifts. A portrait that fails to load falls back to the doctor's initial rather than to a broken image."
   },
   "doctorAffiliation": {
     "organizationId": "string, Appbase organization unit (required)",

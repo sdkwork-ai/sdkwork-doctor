@@ -13,6 +13,7 @@ import 'package:sdkwork_doctor_flutter_mobile/triage.dart';
 import 'package:sdkwork_doctor_flutter_mobile/triage_copy.dart';
 import 'package:sdkwork_doctor_flutter_mobile/ui/care_widgets.dart';
 import 'package:sdkwork_doctor_flutter_mobile/ui/chat_tab.dart';
+import 'package:sdkwork_doctor_flutter_mobile/ui/doctor_search_screen.dart';
 import 'package:sdkwork_doctor_flutter_mobile/ui/doctor_tab.dart';
 import 'package:sdkwork_doctor_flutter_mobile/ui/me_tab.dart';
 import 'package:sdkwork_doctor_flutter_mobile/ui/patient_form_screen.dart';
@@ -95,6 +96,10 @@ Finder inChat(Finder matching) =>
 
 Finder inDoctor(Finder matching) =>
     find.descendant(of: find.byType(DoctorTab), matching: matching);
+
+/// The 医生 navbar: title, search action, and the category tabs.
+Finder inDoctorNavbar(Finder matching) =>
+    find.descendant(of: find.byType(AppBar), matching: matching);
 
 Finder inMe(Finder matching) =>
     find.descendant(of: find.byType(MeTab), matching: matching);
@@ -350,24 +355,29 @@ void main() {
         findsOneWidget);
   });
 
-  testWidgets('医生 groups the directory with top category tabs',
+  testWidgets('医生 keeps the category tabs in the navbar',
       (WidgetTester tester) async {
     await pumpApp(tester);
     await openTab(tester, 1);
 
-    final Finder all = inDoctor(
-        find.text(_t('platform.care.doctors.category.all')));
-    final Finder cardiology = inDoctor(
+    final Finder all =
+        inDoctorNavbar(find.text(_t('platform.care.doctors.category.all')));
+    final Finder cardiology = inDoctorNavbar(
         find.text(_t('platform.care.doctors.department.cardiology')));
-    final Finder pediatrics = inDoctor(
+    final Finder pediatrics = inDoctorNavbar(
         find.text(_t('platform.care.doctors.department.pediatrics')));
-    final Finder generalPractice = inDoctor(
+    final Finder generalPractice = inDoctorNavbar(
         find.text(_t('platform.care.doctors.department.general_practice')));
 
     expect(all, findsOneWidget);
     expect(cardiology, findsOneWidget);
     expect(pediatrics, findsOneWidget);
     expect(generalPractice, findsOneWidget);
+    expect(
+      inDoctor(find.text(_t('platform.care.doctors.category.all'))),
+      findsNothing,
+      reason: 'the strip belongs to the navbar, not the page body',
+    );
     expect(
       inDoctor(find.text(_t('platform.care.doctors.results',
           params: <String, String>{'count': '3'}))),
@@ -392,28 +402,69 @@ void main() {
     expect(inDoctor(find.text('He Zhiyuan')), findsOneWidget);
   });
 
-  testWidgets('医生 searches the directory by name and specialty',
+  testWidgets('医生 searches from the navbar and returns the tapped doctor',
       (WidgetTester tester) async {
     await pumpApp(tester);
     await openTab(tester, 1);
 
-    final Finder search = inDoctor(find.byType(TextField)).first;
+    expect(inDoctor(find.byType(TextField)), findsNothing,
+        reason: 'search is a navbar action, not a field on the page');
+    await tester.tap(find.byTooltip(_t('platform.care.doctors.searchAction')));
+    await tester.pumpAndSettle();
+
+    final Finder page = find.byType(DoctorSearchScreen);
+    expect(page, findsOneWidget);
+    final Finder search = find.descendant(
+        of: page, matching: find.byType(TextField));
 
     await tester.enterText(search, 'Lin Qinghe');
     await tester.pumpAndSettle();
-    expect(inDoctor(find.text('Lin Qinghe')), findsWidgets);
-    expect(inDoctor(find.text('Su Wanning')), findsNothing);
+    expect(find.descendant(of: page, matching: find.text('Lin Qinghe')),
+        findsWidgets);
+    expect(find.descendant(of: page, matching: find.text('Su Wanning')),
+        findsNothing);
 
     await tester.enterText(
         search, _t('platform.care.doctors.specialty.child_fever'));
     await tester.pumpAndSettle();
-    expect(inDoctor(find.text('Su Wanning')), findsWidgets);
-    expect(inDoctor(find.text('Lin Qinghe')), findsNothing);
+    expect(find.descendant(of: page, matching: find.text('Su Wanning')),
+        findsWidgets);
+    expect(find.descendant(of: page, matching: find.text('Lin Qinghe')),
+        findsNothing);
 
     await tester.enterText(search, 'no-such-doctor');
     await tester.pumpAndSettle();
-    expect(inDoctor(find.text(_t('platform.care.doctors.noResults'))),
+    expect(find.text(_t('platform.care.doctors.noResults')), findsOneWidget);
+
+    // The result opens that doctor on the 医生 tab: the page pops and the card
+    // is expanded, so selection and the consultation form stay on one surface.
+    await tester.enterText(search, 'Su Wanning');
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(InkWell, 'Su Wanning').first);
+    await tester.pumpAndSettle();
+
+    expect(page, findsNothing);
+    expect(find.widgetWithText(AppBar, _t('platform.care.nav.doctor')),
         findsOneWidget);
+    expect(inDoctor(find.text(_t('platform.care.doctors.affiliationsHint'))),
+        findsOneWidget,
+        reason: 'the returned doctor card is expanded');
+  });
+
+  testWidgets('医生 search cancels back to the directory',
+      (WidgetTester tester) async {
+    await pumpApp(tester);
+    await openTab(tester, 1);
+
+    await tester.tap(find.byTooltip(_t('platform.care.doctors.searchAction')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.descendant(
+        of: find.byType(DoctorSearchScreen),
+        matching: find.widgetWithText(TextButton, _t('platform.care.action.cancel'))));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DoctorSearchScreen), findsNothing);
+    expect(inDoctor(find.text('Lin Qinghe')), findsOneWidget);
   });
 
   testWidgets('医生 lists the fallback roster and selecting one makes it primary',
@@ -421,7 +472,8 @@ void main() {
     final Harness harness = await pumpApp(tester);
     await openTab(tester, 1);
 
-    expect(inDoctor(find.text(_t('platform.care.doctors.title'))), findsOneWidget);
+    expect(find.widgetWithText(AppBar, _t('platform.care.nav.doctor')),
+        findsOneWidget);
     expect(inDoctor(find.text(_t('platform.care.doctors.source.catalog'))),
         findsOneWidget);
     for (final DoctorProfile doctor in kCatalogDoctorRoster.doctors) {
@@ -468,8 +520,8 @@ void main() {
         inDoctor(find.text(_t('platform.care.doctors.detail'))).first);
     await tester.pumpAndSettle();
     await tester.enterText(
-      // The directory search box comes first; the reason field belongs to the
-      // expanded doctor card.
+      // Search lives in the navbar now; the only field on the page is the
+      // expanded doctor card's reason field.
       inDoctor(find.byType(TextField)).last,
       'chest tightness after dinner',
     );

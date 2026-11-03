@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:sdkwork_chat_composer_flutter/sdkwork_chat_composer_flutter.dart';
 import 'package:sdkwork_doctor_flutter_mobile_care/sdkwork_doctor_flutter_mobile_care.dart';
 
-import '../agent/care_agent.dart';
-import '../family.dart';
+import '../care/care_exchange.dart';
 import '../i18n/care_i18n.dart';
 import '../patients/patient_store.dart';
 import '../records/visit_store.dart';
 import '../theme/doctor_theme.dart';
 import '../triage.dart';
-import '../triage_copy.dart';
 import 'care_shell.dart';
 import 'care_widgets.dart';
 
@@ -51,33 +49,20 @@ class _ChatTabState extends State<ChatTab> {
   }
 
   Future<void> _send(String draft) async {
-    final String text = draft.trim();
     final PatientProfile? patient = widget.patients.active;
-    if (text.isEmpty || patient == null || widget.conversations.sending) {
+    if (draft.trim().isEmpty ||
+        patient == null ||
+        widget.conversations.sending) {
       return;
     }
-    final FamilyMember member = FamilyMember.fromPatient(patient);
-    final String? reply = await widget.conversations.send(
-      text,
-      systemPrompt: buildFamilyDoctorSystemPrompt(member),
-      // The offline transport already answers with its own actions and safety
-      // line; only the hosted answer needs the care reply policy applied.
-      decorate: widget.conversations.mode == 'hosted'
-          ? (String raw) => composeCareReply(
-              widget.locale, resolveReplyLevel(text, raw), raw, member)
-          : null,
+    final String? reply = await sendCareExchange(
+      locale: widget.locale,
+      conversations: widget.conversations,
+      records: widget.records,
+      patient: patient,
+      text: draft,
     );
     if (!mounted || reply == null) {
-      return;
-    }
-    await widget.records.add(createVisitRecord(
-      member: member,
-      symptom: text,
-      advice: reply,
-      level: resolveReplyLevel(text, reply),
-      mode: widget.conversations.mode,
-    ));
-    if (!mounted) {
       return;
     }
     setState(_controller.clear);
@@ -93,7 +78,8 @@ class _ChatTabState extends State<ChatTab> {
       builder: (BuildContext context, Widget? _) {
         final List<PatientProfile> profiles = widget.patients.profiles;
         final PatientProfile? active = widget.patients.active;
-        final List<CareConversationMessage> messages = widget.conversations.messages;
+        final List<CareConversationMessage> messages =
+            widget.conversations.messages;
         final String? error = widget.conversations.error;
         return Column(
           children: <Widget>[

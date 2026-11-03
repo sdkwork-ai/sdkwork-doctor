@@ -184,44 +184,65 @@ class MeTab extends StatelessWidget {
                         style: const TextStyle(color: kMuted),
                       )
                     else ...<Widget>[
-                      Text(
-                        primary.displayName,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w600, color: kInk),
-                      ),
-                      if (primarySite != null) ...<Widget>[
-                        const SizedBox(height: 2),
-                        Text(
-                          careAffiliationSummary(locale, primarySite),
-                          style: const TextStyle(fontSize: 12, color: kMuted),
-                        ),
-                        const SizedBox(height: 4),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 4,
-                          children: <Widget>[
-                            CareBadge(
-                              label: careText(
-                                locale,
-                                careEmploymentKey(primarySite.employmentType),
-                              ),
-                              neutral: true,
-                            ),
-                            if (!primarySite.acceptingNewPatients)
-                              CareBadge(
-                                label: careText(
-                                  locale,
-                                  'platform.care.doctors.notAccepting',
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          CareDoctorAvatar(
+                            name: primary.displayName,
+                            avatarUrl: primary.avatarUrl,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text(
+                                  primary.displayName,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600, color: kInk),
                                 ),
-                                warn: true,
-                              ),
-                          ],
-                        ),
-                      ],
+                                if (primarySite != null) ...<Widget>[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    careAffiliationSummary(locale, primarySite),
+                                    style: const TextStyle(
+                                        fontSize: 12, color: kMuted),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Wrap(
+                                    spacing: 6,
+                                    runSpacing: 4,
+                                    children: <Widget>[
+                                      CareBadge(
+                                        label: careText(
+                                          locale,
+                                          careEmploymentKey(
+                                              primarySite.employmentType),
+                                        ),
+                                        neutral: true,
+                                      ),
+                                      if (!primarySite.acceptingNewPatients)
+                                        CareBadge(
+                                          label: careText(
+                                            locale,
+                                            'platform.care.doctors.notAccepting',
+                                          ),
+                                          warn: true,
+                                        ),
+                                    ],
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         '${careText(locale, 'platform.care.doctors.primary')} · '
-                        '${careText(locale, 'platform.care.doctors.count', params: <String, String>{'count': '${selection.selectedIds.length}'})}',
+                        '${careText(locale, 'platform.care.doctors.count', params: <String, String>{
+                              'count': '${selection.selectedIds.length}'
+                            })}',
                         style: const TextStyle(fontSize: 12, color: kMuted),
                       ),
                     ],
@@ -229,8 +250,8 @@ class MeTab extends StatelessWidget {
                     TextButton.icon(
                       onPressed: onOpenDoctors,
                       icon: const Icon(Icons.medical_information_outlined),
-                      label:
-                          Text(careText(locale, 'platform.care.doctors.choose')),
+                      label: Text(
+                          careText(locale, 'platform.care.doctors.choose')),
                     ),
                   ],
                 ),
@@ -377,8 +398,7 @@ class _PatientRow extends StatelessWidget {
               if (!active)
                 TextButton(
                   onPressed: onSelect,
-                  child: Text(
-                      careText(locale, 'platform.care.profile.select')),
+                  child: Text(careText(locale, 'platform.care.profile.select')),
                 ),
               TextButton(
                 onPressed: onEdit,

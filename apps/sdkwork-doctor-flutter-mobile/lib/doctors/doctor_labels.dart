@@ -26,7 +26,8 @@ String _localized(String locale, String prefix, String raw) {
 
 /// Localized department of one practice site.
 String careDepartmentLabel(String locale, DoctorAffiliation affiliation) =>
-    _localized(locale, 'platform.care.doctors.department', affiliation.department);
+    _localized(
+        locale, 'platform.care.doctors.department', affiliation.department);
 
 /// Stable category key of one practice site (the department slug).
 ///
@@ -45,7 +46,8 @@ String careTitleLabel(String locale, DoctorAffiliation affiliation) =>
 
 /// Localized hospital name of one practice site.
 String careHospitalLabel(String locale, DoctorAffiliation affiliation) =>
-    _localized(locale, 'platform.care.doctors.hospital', affiliation.hospitalName);
+    _localized(
+        locale, 'platform.care.doctors.hospital', affiliation.hospitalName);
 
 /// Localized specialty token of the roster.
 String careSpecialtyLabel(String locale, String specialty) =>

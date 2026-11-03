@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Portrait of Dr. Lin Qinghe">
+  <defs>
+    <linearGradient id="lin-bg" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#EBF3FF"/>
+      <stop offset="1" stop-color="#B9D1F5"/>
+    </linearGradient>
+    <linearGradient id="lin-coat" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#EDF2F9"/>
+    </linearGradient>
+    <clipPath id="lin-frame"><circle cx="256" cy="256" r="256"/></clipPath>
+  </defs>
+  <g clip-path="url(#lin-frame)">
+    <rect width="512" height="512" fill="url(#lin-bg)"/>
+    <circle cx="256" cy="232" r="188" fill="#FFFFFF" opacity="0.26"/>
+    <circle cx="256" cy="236" r="150" fill="#FFFFFF" opacity="0.2"/>
+
+    <!-- neck -->
+    <path d="M 216 288 h 80 v 100 h -80 Z" fill="#E7B08C"/>
+    <path d="M 216 288 h 80 v 26 c -26 12 -54 12 -80 0 Z" fill="#D69A78" opacity="0.7"/>
+
+    <!-- shirt -->
+    <path d="M 118 512 C 126 428 184 384 256 384 C 328 384 386 428 394 512 Z" fill="#C2D3EA"/>
+
+    <!-- white coat -->
+    <path d="M 78 512 C 86 426 158 374 256 374 C 354 374 426 426 434 512 Z" fill="url(#lin-coat)"/>
+    <path d="M 210 378 L 256 478 L 302 378 L 286 376 L 256 454 L 226 376 Z" fill="#DCE5F2"/>
+
+    <!-- head -->
+    <path d="M 256 106 C 306 106 346 148 346 210 C 346 268 310 314 256 314 C 202 314 166 268 166 210 C 166 148 206 106 256 106 Z" fill="#F2C7A6"/>
+    <!-- ears -->
+    <ellipse cx="166" cy="222" rx="15" ry="23" fill="#EDBD9B"/>
+    <ellipse cx="346" cy="222" rx="15" ry="23" fill="#EDBD9B"/>
+
+    <!-- short hair, greying at the temples -->
+    <path d="M 164 218 C 160 146 200 100 256 100 C 312 100 352 146 348 218 C 342 190 332 176 318 166 C 300 154 282 150 256 150 C 230 150 212 154 194 166 C 180 176 170 190 164 218 Z" fill="#3C414A"/>
+    <path d="M 168 206 C 172 168 186 142 208 128 C 196 154 188 180 186 214 Z" fill="#9AA2AD" opacity="0.85"/>
+    <path d="M 344 206 C 340 168 326 142 304 128 C 316 154 324 180 326 214 Z" fill="#9AA2AD" opacity="0.85"/>
+    <path d="M 166 206 C 166 214 166 224 168 232 L 180 232 C 178 220 178 210 178 202 Z" fill="#A6ADB8" opacity="0.8"/>
+    <path d="M 346 206 C 346 214 346 224 344 232 L 332 232 C 334 220 334 210 334 202 Z" fill="#A6ADB8" opacity="0.8"/>
+
+    <!-- brows -->
+    <path d="M 198 186 Q 222 174 244 184" stroke="#4A3B33" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <path d="M 314 186 Q 290 174 268 184" stroke="#4A3B33" stroke-width="8" stroke-linecap="round" fill="none"/>
+
+    <!-- eyes -->
+    <ellipse cx="216" cy="220" rx="9" ry="11" fill="#2E2A28"/>
+    <ellipse cx="296" cy="220" rx="9" ry="11" fill="#2E2A28"/>
+    <circle cx="219" cy="216" r="3" fill="#FFFFFF" opacity="0.85"/>
+    <circle cx="299" cy="216" r="3" fill="#FFFFFF" opacity="0.85"/>
+
+    <!-- nose -->
+    <path d="M 256 226 C 256 242 250 250 243 254" stroke="#D89B7A" stroke-width="7" stroke-linecap="round" fill="none"/>
+
+    <!-- mouth -->
+    <path d="M 232 276 Q 256 292 280 276" stroke="#B26A5A" stroke-width="8" stroke-linecap="round" fill="none"/>
+
+    <!-- glasses -->
+    <rect x="190" y="200" width="58" height="42" rx="14" fill="#FFFFFF" opacity="0.12" stroke="#33383F" stroke-width="6"/>
+    <rect x="264" y="200" width="58" height="42" rx="14" fill="#FFFFFF" opacity="0.12" stroke="#33383F" stroke-width="6"/>
+    <path d="M 248 216 h 16" stroke="#33383F" stroke-width="6" stroke-linecap="round"/>
+    <path d="M 190 214 h -24" stroke="#33383F" stroke-width="6" stroke-linecap="round"/>
+    <path d="M 322 214 h 24" stroke="#33383F" stroke-width="6" stroke-linecap="round"/>
+
+    <!-- stethoscope -->
+    <path d="M 200 386 C 192 436 210 478 256 478 C 302 478 320 436 312 386" stroke="#3D4E68" stroke-width="11" stroke-linecap="round" fill="none"/>
+    <circle cx="256" cy="478" r="20" fill="#516683"/>
+    <circle cx="256" cy="478" r="10" fill="#93A9C6"/>
+  </g>
+</svg>

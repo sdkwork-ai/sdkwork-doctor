@@ -51,6 +51,7 @@ test('the catalog keeps the person and employment models apart', () => {
   const lin = doctors.CATALOG_DOCTOR_ROSTER.doctors[0];
   assert.deepEqual(Object.keys(lin).sort(), [
     'affiliations',
+    'avatarUrl',
     'bio',
     'displayName',
     'id',

@@ -64,11 +64,17 @@
   <view class="h1">{{doctorsTitle}}</view>
   <view class="muted">{{doctorsHint}}</view>
   <view wx:if="{{doctorName}}">
-    <view class="row">
-      <text>{{doctorName}}</text>
-      <text class="badge">{{primaryLabel}}</text>
+    <view class="person">
+      <image wx:if="{{doctorAvatar}}" class="avatar avatar-lg" src="{{doctorAvatar}}" mode="aspectFill" />
+      <view wx:else class="avatar avatar-lg avatar-fallback">{{doctorInitial}}</view>
+      <view class="person-copy">
+        <view class="person-head">
+          <text class="person-name">{{doctorName}}</text>
+          <text class="badge">{{primaryLabel}}</text>
+        </view>
+        <view class="muted">{{doctorSite}}</view>
+      </view>
     </view>
-    <view class="muted">{{doctorSite}}</view>
     <view class="row">
       <text>{{employmentTitle}}</text>
       <text class="badge">{{doctorEmployment}}</text>

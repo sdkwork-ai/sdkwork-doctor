@@ -19,6 +19,8 @@ const EMPLOYMENT_TYPES = ['full_time', 'part_time', 'contract', 'visiting'];
 const CONSULTATION_KINDS = ['video', 'phone', 'messaging', 'clinic'];
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 const YEAR_MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
+const ABSOLUTE_AVATAR_URL = /^https?:\/\/\S+$/i;
+const AVATAR_ASSET_PATH = /^[a-z0-9][a-z0-9._/-]*$/i;
 
 function isDoctorEmploymentType(value) {
   return typeof value === 'string' && EMPLOYMENT_TYPES.indexOf(value) >= 0;
@@ -44,6 +46,45 @@ function textList(value, maxLength) {
     entries.push(text);
   });
   return entries;
+}
+
+/**
+ * Reads a portrait reference. An absolute http(s) URL is kept as published by
+ * an operator directory; a bundle-relative asset path (`avatars/x.png`) is kept
+ * for the authored roster. Any other scheme — a data URI, a `javascript:` URL,
+ * or a path that climbs out of the bundle — is dropped.
+ */
+function avatarUrlFrom(value) {
+  if (typeof value !== 'string') return '';
+  const text = value.trim().slice(0, 500);
+  if (!text) return '';
+  if (ABSOLUTE_AVATAR_URL.test(text)) return text;
+  if (!AVATAR_ASSET_PATH.test(text) || text.indexOf('..') >= 0) return '';
+  return text;
+}
+
+/** True when a portrait is an absolute URL the client loads over the network. */
+function isRemoteDoctorAvatar(avatarUrl) {
+  return typeof avatarUrl === 'string' && ABSOLUTE_AVATAR_URL.test(avatarUrl.trim());
+}
+
+/**
+ * The `image` source for a doctor portrait. The mini program serves its bundled
+ * assets from `/assets/`, so the authored roster's `avatars/x.png` becomes
+ * `/assets/avatars/x.png`; a directory document may publish an absolute URL.
+ * Empty when the profile carries no usable portrait.
+ */
+function resolveDoctorAvatarSrc(avatarUrl) {
+  const text = typeof avatarUrl === 'string' ? avatarUrl.trim() : '';
+  if (!text) return '';
+  return ABSOLUTE_AVATAR_URL.test(text) ? text : '/assets/' + text;
+}
+
+/** One-character monogram shown when a doctor has no portrait. */
+function doctorInitial(displayName) {
+  const text = typeof displayName === 'string' ? displayName.trim() : '';
+  if (!text) return '';
+  return Array.from(text)[0].toUpperCase();
 }
 
 function channelsFrom(value) {
@@ -154,6 +195,7 @@ function doctorFromUnknown(value) {
   return {
     id: id,
     displayName: displayName,
+    avatarUrl: avatarUrlFrom(value.avatarUrl),
     specialties: textList(value.specialties, 40),
     languages: textList(value.languages, 20),
     yearsOfExperience: Number.isInteger(years) && years >= 0 && years <= 70 ? years : 0,
@@ -515,6 +557,7 @@ const CATALOG_DOCTORS = [
   {
     id: 'doctor-lin-qinghe',
     displayName: 'Lin Qinghe',
+    avatarUrl: 'avatars/doctor-lin-qinghe.png',
     specialties: ['Hypertension', 'Coronary heart disease', 'Arrhythmia'],
     languages: ['zh-CN', 'en-US'],
     yearsOfExperience: 22,
@@ -567,6 +610,7 @@ const CATALOG_DOCTORS = [
   {
     id: 'doctor-su-wanning',
     displayName: 'Su Wanning',
+    avatarUrl: 'avatars/doctor-su-wanning.png',
     specialties: ['Child fever', 'Childhood asthma', 'Vaccination planning'],
     languages: ['zh-CN'],
     yearsOfExperience: 15,
@@ -600,6 +644,7 @@ const CATALOG_DOCTORS = [
   {
     id: 'doctor-he-zhiyuan',
     displayName: 'He Zhiyuan',
+    avatarUrl: 'avatars/doctor-he-zhiyuan.png',
     specialties: ['Respiratory infection', 'Gastroenteritis', 'Chronic disease follow-up'],
     languages: ['zh-CN', 'en-US'],
     yearsOfExperience: 9,
@@ -720,6 +765,9 @@ module.exports = {
   doctorEmploymentTypes,
   preferredDoctorChannel,
   doctorRecordLabel,
+  doctorInitial,
+  isRemoteDoctorAvatar,
+  resolveDoctorAvatarSrc,
   parseDoctorSelection,
   serializeDoctorSelection,
   createDoctorSelectionStore,

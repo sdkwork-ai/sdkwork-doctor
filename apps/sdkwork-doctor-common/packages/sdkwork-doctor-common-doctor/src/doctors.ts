@@ -80,6 +80,14 @@ export interface DoctorAffiliation {
 export interface DoctorProfile {
   readonly id: string;
   readonly displayName: string;
+  /**
+   * Portrait reference. An operator directory publishes an absolute http(s)
+   * URL; the authored roster names a bundle-relative asset
+   * (`avatars/<doctor-id>.png`), which every client ships and resolves against
+   * its own asset root. Empty means no portrait, and the UI shows the doctor's
+   * initial instead.
+   */
+  readonly avatarUrl: string;
   readonly specialties: readonly string[];
   readonly languages: readonly string[];
   readonly yearsOfExperience: number;
@@ -122,6 +130,8 @@ const EMPLOYMENT_TYPES: readonly DoctorEmploymentType[] = Object.freeze(['full_t
 const CONSULTATION_KINDS: readonly DoctorConsultationKind[] = Object.freeze(['video', 'phone', 'messaging', 'clinic']);
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/u;
 const YEAR_MONTH = /^\d{4}-(0[1-9]|1[0-2])$/u;
+const ABSOLUTE_AVATAR_URL = /^https?:\/\/\S+$/iu;
+const AVATAR_ASSET_PATH = /^[a-z0-9][a-z0-9._/-]*$/iu;
 
 export function isDoctorEmploymentType(value: unknown): value is DoctorEmploymentType {
   return typeof value === 'string' && (EMPLOYMENT_TYPES as readonly string[]).includes(value);
@@ -147,6 +157,45 @@ function textList(value: unknown, maxLength: number): readonly string[] {
 
 function requiredText(value: unknown, maxLength: number): string {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
+}
+
+/**
+ * Reads a portrait reference. An absolute http(s) URL is kept as published by
+ * an operator directory; a bundle-relative asset path (`avatars/x.png`) is kept
+ * for the authored roster. Any other scheme — a data URI, a `javascript:` URL,
+ * or a path that climbs out of the bundle — is dropped, so a directory document
+ * cannot make a client load something it does not own.
+ */
+function avatarUrlFrom(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  const text = value.trim().slice(0, 500);
+  if (!text) return '';
+  if (ABSOLUTE_AVATAR_URL.test(text)) return text;
+  if (!AVATAR_ASSET_PATH.test(text) || text.includes('..')) return '';
+  return text;
+}
+
+/** True when a portrait is an absolute URL the client loads over the network. */
+export function isRemoteDoctorAvatar(avatarUrl: string): boolean {
+  return typeof avatarUrl === 'string' && ABSOLUTE_AVATAR_URL.test(avatarUrl.trim());
+}
+
+/**
+ * The URL a browser surface loads for a doctor portrait. The authored roster
+ * names a bundle-relative asset (`avatars/x.png`), which the browser app serves
+ * from its origin root; a directory document may publish an absolute URL.
+ * Empty when the profile carries no usable portrait.
+ */
+export function doctorAvatarHref(avatarUrl: string): string {
+  const text = typeof avatarUrl === 'string' ? avatarUrl.trim() : '';
+  if (!text) return '';
+  return ABSOLUTE_AVATAR_URL.test(text) ? text : '/' + text;
+}
+
+/** One-character monogram shown when a doctor has no portrait. */
+export function doctorInitial(displayName: string): string {
+  const text = typeof displayName === 'string' ? displayName.trim() : '';
+  return text ? ([...text][0] ?? '').toUpperCase() : '';
 }
 
 function channelsFrom(value: unknown): readonly DoctorConsultationChannel[] {
@@ -253,6 +302,7 @@ function doctorFromUnknown(value: unknown): DoctorProfile | null {
   return Object.freeze({
     id,
     displayName,
+    avatarUrl: avatarUrlFrom(candidate.avatarUrl),
     specialties: textList(candidate.specialties, 40),
     languages: textList(candidate.languages, 20),
     yearsOfExperience: Number.isInteger(years) && years >= 0 && years <= 70 ? years : 0,
@@ -561,6 +611,7 @@ export const CATALOG_DOCTOR_ROSTER: DoctorRoster = createDoctorRoster('catalog',
   Object.freeze({
     id: 'doctor-lin-qinghe',
     displayName: 'Lin Qinghe',
+    avatarUrl: 'avatars/doctor-lin-qinghe.png',
     specialties: Object.freeze(['Hypertension', 'Coronary heart disease', 'Arrhythmia']),
     languages: Object.freeze(['zh-CN', 'en-US']),
     yearsOfExperience: 22,
@@ -610,6 +661,7 @@ export const CATALOG_DOCTOR_ROSTER: DoctorRoster = createDoctorRoster('catalog',
   Object.freeze({
     id: 'doctor-su-wanning',
     displayName: 'Su Wanning',
+    avatarUrl: 'avatars/doctor-su-wanning.png',
     specialties: Object.freeze(['Child fever', 'Childhood asthma', 'Vaccination planning']),
     languages: Object.freeze(['zh-CN']),
     yearsOfExperience: 15,
@@ -642,6 +694,7 @@ export const CATALOG_DOCTOR_ROSTER: DoctorRoster = createDoctorRoster('catalog',
   Object.freeze({
     id: 'doctor-he-zhiyuan',
     displayName: 'He Zhiyuan',
+    avatarUrl: 'avatars/doctor-he-zhiyuan.png',
     specialties: Object.freeze(['Respiratory infection', 'Gastroenteritis', 'Chronic disease follow-up']),
     languages: Object.freeze(['zh-CN', 'en-US']),
     yearsOfExperience: 9,

@@ -2,6 +2,14 @@
     <!-- Hosted conversation calls the sdkwork-agents app API when a base URL
          and an IAM token are provisioned; offline mode needs no network. -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Voice-call mode: the microphone feeds on-device speech recognition and
+         the camera feeds the full-screen video preview. Both are runtime
+         permissions requested only when the call screen opens; the app stays
+         installable on hardware that lacks either one. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera.any" android:required="false"/>
+    <uses-feature android:name="android.hardware.microphone" android:required="false"/>
     <application
         android:label="SDKWork Doctor"
         android:name="${applicationName}"
@@ -43,6 +51,14 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- Package visibility for voice-call mode: the speech recognizer and the
+             text-to-speech engine are system services resolved by intent. -->
+        <intent>
+            <action android:name="android.speech.RecognitionService"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE"/>
         </intent>
     </queries>
 </manifest>

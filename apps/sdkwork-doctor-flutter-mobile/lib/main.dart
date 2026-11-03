@@ -5,14 +5,18 @@ import 'package:sdkwork_doctor_flutter_mobile_care/sdkwork_doctor_flutter_mobile
 
 import 'agent/care_agent.dart';
 import 'bootstrap/sdkwork_tls_trust.dart';
+import 'care/voice/care_voice_ports.dart';
+import 'care/voice/system_care_voice_ports.dart';
 import 'doctors/doctor_directory.dart';
 import 'doctors/doctor_selection.dart';
 import 'i18n/care_i18n.dart';
 import 'patients/patient_store.dart';
 import 'records/visit_store.dart';
 import 'theme/doctor_theme.dart';
+import 'ui/care_call_screen.dart';
 import 'ui/care_shell.dart';
 import 'ui/chat_tab.dart';
+import 'ui/doctor_search_screen.dart';
 import 'ui/doctor_tab.dart';
 import 'ui/me_tab.dart';
 import 'ui/records_screen.dart';
@@ -46,8 +50,8 @@ Future<void> main() async {
       await VisitRecordStore.load(SharedPreferencesVisitRecordStorage());
   final PatientProfileStore patients =
       await PatientProfileStore.load(SharedPreferencesPatientProfileStorage());
-  final DoctorSelectionStore doctors =
-      await DoctorSelectionStore.load(SharedPreferencesDoctorSelectionStorage());
+  final DoctorSelectionStore doctors = await DoctorSelectionStore.load(
+      SharedPreferencesDoctorSelectionStorage());
   runApp(DoctorApp(
     records: records,
     patients: patients,
@@ -64,6 +68,7 @@ class DoctorApp extends StatefulWidget {
     required this.doctors,
     this.directory,
     this.conversationService,
+    this.voiceEnvironment,
     this.initialLocale,
   });
 
@@ -85,6 +90,11 @@ class DoctorApp extends StatefulWidget {
   /// (hosted when an agents API base URL and an IAM token exist, offline
   /// otherwise); tests inject a local service with in-memory storage.
   final CareConversationService? conversationService;
+
+  /// Voice-call platform ports. Null composes the real device ports
+  /// (microphone recognition, text-to-speech, camera); tests inject fakes so no
+  /// widget test opens a permission dialog or touches a sensor.
+  final CareVoiceCallEnvironment? voiceEnvironment;
 
   /// Forces the starting locale (tests and host overrides); otherwise the
   /// platform locale decides.
@@ -112,7 +122,8 @@ class _DoctorAppState extends State<DoctorApp> {
           agentsApiBaseUrl: _agentsApiBaseUrl,
           getAccessToken: _hostAccessToken,
           locale: () => _locale,
-          localSessionTitle: careText(_locale, 'platform.care.sessions.defaultTitle'),
+          localSessionTitle:
+              careText(_locale, 'platform.care.sessions.defaultTitle'),
         );
     _conversations = CareConversationsController(service: service);
     // Fire and forget: the drawer renders its own loading and failure states.
@@ -144,6 +155,8 @@ class _DoctorAppState extends State<DoctorApp> {
         patients: widget.patients,
         doctors: widget.doctors,
         directory: _directory,
+        voiceEnvironment:
+            widget.voiceEnvironment ?? const SystemCareVoiceCallEnvironment(),
         onToggleLocale: _toggleLocale,
       ),
     );
@@ -162,6 +175,7 @@ class DoctorHome extends StatefulWidget {
     required this.patients,
     required this.doctors,
     required this.directory,
+    required this.voiceEnvironment,
     required this.onToggleLocale,
   });
 
@@ -171,6 +185,7 @@ class DoctorHome extends StatefulWidget {
   final PatientProfileStore patients;
   final DoctorSelectionStore doctors;
   final DoctorDirectory directory;
+  final CareVoiceCallEnvironment voiceEnvironment;
   final VoidCallback onToggleLocale;
 
   @override
@@ -180,6 +195,12 @@ class DoctorHome extends StatefulWidget {
 class _DoctorHomeState extends State<DoctorHome> {
   int _index = 0;
   late final DoctorRosterController _roster;
+
+  /// 医生 navbar state: the selected category tab, and the doctor the search page
+  /// returned so the tab expands and scrolls to that card.
+  String? _doctorCategory;
+  String? _focusDoctorId;
+  int _focusNonce = 0;
 
   static const List<String> _tabLabelKeys = <String>[
     'platform.care.nav.chat',
@@ -243,6 +264,45 @@ class _DoctorHomeState extends State<DoctorHome> {
     _openTab(0);
   }
 
+  /// Opens the WeChat-style doctor search page. The page returns the doctor the
+  /// family tapped; the 医生 tab then shows 全部 and expands that doctor's card,
+  /// so selection, details, and the consultation form stay in one place.
+  Future<void> _openDoctorSearch() async {
+    final DoctorRoster? roster = _roster.roster;
+    final String? doctorId = await Navigator.of(context).push<String>(
+      MaterialPageRoute<String>(
+        builder: (BuildContext context) => DoctorSearchScreen(
+          locale: widget.locale,
+          doctors: roster?.doctors ?? const <DoctorProfile>[],
+        ),
+      ),
+    );
+    if (!mounted || doctorId == null) return;
+    setState(() {
+      _doctorCategory = null;
+      _focusDoctorId = doctorId;
+      _focusNonce += 1;
+    });
+  }
+
+  /// Voice-call mode of the active care session: the full-screen call owns the
+  /// microphone, the speech engine, and the camera, and every spoken turn lands
+  /// in the same transcript and 看病记录 as a typed turn.
+  Future<void> _openVoiceCall() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (BuildContext routeContext) => CareCallScreen(
+          locale: widget.locale,
+          patient: widget.patients.active,
+          environment: widget.voiceEnvironment,
+          conversations: widget.conversations,
+          records: widget.records,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final String locale = widget.locale;
@@ -258,18 +318,46 @@ class _DoctorHomeState extends State<DoctorHome> {
         ),
         title: Text(careText(locale, _tabLabelKeys[_index])),
         actions: <Widget>[
+          // Voice call sits left of the "+" so the two chat actions read as
+          // "talk" then "new conversation".
+          IconButton(
+            tooltip: careText(locale, 'platform.care.call.open'),
+            icon: const Icon(Icons.graphic_eq_rounded),
+            onPressed: _openVoiceCall,
+          ),
           IconButton(
             tooltip: careText(locale, 'platform.care.action.newConsultation'),
             icon: const Icon(Icons.add),
             onPressed: _openActions,
           ),
+          // 医生 is the searchable directory: the navbar search icon opens the
+          // search page, and the category tabs sit in the navbar bottom.
+          if (_index == 1)
+            IconButton(
+              tooltip: careText(locale, 'platform.care.doctors.searchAction'),
+              icon: const Icon(Icons.search),
+              onPressed: _openDoctorSearch,
+            ),
         ],
+        bottom: _index == 1
+            ? PreferredSize(
+                preferredSize: const Size.fromHeight(44),
+                child: DoctorCategoryBar(
+                  locale: locale,
+                  doctors: _roster.roster?.doctors ?? const <DoctorProfile>[],
+                  selected: _doctorCategory,
+                  onSelected: (String? key) =>
+                      setState(() => _doctorCategory = key),
+                ),
+              )
+            : null,
       ),
       drawer: CareSessionsDrawer(
         controller: widget.conversations,
         agentName: 'SDKWork Doctor',
         style: doctorSessionsDrawerStyle,
-        translate: (String key, {Map<String, String> params = const <String, String>{}}) =>
+        translate: (String key,
+                {Map<String, String> params = const <String, String>{}}) =>
             careText(locale, key, params: params),
         onSelected: (CareConversationSession session) => _openTab(0),
       ),
@@ -290,6 +378,9 @@ class _DoctorHomeState extends State<DoctorHome> {
             records: widget.records,
             selection: widget.doctors,
             roster: _roster,
+            category: _doctorCategory,
+            focusDoctorId: _focusDoctorId,
+            focusNonce: _focusNonce,
           ),
           RecordsScreen(
             locale: locale,

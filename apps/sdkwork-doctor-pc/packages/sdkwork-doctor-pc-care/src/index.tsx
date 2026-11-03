@@ -18,6 +18,7 @@ import {
   DOCTOR_SELECTION_LIMIT,
   createVisitRecord,
   demoSelfMember,
+  doctorAvatarHref,
   preferredDoctorChannel,
   primaryAffiliation,
   resolvePrimaryDoctor,
@@ -29,7 +30,7 @@ import {
   type PatientProfileStore,
   type VisitRecordStore,
 } from '@sdkwork/doctor-common-doctor';
-import { ActionButton, Panel } from '@sdkwork/doctor-pc-commons';
+import { ActionButton, DoctorAvatar, Panel } from '@sdkwork/doctor-pc-commons';
 import { CheckList, useDiagnosticsReport } from '@sdkwork/doctor-pc-diagnostics';
 
 import { PatientPanel, PatientSwitcher, usePatientLabel } from './patients';
@@ -299,9 +300,12 @@ export function DoctorPage({
               return (
                 <li className="doctor-list-card" key={doctor.id}>
                   <div className="doctor-card-head">
-                    <div>
-                      <h3 className="doctor-check-title">{doctor.displayName}</h3>
-                      {site ? renderSiteLine(doctor, site) : null}
+                    <div className="doctor-card-identity">
+                      <DoctorAvatar name={doctor.displayName} src={doctorAvatarHref(doctor.avatarUrl)} />
+                      <div className="doctor-card-copy">
+                        <h3 className="doctor-check-title">{doctor.displayName}</h3>
+                        {site ? renderSiteLine(doctor, site) : null}
+                      </div>
                     </div>
                     {doctor.id === state.primaryId ? <span className="doctor-badge" data-status="ok">{t('platform.care.doctors.primary')}</span> : null}
                   </div>
@@ -351,9 +355,12 @@ export function DoctorPage({
               return (
                 <li className="doctor-list-card" key={doctor.id}>
                   <div className="doctor-card-head">
-                    <div>
-                      <h3 className="doctor-check-title">{doctor.displayName}</h3>
-                      {site ? renderSiteLine(doctor, site) : null}
+                    <div className="doctor-card-identity">
+                      <DoctorAvatar name={doctor.displayName} src={doctorAvatarHref(doctor.avatarUrl)} />
+                      <div className="doctor-card-copy">
+                        <h3 className="doctor-check-title">{doctor.displayName}</h3>
+                        {site ? renderSiteLine(doctor, site) : null}
+                      </div>
                     </div>
                     <div className="doctor-inline-badges">
                       <span className="doctor-badge" data-status={doctor.verified ? 'ok' : 'skipped'}>
@@ -564,16 +571,19 @@ export function MePage({ context, agent, patients, records, selection, roster, a
         {primary && primarySite ? (
           <div className="doctor-list-card">
             <div className="doctor-card-head">
-              <div>
-                <h3 className="doctor-check-title">{primary.displayName}</h3>
-                <p className="doctor-check-detail">
-                  {primarySite.title} · {primarySite.department} · {primarySite.hospitalName}
-                </p>
-                <p className="doctor-check-detail">
-                  {t('platform.care.doctors.employment.label')}: {t(employmentLabelKey(primarySite))}
-                  {' · '}
-                  {primarySite.organizationId}
-                </p>
+              <div className="doctor-card-identity">
+                <DoctorAvatar name={primary.displayName} size="lg" src={doctorAvatarHref(primary.avatarUrl)} />
+                <div className="doctor-card-copy">
+                  <h3 className="doctor-check-title">{primary.displayName}</h3>
+                  <p className="doctor-check-detail">
+                    {primarySite.title} · {primarySite.department} · {primarySite.hospitalName}
+                  </p>
+                  <p className="doctor-check-detail">
+                    {t('platform.care.doctors.employment.label')}: {t(employmentLabelKey(primarySite))}
+                    {' · '}
+                    {primarySite.organizationId}
+                  </p>
+                </div>
               </div>
               <span className="doctor-badge" data-status="ok">{t('platform.care.doctors.primary')}</span>
             </div>

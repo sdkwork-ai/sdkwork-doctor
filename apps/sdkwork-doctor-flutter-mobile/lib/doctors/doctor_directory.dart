@@ -173,6 +173,7 @@ class DoctorProfile {
   const DoctorProfile({
     required this.id,
     required this.displayName,
+    this.avatarUrl = '',
     this.specialties = const <String>[],
     this.languages = const <String>[],
     this.yearsOfExperience = 0,
@@ -183,6 +184,12 @@ class DoctorProfile {
 
   final String id;
   final String displayName;
+
+  /// Portrait reference. An operator directory publishes an absolute http(s)
+  /// URL; the authored roster names a bundle-relative asset
+  /// (`avatars/<doctor-id>.png`) that this app bundles under `assets/`. Empty
+  /// means no portrait, and the UI shows the doctor's initial instead.
+  final String avatarUrl;
   final List<String> specialties;
   final List<String> languages;
   final int yearsOfExperience;
@@ -196,6 +203,7 @@ class DoctorProfile {
   Map<String, Object?> toJson() => <String, Object?>{
         'id': id,
         'displayName': displayName,
+        'avatarUrl': avatarUrl,
         'specialties': specialties,
         'languages': languages,
         'yearsOfExperience': yearsOfExperience,
@@ -221,6 +229,7 @@ class DoctorProfile {
     return DoctorProfile(
       id: id,
       displayName: displayName,
+      avatarUrl: _avatarUrlFrom(value['avatarUrl']),
       specialties: _textList(value['specialties'], 40),
       languages: _textList(value['languages'], 20),
       yearsOfExperience:
@@ -234,6 +243,41 @@ class DoctorProfile {
 
 /// Where a roster came from: an operator directory, or the authored fallback.
 enum DoctorRosterSource { directory, catalog }
+
+final RegExp _absoluteAvatarPattern =
+    RegExp(r'^https?://\S+$', caseSensitive: false);
+final RegExp _avatarAssetPattern =
+    RegExp(r'^[a-z0-9][a-z0-9._/-]*$', caseSensitive: false);
+
+/// Reads a portrait reference. An absolute http(s) URL is kept as published by
+/// an operator directory; a bundle-relative asset path (`avatars/x.png`) is kept
+/// for the authored roster. Any other scheme — a data URI, a `javascript:` URL,
+/// or a path that climbs out of the bundle — is dropped.
+String _avatarUrlFrom(Object? value) {
+  if (value is! String) return '';
+  final String raw = value.trim();
+  final String text = raw.length > 500 ? raw.substring(0, 500) : raw;
+  if (text.isEmpty) return '';
+  if (_absoluteAvatarPattern.hasMatch(text)) return text;
+  if (!_avatarAssetPattern.hasMatch(text) || text.contains('..')) return '';
+  return text;
+}
+
+/// True when a portrait is an absolute URL the client loads over the network.
+bool isRemoteDoctorAvatar(String avatarUrl) {
+  final String text = avatarUrl.trim();
+  return text.isNotEmpty && _absoluteAvatarPattern.hasMatch(text);
+}
+
+/// The bundled asset path for a portrait: `avatars/x.png` -> `assets/avatars/x.png`.
+String doctorAvatarAssetPath(String avatarUrl) => 'assets/${avatarUrl.trim()}';
+
+/// One-character monogram shown when a doctor has no portrait.
+String doctorInitial(String displayName) {
+  final String text = displayName.trim();
+  if (text.isEmpty) return '';
+  return String.fromCharCodes(text.runes.take(1)).toUpperCase();
+}
 
 /// One roster plus the source that answered.
 class DoctorRoster {
@@ -341,9 +385,8 @@ DoctorAffiliation? _affiliationFromUnknown(
     departmentCode: _requiredText(value['departmentCode'], 20),
     department: _requiredText(value['department'], 60),
     title: _requiredText(value['title'], 60),
-    employmentType:
-        doctorEmploymentTypeFrom(value['employmentType']) ??
-            DoctorEmploymentType.fullTime,
+    employmentType: doctorEmploymentTypeFrom(value['employmentType']) ??
+        DoctorEmploymentType.fullTime,
     primary: rawPrimary == true || (fallbackPrimary && rawPrimary != false),
     acceptingNewPatients: value['acceptingNewPatients'] != false,
     availability: _availabilityFrom(value['availability']),
@@ -382,10 +425,10 @@ List<DoctorAffiliation> _affiliationsFrom(Map<Object?, Object?> value) {
   final Object? legacyOrganizationId = value['organizationId'];
   final DoctorAffiliation? legacy = _affiliationFromUnknown(
     <String, Object?>{
-      'organizationId':
-          legacyOrganizationId is String && legacyOrganizationId.trim().isNotEmpty
-              ? legacyOrganizationId
-              : 'org.legacy-directory',
+      'organizationId': legacyOrganizationId is String &&
+              legacyOrganizationId.trim().isNotEmpty
+          ? legacyOrganizationId
+          : 'org.legacy-directory',
       'hospitalCode': value['hospitalCode'] ?? '',
       'hospitalName': legacyHospital,
       'department': value['department'],
@@ -483,16 +526,16 @@ DoctorAffiliation? affiliationByOrganization(
 }
 
 /// True when the clinician holds at least one part-time engagement.
-bool hasPartTimeEngagement(DoctorProfile doctor) => doctor.affiliations
-    .any((DoctorAffiliation entry) =>
+bool hasPartTimeEngagement(DoctorProfile doctor) =>
+    doctor.affiliations.any((DoctorAffiliation entry) =>
         entry.employmentType == DoctorEmploymentType.partTime);
 
 /// Unique engagement types, ordered by the employment vocabulary.
 List<DoctorEmploymentType> doctorEmploymentTypes(DoctorProfile doctor) =>
     List<DoctorEmploymentType>.unmodifiable(
-      DoctorEmploymentType.values.where((DoctorEmploymentType type) =>
-          doctor.affiliations.any(
-              (DoctorAffiliation entry) => entry.employmentType == type)),
+      DoctorEmploymentType.values.where((DoctorEmploymentType type) => doctor
+          .affiliations
+          .any((DoctorAffiliation entry) => entry.employmentType == type)),
     );
 
 /// One consult channel that can actually be opened at this affiliation, or
@@ -524,6 +567,7 @@ const DoctorRoster kCatalogDoctorRoster = DoctorRoster(
     DoctorProfile(
       id: 'doctor-lin-qinghe',
       displayName: 'Lin Qinghe',
+      avatarUrl: 'avatars/doctor-lin-qinghe.png',
       specialties: <String>[
         'Hypertension',
         'Coronary heart disease',
@@ -608,6 +652,7 @@ const DoctorRoster kCatalogDoctorRoster = DoctorRoster(
     DoctorProfile(
       id: 'doctor-su-wanning',
       displayName: 'Su Wanning',
+      avatarUrl: 'avatars/doctor-su-wanning.png',
       specialties: <String>[
         'Child fever',
         'Childhood asthma',
@@ -654,7 +699,8 @@ const DoctorRoster kCatalogDoctorRoster = DoctorRoster(
             ),
             DoctorChannel(
               kind: DoctorChannelKind.phone,
-              target: 'https://care.sdkwork.com/consult/doctor-su-wanning/phone',
+              target:
+                  'https://care.sdkwork.com/consult/doctor-su-wanning/phone',
             ),
           ],
           since: '2018-09',
@@ -664,6 +710,7 @@ const DoctorRoster kCatalogDoctorRoster = DoctorRoster(
     DoctorProfile(
       id: 'doctor-he-zhiyuan',
       displayName: 'He Zhiyuan',
+      avatarUrl: 'avatars/doctor-he-zhiyuan.png',
       specialties: <String>[
         'Respiratory infection',
         'Gastroenteritis',
@@ -711,7 +758,8 @@ const DoctorRoster kCatalogDoctorRoster = DoctorRoster(
             ),
             DoctorChannel(
               kind: DoctorChannelKind.clinic,
-              target: 'https://care.sdkwork.com/consult/doctor-he-zhiyuan/clinic',
+              target:
+                  'https://care.sdkwork.com/consult/doctor-he-zhiyuan/clinic',
             ),
           ],
           since: '2024-01',
@@ -766,9 +814,8 @@ Future<String> _fetchJson(String url) async {
   }
   final HttpClient client = HttpClient();
   try {
-    final HttpClientRequest request = await client
-        .getUrl(uri)
-        .timeout(const Duration(seconds: 8));
+    final HttpClientRequest request =
+        await client.getUrl(uri).timeout(const Duration(seconds: 8));
     request.headers.set(HttpHeaders.acceptHeader, 'application/json');
     final HttpClientResponse response =
         await request.close().timeout(const Duration(seconds: 8));

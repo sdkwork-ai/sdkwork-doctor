@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Portrait of Dr. Su Wanning">
+  <defs>
+    <linearGradient id="su-bg" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#FDF0F4"/>
+      <stop offset="1" stop-color="#E7C6D8"/>
+    </linearGradient>
+    <linearGradient id="su-coat" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#EDF2F9"/>
+    </linearGradient>
+    <clipPath id="su-frame"><circle cx="256" cy="256" r="256"/></clipPath>
+  </defs>
+  <g clip-path="url(#su-frame)">
+    <rect width="512" height="512" fill="url(#su-bg)"/>
+    <circle cx="256" cy="232" r="188" fill="#FFFFFF" opacity="0.26"/>
+    <circle cx="256" cy="236" r="150" fill="#FFFFFF" opacity="0.2"/>
+
+    <!-- long hair behind the shoulders -->
+    <path d="M 256 96 C 330 96 372 156 372 244 C 372 302 368 350 362 386 C 330 400 182 400 150 386 C 144 350 140 302 140 244 C 140 156 182 96 256 96 Z" fill="#3B2D2B"/>
+
+    <!-- neck -->
+    <path d="M 222 290 h 68 v 96 h -68 Z" fill="#E8B492"/>
+
+    <!-- teal blouse -->
+    <path d="M 118 512 C 126 430 184 386 256 386 C 328 386 386 430 394 512 Z" fill="#7FB6AE"/>
+
+    <!-- white coat -->
+    <path d="M 82 512 C 90 430 158 376 256 376 C 354 376 422 430 430 512 Z" fill="url(#su-coat)"/>
+    <path d="M 212 380 L 256 478 L 300 380 L 284 378 L 256 452 L 228 378 Z" fill="#DCE5F2"/>
+
+    <!-- head -->
+    <path d="M 256 112 C 302 112 338 152 338 212 C 338 268 304 310 256 310 C 208 310 174 268 174 212 C 174 152 210 112 256 112 Z" fill="#F6CBB0"/>
+    <!-- ears -->
+    <ellipse cx="175" cy="226" rx="13" ry="20" fill="#EFBF9E"/>
+    <ellipse cx="337" cy="226" rx="13" ry="20" fill="#EFBF9E"/>
+
+    <!-- hairline with a soft center part -->
+    <path d="M 170 214 C 168 150 204 106 256 106 C 308 106 344 150 342 214 C 334 180 318 164 300 160 C 282 156 268 162 256 172 C 244 162 230 156 212 160 C 194 164 178 180 170 214 Z" fill="#3B2D2B"/>
+    <path d="M 198 146 C 222 118 290 118 314 146 C 286 130 226 130 198 146 Z" fill="#5A4642" opacity="0.55"/>
+
+    <!-- brows -->
+    <path d="M 206 190 Q 226 181 244 189" stroke="#4A3A34" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <path d="M 306 190 Q 286 181 268 189" stroke="#4A3A34" stroke-width="6" stroke-linecap="round" fill="none"/>
+
+    <!-- eyes -->
+    <ellipse cx="222" cy="222" rx="8" ry="10" fill="#2E2A28"/>
+    <ellipse cx="290" cy="222" rx="8" ry="10" fill="#2E2A28"/>
+    <circle cx="225" cy="218" r="3" fill="#FFFFFF" opacity="0.85"/>
+    <circle cx="293" cy="218" r="3" fill="#FFFFFF" opacity="0.85"/>
+
+    <!-- nose -->
+    <path d="M 256 228 C 256 242 251 250 245 254" stroke="#DC9E7C" stroke-width="6" stroke-linecap="round" fill="none"/>
+
+    <!-- mouth -->
+    <path d="M 236 274 Q 256 288 276 274" stroke="#C4736A" stroke-width="7" stroke-linecap="round" fill="none"/>
+
+    <!-- hair falling in front of the coat, tapered at the ends -->
+    <path d="M 170 206 C 156 262 152 322 170 374 C 179 372 186 366 190 356 C 178 306 176 252 186 210 Z" fill="#3B2D2B"/>
+    <path d="M 342 206 C 356 262 360 322 342 374 C 333 372 326 366 322 356 C 334 306 336 252 326 210 Z" fill="#3B2D2B"/>
+
+    <!-- stethoscope -->
+    <path d="M 202 386 C 194 436 210 476 256 476 C 302 476 318 436 310 386" stroke="#3D4E68" stroke-width="11" stroke-linecap="round" fill="none"/>
+    <circle cx="256" cy="476" r="20" fill="#516683"/>
+    <circle cx="256" cy="476" r="10" fill="#93A9C6"/>
+  </g>
+</svg>

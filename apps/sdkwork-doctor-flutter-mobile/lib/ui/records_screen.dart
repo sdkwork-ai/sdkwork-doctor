@@ -76,11 +76,10 @@ class RecordsScreen extends StatelessWidget {
                         final VisitRecord record = items[index];
                         final String modeLabel =
                             careText(locale, careModeKey(record.mode));
-                        final String doctorSuffix =
-                            record.mode == 'human' &&
-                                    (record.doctorLabel ?? '').isNotEmpty
-                                ? ' · ${record.doctorLabel}'
-                                : '';
+                        final String doctorSuffix = record.mode == 'human' &&
+                                (record.doctorLabel ?? '').isNotEmpty
+                            ? ' · ${record.doctorLabel}'
+                            : '';
                         final List<String> siteFacts = <String>[
                           if ((record.doctorHospitalLabel ?? '').isNotEmpty)
                             '${careText(locale, 'platform.care.records.hospital')}: '
@@ -101,8 +100,7 @@ class RecordsScreen extends StatelessWidget {
                                   '${record.memberLabel} · '
                                   '${careFormatTime(record.recordedAt)} · '
                                   '$modeLabel$doctorSuffix',
-                                  style:
-                                      Theme.of(context).textTheme.bodySmall,
+                                  style: Theme.of(context).textTheme.bodySmall,
                                 ),
                                 if (siteFacts.isNotEmpty)
                                   Text(
@@ -113,8 +111,8 @@ class RecordsScreen extends StatelessWidget {
                               ],
                             ),
                             trailing: CareLevelChip(
-                              label: careText(
-                                  locale, careLevelKey(record.level)),
+                              label:
+                                  careText(locale, careLevelKey(record.level)),
                               warn: record.level == TriageLevel.emergency ||
                                   record.level == TriageLevel.urgent,
                             ),

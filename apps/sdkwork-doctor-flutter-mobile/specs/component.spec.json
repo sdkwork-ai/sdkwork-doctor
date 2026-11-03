@@ -81,6 +81,9 @@
       "MeTab",
       "RecordsScreen",
       "PatientEditorScreen",
+      "CareCallScreen",
+      "CareVoiceCallController",
+      "CareVoiceCallEnvironment",
       "createCareConversationService"
     ],
     "routeManifest": null,
