@@ -65,7 +65,18 @@ test('the mini program pages render from the generated care catalog', () => {
 });
 
 test('Flutter and the mini program speak the same agents contract', () => {
-  const dart = read(path.join(flutterRoot, 'lib/agent/care_agent.dart'));
+  // The Flutter root speaks the contract through two files since the transport
+  // moved into the care package: the app binding owns the agent id, surface
+  // prefix, and payload signing, the package owns the session/turn vocabulary.
+  const dart = [
+    read(path.join(flutterRoot, 'lib/agent/care_agent.dart')),
+    read(
+      path.join(
+        flutterRoot,
+        'packages/sdkwork_doctor_flutter_mobile_care/lib/src/services/agents_care_conversation_service.dart',
+      ),
+    ),
+  ].join('\n');
   const mp = read(path.join(miniProgramRoot, 'src/lib/agent.js'));
   for (const source of [dart, mp]) {
     assert.match(source, /agent\.family-doctor/u);
@@ -75,12 +86,22 @@ test('Flutter and the mini program speak the same agents contract', () => {
     assert.match(source, /assistant_output/u);
     assert.match(source, /careTurnPayloadHash/u);
   }
-  const dartFingerprint = read(path.join(flutterRoot, 'lib/agent/fingerprint.dart'));
+  const dartFingerprint = read(
+    path.join(
+      flutterRoot,
+      'packages/sdkwork_doctor_flutter_mobile_care/lib/src/sdk/care_fingerprint.dart',
+    ),
+  );
   const mpFingerprint = read(path.join(miniProgramRoot, 'src/lib/fingerprint.js'));
   for (const source of [dartFingerprint, mpFingerprint]) {
     assert.match(source, /care\.v1:/u);
     assert.match(source, /care\.turn\.v1/u);
   }
+  assert.match(
+    read(path.join(flutterRoot, 'lib/agent/fingerprint.dart')),
+    /export 'package:sdkwork_doctor_flutter_mobile_care\/sdkwork_doctor_flutter_mobile_care\.dart'/u,
+    'the app import path must re-export the single Dart fingerprint',
+  );
 });
 
 test('neither native client carries a hard-coded access token', () => {

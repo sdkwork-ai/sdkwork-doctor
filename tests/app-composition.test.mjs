@@ -21,9 +21,9 @@ function structural(block) {
   return Object.fromEntries(STRUCTURAL_FIELDS.map((field) => [field, block[field]]));
 }
 
-test('the composition contract declares exactly the three tabs', () => {
+test('the composition contract declares exactly the four tabs', () => {
   assert.equal(contract.kind, 'sdkwork.doctor.app-composition');
-  assert.deepEqual(contract.blocks.map((block) => block.id), ['chat', 'doctor', 'me']);
+  assert.deepEqual(contract.blocks.map((block) => block.id), ['chat', 'doctor', 'records', 'me']);
   const ids = contract.blocks.map((block) => block.id);
   assert.equal(new Set(ids).size, ids.length, 'block ids must be unique');
   for (const block of contract.blocks) {
@@ -55,15 +55,15 @@ test('the TypeScript catalogue mirrors the contract exactly', () => {
   assert.deepEqual(blocks.DOCTOR_PAGE_IDS, Object.fromEntries(contract.blocks.map((block) => [block.id, block.pageId])));
 });
 
-test('every surface resolves the same three blocks', () => {
+test('every surface resolves the same four blocks', () => {
   for (const surface of ['pc', 'h5', 'flutter', 'mini_program']) {
-    assert.deepEqual(blocks.resolveAppBlocks(surface).map((block) => block.id), ['chat', 'doctor', 'me'], surface);
+    assert.deepEqual(blocks.resolveAppBlocks(surface).map((block) => block.id), ['chat', 'doctor', 'records', 'me'], surface);
   }
 });
 
 test('required blocks cannot be hidden', () => {
   const hidden = blocks.resolveAppBlocks('pc', { hidden: ['chat', 'doctor'] });
-  assert.deepEqual(hidden.map((block) => block.id), ['chat', 'doctor', 'me']);
+  assert.deepEqual(hidden.map((block) => block.id), ['chat', 'doctor', 'records', 'me']);
 });
 
 test('order floats known ids first and ignores unknown ids', () => {
@@ -71,7 +71,7 @@ test('order floats known ids first and ignores unknown ids', () => {
   const ids = ordered.map((block) => block.id);
   assert.equal(ids[0], 'me');
   assert.equal(ids[1], 'chat');
-  assert.equal(ordered.length, 3);
+  assert.equal(ordered.length, 4);
 });
 
 test('labels override the i18n key per deployment', () => {
@@ -149,7 +149,7 @@ test('the shells project their navigation from the resolved blocks', () => {
   }
 });
 
-test('both browser route tables implement the three tabs and the records sub-route', () => {
+test('both browser route tables implement the four tabs', () => {
   for (const routes of [
     read('apps/sdkwork-doctor-pc/packages/sdkwork-doctor-pc-shell/src/DoctorPcRoutes.tsx'),
     read('apps/sdkwork-doctor-h5/packages/sdkwork-doctor-h5-shell/src/DoctorH5Routes.tsx'),
@@ -157,8 +157,8 @@ test('both browser route tables implement the three tabs and the records sub-rou
     assert.match(routes, /path="chat"/u);
     assert.match(routes, /path="doctor"/u);
     assert.match(routes, /path="me"/u);
-    assert.match(routes, /path="me\/records"/u);
-    assert.doesNotMatch(routes, /path="records"/u, 'records must not be a tab route');
+    assert.match(routes, /path="records"/u, 'records is a tab route');
+    assert.match(routes, /path="me\/records"/u, 'older records links still resolve');
     assert.match(routes, /<Route index element=\{<HomePage/u, 'the landing is the index route');
   }
 });

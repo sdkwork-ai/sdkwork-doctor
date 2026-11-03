@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "kind": "sdkwork.doctor.app-composition",
-  "purpose": "The building-block catalogue for the family private-doctor app. Each block is one independently composable unit with a stable id, a canonical cross-client page id, a route, an i18n label key, and a surface presentation. Clients compose these blocks instead of hard-coding navigation, and a deployment can reorder, hide, or relabel them. The catalogue is exactly the three tabs (chat / doctor / me); the browser workbench landing is a route, not a tab.",
+  "purpose": "The building-block catalogue for the family private-doctor app. Each block is one independently composable unit with a stable id, a canonical cross-client page id, a route, an i18n label key, and a surface presentation. Clients compose these blocks instead of hard-coding navigation, and a deployment can reorder, hide, or relabel them. The catalogue is exactly the four tabs (chat / doctor / records / me); the browser workbench landing is a route, not a tab.",
   "pageIdFormat": "<surface>.<domain>.<capability>.<screen>",
   "blocks": [
     {
@@ -29,20 +29,32 @@
       "description": "Human doctor directory: choose the family doctor and start a human consultation."
     },
     {
+      "id": "records",
+      "kind": "navigation",
+      "pageId": "app.doctor.records.index",
+      "route": "/doctor/records",
+      "labelKey": "platform.care.nav.records",
+      "icon": "records",
+      "order": 30,
+      "surfaces": ["pc", "h5", "flutter", "mini_program"],
+      "optional": false,
+      "description": "Every visit record on this device, newest first, with the doctor and site of human consultations."
+    },
+    {
       "id": "me",
       "kind": "navigation",
       "pageId": "app.doctor.profile.index",
       "route": "/doctor/me",
       "labelKey": "platform.care.nav.me",
       "icon": "user",
-      "order": 30,
+      "order": 40,
       "surfaces": ["pc", "h5", "flutter", "mini_program"],
       "optional": false,
       "description": "Patient files, my doctors, visit records, active mode, device checks."
     }
   ],
   "landing": {
-    "purpose": "The browser workbench landing at the surface root. It is a route, not a tab, so the tab count stays three on every client.",
+    "purpose": "The browser workbench landing at the surface root. It is a route, not a tab, so the landing never consumes a tab on any client.",
     "route": "/doctor",
     "sections": [
       {

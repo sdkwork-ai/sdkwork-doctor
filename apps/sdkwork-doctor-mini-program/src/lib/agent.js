@@ -7,13 +7,11 @@
 // hosted answer can only raise the level, never lower it.
 const { triageLevel } = require('./triage.js');
 const { careTurnPayloadHash, careSessionPayloadHash } = require('./fingerprint.js');
+const { composeHostedReply, offlineAnswer } = require('./triage-copy.js');
 
 const FAMILY_DOCTOR_AGENT_ID = 'agent.family-doctor';
 const API_PREFIX = '/app/v3/api';
 const SESSION_TITLE = 'Family doctor conversation';
-const SAFETY_LINE = 'This is general guidance, not a diagnosis. For emergencies call your local emergency number.';
-const EMERGENCY_LEAD =
-  'Emergency red flag detected. Call local emergency services now. Do not drive yourself. Stay with the person until help arrives.';
 const RANK = { 'self-care': 0, routine: 1, urgent: 2, emergency: 3 };
 
 function careAgentError(message, extra) {
@@ -101,11 +99,7 @@ function resolveReplyTriage(userText, replyText) {
 }
 
 function composeReply(level, replyText, member) {
-  const who = member && member.displayName && member.displayName !== 'Me' ? member.displayName : 'you';
-  const body = replyText.indexOf(SAFETY_LINE) >= 0 ? replyText : replyText + ' ' + SAFETY_LINE;
-  if (level === 'emergency') return EMERGENCY_LEAD + ' (' + who + ') ' + body;
-  if (level === 'urgent') return 'This needs a same-day clinician review (' + who + '). ' + body;
-  return body;
+  return composeHostedReply(level, replyText, member);
 }
 
 function answerText(item) {
@@ -150,10 +144,7 @@ function createOfflineAgent() {
       const level = triageLevel(text);
       const reply = {
         role: 'assistant',
-        text:
-          level === 'emergency'
-            ? EMERGENCY_LEAD + ' ' + SAFETY_LINE
-            : 'No red flag was found in what you described. ' + SAFETY_LINE,
+        text: offlineAnswer(level, member),
         level,
       };
       history.push({ role: 'user', text: text, level: level });

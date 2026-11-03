@@ -1,6 +1,6 @@
 // Visit records page: every consultation recorded on this device, newest first.
-// It is no longer a tab; the Me tab opens it with wx.navigateTo, so it carries a
-// back action. Human consultations show the doctor they were routed to.
+// It is a tab of its own, so the page carries no back action; the tab bar is the
+// navigation. Human consultations show the doctor they were routed to.
 const { careText } = require('../../lib/i18n.js');
 const { isDoctorEmploymentType } = require('../../lib/doctors.js');
 
@@ -32,7 +32,6 @@ Page({
     countLabel: '',
     emptyLabel: '',
     clearLabel: '',
-    backLabel: '',
     doctorTitle: '',
     hospitalTitle: '',
     employmentTitle: '',
@@ -45,7 +44,6 @@ Page({
       subtitle: careText('platform.care.records.subtitle'),
       emptyLabel: careText('platform.care.records.empty'),
       clearLabel: careText('platform.care.records.clear'),
-      backLabel: careText('platform.care.records.back'),
       doctorTitle: careText('platform.care.records.doctor'),
       hospitalTitle: careText('platform.care.records.hospital'),
       employmentTitle: careText('platform.care.records.employment'),
@@ -79,19 +77,6 @@ Page({
           record.memberLabel + ' · ' + formatTime(record.recordedAt) + ' · ' + modeLabel(record.mode),
       })),
     });
-  },
-
-  onBack() {
-    try {
-      wx.navigateBack({
-        delta: 1,
-        fail: () => {
-          wx.switchTab({ url: '/pages/profile/index' });
-        },
-      });
-    } catch (error) {
-      // The tab bar remains the way back on a host without a navigation stack.
-    }
   },
 
   onClear() {

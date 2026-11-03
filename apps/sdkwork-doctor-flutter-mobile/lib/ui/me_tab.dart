@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../doctors/doctor_directory.dart';
+import '../doctors/doctor_labels.dart';
 import '../doctors/doctor_selection.dart';
 import '../i18n/care_i18n.dart';
 import '../patients/patient_store.dart';
@@ -27,6 +28,7 @@ class MeTab extends StatelessWidget {
     required this.roster,
     required this.onOpenDoctors,
     required this.onOpenRecords,
+    required this.onToggleLocale,
   });
 
   final String locale;
@@ -37,6 +39,10 @@ class MeTab extends StatelessWidget {
   final DoctorRosterController roster;
   final VoidCallback onOpenDoctors;
   final VoidCallback onOpenRecords;
+
+  /// Switches the care catalog between 中文 and English. The session drawer is a
+  /// pure conversation list, so this control lives here.
+  final VoidCallback onToggleLocale;
 
   Future<void> _openEditor(BuildContext context,
       {PatientProfile? profile}) async {
@@ -186,9 +192,7 @@ class MeTab extends StatelessWidget {
                       if (primarySite != null) ...<Widget>[
                         const SizedBox(height: 2),
                         Text(
-                          '${primarySite.title} · '
-                          '${primarySite.department} · '
-                          '${primarySite.hospitalName}',
+                          careAffiliationSummary(locale, primarySite),
                           style: const TextStyle(fontSize: 12, color: kMuted),
                         ),
                         const SizedBox(height: 4),
@@ -253,6 +257,17 @@ class MeTab extends StatelessWidget {
               child: ListTile(
                 title: Text(careText(locale, 'platform.care.me.mode')),
                 subtitle: Text(careText(locale, careModeKey(agentMode))),
+              ),
+            ),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.translate, color: kMuted),
+                title: Text(careText(locale, 'platform.care.language.label')),
+                trailing: Text(
+                  locale == 'zh-CN' ? '中文' : 'English',
+                  style: const TextStyle(color: kMuted, fontSize: 12),
+                ),
+                onTap: onToggleLocale,
               ),
             ),
             Card(

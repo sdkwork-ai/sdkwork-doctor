@@ -116,15 +116,15 @@ test('the mini program records a human consultation against the doctor', () => {
   assert.equal(Object.keys(record()).includes('doctorId'), false, 'a plain record omits the doctor fields');
 });
 
-test('the records screen is registered but is not a tab', () => {
+test('the records screen is a tab of its own', () => {
   const app = JSON.parse(fs.readFileSync(path.join(repoRoot, 'apps/sdkwork-doctor-mini-program/src/app.json'), 'utf8'));
   assert.ok(app.pages.includes('pages/records/index'), 'the records page must stay registered');
   assert.equal(
     app.tabBar.list.some((entry) => entry.pagePath === 'pages/records/index'),
-    false,
-    'records is a sub-screen of 我的, not a tab',
+    true,
+    'records is the third tab',
   );
-  assert.deepEqual(app.tabBar.list.map((entry) => entry.text), ['对话', '医生', '我的']);
+  assert.deepEqual(app.tabBar.list.map((entry) => entry.text), ['对话', '医生', '看病记录', '我的']);
   const page = fs.readFileSync(path.join(repoRoot, 'apps/sdkwork-doctor-mini-program/src/pages/records/index.js'), 'utf8');
   assert.match(page, /platform\.care\.records\.title/u);
   assert.match(page, /platform\.care\.records\.empty/u);

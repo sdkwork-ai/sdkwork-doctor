@@ -17,6 +17,7 @@
     }
   },
   "dependencies": {
+    "@sdkwork/chat-composer-mobile-react": "workspace:*",
     "@sdkwork/doctor-common-agent": "workspace:*",
     "@sdkwork/doctor-common-blocks": "workspace:*",
     "@sdkwork/doctor-common-diagnostics": "workspace:*",

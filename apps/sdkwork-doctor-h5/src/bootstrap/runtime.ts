@@ -1,3 +1,5 @@
+import i18n from 'i18next';
+
 import type { AgentConversationPort, CareAgentCatalogPort } from '@sdkwork/doctor-common-agent';
 import { applyThemeToStyle, resolveAppBlocks, resolveAppTheme, type ResolvedAppBlock } from '@sdkwork/doctor-common-blocks';
 import { createDoctorRuntimeContext, type DoctorRuntimeContext } from '@sdkwork/doctor-common-diagnostics';
@@ -46,6 +48,8 @@ export function bootstrapDoctorH5(): Promise<DoctorH5Runtime> {
       const careAgent = await createDoctorH5CareAgent({
         agentsApiBaseUrl: environment.agentsApiBaseUrl,
         accessToken: session.current().accessToken,
+        // Live translator: the language toggle changes this without a reload.
+        translate: (key, params) => (params ? i18n.t(key, params) : i18n.t(key)),
       });
       const blocks = resolveAppBlocks('h5', environment.appBlocks);
       applyThemeToStyle(document.documentElement.style, resolveAppTheme(environment.theme));

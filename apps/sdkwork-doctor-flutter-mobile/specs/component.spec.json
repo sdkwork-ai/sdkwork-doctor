@@ -74,18 +74,28 @@
     "requiredPorts": [],
     "runtimeEntrypoints": [
       "CareChatLanding",
-      "CareDrawer",
+      "CareSessionsDrawer",
       "NewConsultationSheet",
       "ChatTab",
       "DoctorTab",
       "MeTab",
       "RecordsScreen",
       "PatientEditorScreen",
-      "createCareAgent"
+      "createCareConversationService"
     ],
     "routeManifest": null,
-    "sdkClients": [],
-    "sdkDependencies": [],
+    "sdkClients": [
+      "sdkwork_agents_app_sdk"
+    ],
+    "sdkDependencies": [
+      {
+        "package": "sdkwork_agents_app_sdk",
+        "surface": "app",
+        "apiPrefix": "/app/v3/api",
+        "constructedIn": "lib/agent/care_agent.dart",
+        "consumedBy": "sdkwork_doctor_flutter_mobile_care"
+      }
+    ],
     "permissionComposition": {},
     "dependencyApiExports": [],
     "dependencyApiSurfaces": [],

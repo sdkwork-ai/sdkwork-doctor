@@ -8,8 +8,9 @@ import 'care_widgets.dart';
 
 /// 看病记录: every consultation on this device, newest first.
 ///
-/// Visit records are no longer a tab; this screen is pushed from 我的 and from
-/// the "+" sheet, so it carries an explicit way back and its own clear action.
+/// It is the third destination of the tab bar, so it renders as tab content with
+/// no app bar and no way back; 我的 and the "+" sheet switch to this tab instead
+/// of pushing a second copy.
 class RecordsScreen extends StatelessWidget {
   const RecordsScreen({
     super.key,
@@ -43,110 +44,100 @@ class RecordsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: careText(locale, 'platform.care.records.back'),
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-        title: Text(careText(locale, 'platform.care.records.title')),
-      ),
-      body: AnimatedBuilder(
-        animation: records,
-        builder: (BuildContext context, Widget? _) {
-          final List<VisitRecord> items = records.records;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              CarePageHeader(
-                title: careText(locale, 'platform.care.records.title'),
-                subtitle: careText(locale, 'platform.care.records.subtitle'),
-                extra: careText(
-                  locale,
-                  'platform.care.records.count',
-                  params: <String, String>{'count': '${items.length}'},
-                ),
+    return AnimatedBuilder(
+      animation: records,
+      builder: (BuildContext context, Widget? _) {
+        final List<VisitRecord> items = records.records;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            CarePageHeader(
+              title: careText(locale, 'platform.care.records.title'),
+              subtitle: careText(locale, 'platform.care.records.subtitle'),
+              extra: careText(
+                locale,
+                'platform.care.records.count',
+                params: <String, String>{'count': '${items.length}'},
               ),
-              Expanded(
-                child: items.isEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Text(
-                          careText(locale, 'platform.care.records.empty'),
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: items.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          final VisitRecord record = items[index];
-                          final String modeLabel =
-                              careText(locale, careModeKey(record.mode));
-                          final String doctorSuffix =
-                              record.mode == 'human' &&
-                                      (record.doctorLabel ?? '').isNotEmpty
-                                  ? ' · ${record.doctorLabel}'
-                                  : '';
-                          final List<String> siteFacts = <String>[
-                            if ((record.doctorHospitalLabel ?? '').isNotEmpty)
-                              '${careText(locale, 'platform.care.records.hospital')}: '
-                                  '${record.doctorHospitalLabel}',
-                            if ((record.doctorEmploymentType ?? '').isNotEmpty)
-                              '${careText(locale, 'platform.care.records.employment')}: '
-                                  '${careEmploymentLabel(locale, record.doctorEmploymentType)}',
-                          ];
-                          return Card(
-                            child: ListTile(
-                              title: Text(record.symptom),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  Text(record.advice),
-                                  const SizedBox(height: 4),
+            ),
+            Expanded(
+              child: items.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        careText(locale, 'platform.care.records.empty'),
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: items.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        final VisitRecord record = items[index];
+                        final String modeLabel =
+                            careText(locale, careModeKey(record.mode));
+                        final String doctorSuffix =
+                            record.mode == 'human' &&
+                                    (record.doctorLabel ?? '').isNotEmpty
+                                ? ' · ${record.doctorLabel}'
+                                : '';
+                        final List<String> siteFacts = <String>[
+                          if ((record.doctorHospitalLabel ?? '').isNotEmpty)
+                            '${careText(locale, 'platform.care.records.hospital')}: '
+                                '${record.doctorHospitalLabel}',
+                          if ((record.doctorEmploymentType ?? '').isNotEmpty)
+                            '${careText(locale, 'platform.care.records.employment')}: '
+                                '${careEmploymentLabel(locale, record.doctorEmploymentType)}',
+                        ];
+                        return Card(
+                          child: ListTile(
+                            title: Text(record.symptom),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text(record.advice),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${record.memberLabel} · '
+                                  '${careFormatTime(record.recordedAt)} · '
+                                  '$modeLabel$doctorSuffix',
+                                  style:
+                                      Theme.of(context).textTheme.bodySmall,
+                                ),
+                                if (siteFacts.isNotEmpty)
                                   Text(
-                                    '${record.memberLabel} · '
-                                    '${careFormatTime(record.recordedAt)} · '
-                                    '$modeLabel$doctorSuffix',
+                                    siteFacts.join(' · '),
                                     style:
                                         Theme.of(context).textTheme.bodySmall,
                                   ),
-                                  if (siteFacts.isNotEmpty)
-                                    Text(
-                                      siteFacts.join(' · '),
-                                      style:
-                                          Theme.of(context).textTheme.bodySmall,
-                                    ),
-                                ],
-                              ),
-                              trailing: CareLevelChip(
-                                label: careText(
-                                    locale, careLevelKey(record.level)),
-                                warn: record.level == TriageLevel.emergency ||
-                                    record.level == TriageLevel.urgent,
-                              ),
+                              ],
                             ),
-                          );
-                        },
-                      ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: FilledButton.tonal(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: kSurfaceAlt,
-                    foregroundColor: kTechBlueStrong,
-                    elevation: 0,
-                  ),
-                  onPressed: items.isEmpty ? null : () => _confirmClear(context),
-                  child: Text(careText(locale, 'platform.care.records.clear')),
+                            trailing: CareLevelChip(
+                              label: careText(
+                                  locale, careLevelKey(record.level)),
+                              warn: record.level == TriageLevel.emergency ||
+                                  record.level == TriageLevel.urgent,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: FilledButton.tonal(
+                style: FilledButton.styleFrom(
+                  backgroundColor: kSurfaceAlt,
+                  foregroundColor: kTechBlueStrong,
+                  elevation: 0,
                 ),
+                onPressed: items.isEmpty ? null : () => _confirmClear(context),
+                child: Text(careText(locale, 'platform.care.records.clear')),
               ),
-            ],
-          );
-        },
-      ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

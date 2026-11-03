@@ -32,6 +32,8 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+# Path packages under packages/ resolve through the application lockfile.
+packages/**/pubspec.lock
 
 # Symbolication related
 app.*.symbols

@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "kind": "sdkwork.component.spec",
+  "component": {
+    "name": "sdkwork_doctor_flutter_mobile_care",
+    "displayName": "SDKWork Doctor Flutter Mobile Care",
+    "version": "0.1.0",
+    "type": "flutter-package",
+    "root": "apps/sdkwork-doctor-flutter-mobile/packages/sdkwork_doctor_flutter_mobile_care",
+    "domain": "platform",
+    "capability": "care",
+    "surface": "flutter",
+    "languages": [
+      "dart"
+    ],
+    "generated": false,
+    "manifests": [
+      "pubspec.yaml"
+    ]
+  },
+  "canonicalSpecs": [
+    {
+      "file": "FLUTTER_APP_MOBILE_ARCHITECTURE_SPEC.md",
+      "path": "../../../../../../sdkwork-specs/FLUTTER_APP_MOBILE_ARCHITECTURE_SPEC.md",
+      "purpose": "Flutter package taxonomy and SDK boundary."
+    },
+    {
+      "file": "APP_FLUTTER_UI_SPEC.md",
+      "path": "../../../../../../sdkwork-specs/APP_FLUTTER_UI_SPEC.md",
+      "purpose": "Flutter UI rules."
+    },
+    {
+      "file": "APP_SDK_INTEGRATION_SPEC.md",
+      "path": "../../../../../../sdkwork-specs/APP_SDK_INTEGRATION_SPEC.md",
+      "purpose": "Generated app SDK consumption."
+    },
+    {
+      "file": "DART_CODE_SPEC.md",
+      "path": "../../../../../../sdkwork-specs/DART_CODE_SPEC.md",
+      "purpose": "Dart code rules."
+    }
+  ],
+  "contracts": {
+    "layerRole": "frontend-feature",
+    "publicExports": [
+      ".",
+      "lib/src/models/care_conversation.dart",
+      "lib/src/services/care_conversation_service.dart",
+      "lib/src/services/agents_care_conversation_service.dart",
+      "lib/src/services/local_care_conversation_service.dart",
+      "lib/src/state/care_conversations_controller.dart",
+      "lib/src/widgets/care_sessions_drawer.dart",
+      "lib/src/sdk/care_fingerprint.dart"
+    ],
+    "providedPorts": [
+      {
+        "name": "careConversationService",
+        "export": "lib/src/services/care_conversation_service.dart"
+      },
+      {
+        "name": "careConversations",
+        "export": "lib/src/state/care_conversations_controller.dart"
+      },
+      {
+        "name": "careSessionsDrawer",
+        "export": "lib/src/widgets/care_sessions_drawer.dart"
+      }
+    ],
+    "requiredPorts": [],
+    "runtimeEntrypoints": [
+      "CareSessionsDrawer",
+      "CareConversationsController",
+      "AgentsCareConversationService",
+      "LocalCareConversationService"
+    ],
+    "routeManifest": null,
+    "sdkClients": [
+      "sdkwork_agents_app_sdk"
+    ],
+    "sdkDependencies": [
+      {
+        "package": "sdkwork_agents_app_sdk",
+        "surface": "app",
+        "apiPrefix": "/app/v3/api",
+        "operations": [
+          "ai.agentsSessionsList",
+          "ai.agentsSessionsCreate",
+          "ai.agentsSessionsUpdate",
+          "ai.agentsSessionsDelete",
+          "ai.agentsSessionItemsList",
+          "ai.agentsTurnsStream"
+        ]
+      }
+    ],
+    "permissionComposition": {},
+    "dependencyApiExports": [],
+    "dependencyApiSurfaces": [],
+    "events": [],
+    "configKeys": []
+  },
+  "verification": {
+    "commands": [
+      "flutter analyze",
+      "flutter test"
+    ]
+  }
+}

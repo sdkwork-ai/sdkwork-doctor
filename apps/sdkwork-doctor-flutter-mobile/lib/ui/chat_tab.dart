@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:sdkwork_chat_composer_flutter/sdkwork_chat_composer_flutter.dart';
+import 'package:sdkwork_doctor_flutter_mobile_care/sdkwork_doctor_flutter_mobile_care.dart';
 
 import '../agent/care_agent.dart';
 import '../family.dart';
@@ -7,26 +9,28 @@ import '../patients/patient_store.dart';
 import '../records/visit_store.dart';
 import '../theme/doctor_theme.dart';
 import '../triage.dart';
+import '../triage_copy.dart';
 import 'care_shell.dart';
 import 'care_widgets.dart';
 
-/// 对话: the family-doctor conversation.
+/// 对话: the family-doctor conversation of the active care session.
 ///
-/// The active patient is switchable in place at the top; every completed
-/// exchange is recorded against that patient. With no patient file there is
-/// nothing to consult for, so sending is disabled and 我的 is linked instead.
+/// The transcript and every send belong to the session the drawer selected; the
+/// active patient is switchable in place at the top and every completed exchange
+/// is recorded against that patient. With no patient file there is nothing to
+/// consult for, so sending is disabled and 我的 is linked instead.
 class ChatTab extends StatefulWidget {
   const ChatTab({
     super.key,
     required this.locale,
-    required this.agent,
+    required this.conversations,
     required this.records,
     required this.patients,
     required this.onOpenMe,
   });
 
   final String locale;
-  final CareAgent agent;
+  final CareConversationsController conversations;
   final VisitRecordStore records;
   final PatientProfileStore patients;
 
@@ -39,9 +43,6 @@ class ChatTab extends StatefulWidget {
 
 class _ChatTabState extends State<ChatTab> {
   final TextEditingController _controller = TextEditingController();
-  List<CareMessage> _messages = <CareMessage>[];
-  bool _busy = false;
-  String? _error;
 
   @override
   void dispose() {
@@ -49,44 +50,51 @@ class _ChatTabState extends State<ChatTab> {
     super.dispose();
   }
 
-  Future<void> _send() async {
-    final String text = _controller.text.trim();
+  Future<void> _send(String draft) async {
+    final String text = draft.trim();
     final PatientProfile? patient = widget.patients.active;
-    if (text.isEmpty || _busy || patient == null) return;
-    final FamilyMember member = FamilyMember.fromPatient(patient);
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    try {
-      final CareMessage reply = await widget.agent.send(text, member);
-      await widget.records.add(createVisitRecord(
-        member: member,
-        symptom: text,
-        advice: reply.text,
-        level: reply.level,
-        mode: widget.agent.mode,
-      ));
-      if (!mounted) return;
-      setState(() {
-        _messages = widget.agent.history;
-        _controller.clear();
-      });
-    } on CareAgentException catch (error) {
-      if (mounted) setState(() => _error = error.message);
-    } finally {
-      if (mounted) setState(() => _busy = false);
+    if (text.isEmpty || patient == null || widget.conversations.sending) {
+      return;
     }
+    final FamilyMember member = FamilyMember.fromPatient(patient);
+    final String? reply = await widget.conversations.send(
+      text,
+      systemPrompt: buildFamilyDoctorSystemPrompt(member),
+      // The offline transport already answers with its own actions and safety
+      // line; only the hosted answer needs the care reply policy applied.
+      decorate: widget.conversations.mode == 'hosted'
+          ? (String raw) => composeCareReply(
+              widget.locale, resolveReplyLevel(text, raw), raw, member)
+          : null,
+    );
+    if (!mounted || reply == null) {
+      return;
+    }
+    await widget.records.add(createVisitRecord(
+      member: member,
+      symptom: text,
+      advice: reply,
+      level: resolveReplyLevel(text, reply),
+      mode: widget.conversations.mode,
+    ));
+    if (!mounted) {
+      return;
+    }
+    setState(_controller.clear);
   }
 
   @override
   Widget build(BuildContext context) {
     final String locale = widget.locale;
     return AnimatedBuilder(
-      animation: widget.patients,
+      animation: Listenable.merge(
+        <Listenable>[widget.patients, widget.conversations],
+      ),
       builder: (BuildContext context, Widget? _) {
         final List<PatientProfile> profiles = widget.patients.profiles;
         final PatientProfile? active = widget.patients.active;
+        final List<CareConversationMessage> messages = widget.conversations.messages;
+        final String? error = widget.conversations.error;
         return Column(
           children: <Widget>[
             if (profiles.isEmpty)
@@ -98,7 +106,7 @@ class _ChatTabState extends State<ChatTab> {
                 activeId: widget.patients.activeId,
                 onSelect: widget.patients.select,
               ),
-            if (_messages.isNotEmpty)
+            if (messages.isNotEmpty)
               CarePageHeader(
                 title: careText(locale, 'platform.care.chat.title'),
                 subtitle: careText(
@@ -110,20 +118,29 @@ class _ChatTabState extends State<ChatTab> {
                         : carePatientLabel(locale, active),
                   },
                 ),
-                extra: careText(locale, careModeKey(widget.agent.mode)),
+                extra: careText(locale, careModeKey(widget.conversations.mode)),
               ),
             Expanded(
-              child: _messages.isEmpty
-                  ? CareChatLanding(
-                      locale: locale,
-                      onPick: (String suggestion) =>
-                          setState(() => _controller.text = suggestion),
-                    )
+              child: messages.isEmpty
+                  ? widget.conversations.loadingMessages
+                      ? const Center(child: CircularProgressIndicator())
+                      : CareChatLanding(
+                          locale: locale,
+                          onPick: (String suggestion) =>
+                              setState(() => _controller.text = suggestion),
+                        )
                   : ListView.builder(
                       padding: const EdgeInsets.all(16),
-                      itemCount: _messages.length,
+                      itemCount: messages.length,
                       itemBuilder: (BuildContext context, int index) {
-                        final CareMessage message = _messages[index];
+                        final CareConversationMessage message = messages[index];
+                        // The doctor bubble carries the urgency of the exchange:
+                        // the user's text sets the floor and a red flag inside
+                        // the answer can only raise it.
+                        final TriageLevel level = message.isUser
+                            ? triageSymptoms(message.text).level
+                            : resolveReplyLevel(
+                                _lastUserBefore(messages, index), message.text);
                         return Card(
                           child: ListTile(
                             title: Text(careText(
@@ -134,53 +151,51 @@ class _ChatTabState extends State<ChatTab> {
                             )),
                             subtitle: Text(message.text),
                             trailing: CareLevelChip(
-                              label:
-                                  careText(locale, careLevelKey(message.level)),
-                              warn: message.level == TriageLevel.emergency ||
-                                  message.level == TriageLevel.urgent,
+                              label: careText(locale, careLevelKey(level)),
+                              warn: level == TriageLevel.emergency ||
+                                  level == TriageLevel.urgent,
                             ),
                           ),
                         );
                       },
                     ),
             ),
-            if (_error != null)
+            if (error != null)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   careText(locale, 'platform.care.chat.error',
-                      params: <String, String>{'message': _error!}),
+                      params: <String, String>{'message': error}),
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ),
             Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      enabled: active != null,
-                      decoration: InputDecoration(
-                        labelText:
-                            careText(locale, 'platform.care.chat.inputLabel'),
-                        hintText: careText(locale,
-                            'platform.care.chat.placeholder'),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              child: SdkworkChatComposer(
+                busy: widget.conversations.sending,
+                controller: _controller,
+                elevation: false,
+                enabled: active != null,
+                labels: SdkworkChatComposerLabels(
+                  attach: careText(locale, 'platform.care.chat.attach'),
+                  busy: careText(locale, 'platform.care.chat.sending'),
+                  inputLabel: careText(locale, 'platform.care.chat.inputLabel'),
+                  mode: careText(locale, 'platform.care.me.mode'),
+                  placeholder: active == null
+                      ? careText(locale, 'platform.care.chat.noPatient')
+                      : careText(locale, 'platform.care.chat.placeholder'),
+                  send: careText(locale, 'platform.care.chat.send'),
+                  voice: careText(locale, 'platform.care.chat.voice'),
+                ),
+                mode: active == null
+                    ? null
+                    : SdkworkChatComposerMode(
+                        label: careText(
+                          locale,
+                          careModeKey(widget.conversations.mode),
+                        ),
                       ),
-                      onSubmitted: (_) => _send(),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton(
-                    onPressed: _busy || active == null ? null : _send,
-                    child: Text(careText(
-                      locale,
-                      _busy
-                          ? 'platform.care.chat.sending'
-                          : 'platform.care.chat.send',
-                    )),
-                  ),
-                ],
+                onSend: _send,
               ),
             ),
           ],
@@ -188,6 +203,16 @@ class _ChatTabState extends State<ChatTab> {
       },
     );
   }
+}
+
+/// Text of the user message that precedes [index], or '' when there is none.
+String _lastUserBefore(List<CareConversationMessage> messages, int index) {
+  for (int cursor = index - 1; cursor >= 0; cursor -= 1) {
+    if (messages[cursor].isUser) {
+      return messages[cursor].text;
+    }
+  }
+  return '';
 }
 
 /// Compact active-patient switcher: one chip per patient file.

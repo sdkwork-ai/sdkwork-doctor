@@ -8,6 +8,7 @@ import { LanguageToggle } from './LanguageToggle';
 const ICON_PATHS: Readonly<Record<AppBlockIcon, string>> = Object.freeze({
   chat: 'M4 5h16v11H8l-4 4z',
   doctor: 'M12 4v16M4 12h16',
+  records: 'M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h5',
   user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c0-4 4-6 8-6s8 2 8 6',
 });
 

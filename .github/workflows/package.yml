@@ -73,6 +73,10 @@ on:
         required: true
         default: false
         type: boolean
+      sdkwork_appbase_ref:
+        description: 'SDKWORK_APPBASE_REF dependency ref; blank falls back to the repository variable.'
+        required: false
+        default: ''
       sdkwork_specs_ref:
         description: 'SDKWORK_SPECS_REF dependency ref; blank falls back to the repository variable.'
         required: false
@@ -106,6 +110,7 @@ jobs:
       framework_ref: v1
       dependency_refs_json: >-
         {
+                    "SDKWORK_APPBASE_REF": "${{ github.event.inputs.sdkwork_appbase_ref || vars.SDKWORK_APPBASE_REF }}",
                     "SDKWORK_SPECS_REF": "${{ github.event.inputs.sdkwork_specs_ref || vars.SDKWORK_SPECS_REF }}"
         }
     secrets: inherit

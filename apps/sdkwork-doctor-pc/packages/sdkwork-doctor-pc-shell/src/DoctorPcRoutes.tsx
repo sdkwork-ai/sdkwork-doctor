@@ -42,8 +42,8 @@ export interface DoctorPcRoutesProps {
 
 /**
  * Route composition for the PC surface: a workbench landing at `/doctor` plus
- * exactly three tabs (chat / doctor / me). Visit records hang off 我的 as
- * `/doctor/me/records` instead of being a fourth tab.
+ * exactly four tabs (chat / doctor / records / me). Visit records are a tab of
+ * their own; `/doctor/me/records` stays as a redirect for older links.
  */
 export function DoctorPcRoutes({
   runtime,
@@ -78,7 +78,8 @@ export function DoctorPcRoutes({
           )}
         />
         <Route path="me" element={<MePage agent={agent} agents={catalogState.agents} context={runtime} patients={patients} records={records} roster={rosterState.roster} selection={selection} />} />
-        <Route path="me/records" element={<RecordsPage records={records} />} />
+        <Route path="records" element={<RecordsPage records={records} />} />
+        <Route path="me/records" element={<Navigate replace to="/doctor/records" />} />
         <Route path="*" element={<Navigate replace to="/doctor" />} />
       </Routes>
     </AppShell>

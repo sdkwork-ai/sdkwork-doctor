@@ -8,9 +8,23 @@ dependencies:
   flutter:
     sdk: flutter
   shared_preferences: ^2.5.6
+  # Shared SDKWork conversation composer (idle pill / focus-expanded card).
+  sdkwork_chat_composer_flutter:
+    path: ../../../sdkwork-appbase/packages/mobile-flutter/foundation/sdkwork_chat_composer_flutter
+  sdkwork_doctor_flutter_mobile_care:
+    path: packages/sdkwork_doctor_flutter_mobile_care
+  # Generated Dart app SDK for the sdkwork-agents surface. Constructed by the
+  # bootstrap (`lib/agent/care_agent.dart`), never inside widgets.
+  sdkwork_agents_app_sdk:
+    path: ../../../sdkwork-agents/sdks/sdkwork-agents-app-sdk/sdkwork-agents-app-sdk-flutter/generated/server-openapi
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+
+dependency_overrides:
+  sdkwork_common_flutter:
+    path: ../../../sdkwork-sdk-commons/sdkwork-sdk-common-flutter
+
 flutter:
   uses-material-design: true

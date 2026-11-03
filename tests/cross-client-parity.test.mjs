@@ -9,6 +9,7 @@ const exists = (relativePath) => fs.existsSync(path.join(repoRoot, relativePath)
 
 const CHAT = '\u5bf9\u8bdd';
 const DOCTOR = '\u533b\u751f';
+const RECORDS = '\u770b\u75c5\u8bb0\u5f55';
 const ME = '\u6211\u7684';
 const RULES = 'apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor/contracts/triage-rules.json';
 const COMPOSITION = 'specs/app-composition.contract.json';
@@ -18,17 +19,24 @@ function flutterSources() {
   const walk = (dir) => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
-      if (entry.isDirectory()) walk(full);
-      else if (entry.name.endsWith('.dart')) files.push(fs.readFileSync(full, 'utf8'));
+      if (entry.isDirectory()) {
+        walk(full);
+        continue;
+      }
+      if (!entry.name.endsWith('.dart')) continue;
+      // The generated care catalog mirrors every shared key, including labels
+      // other surfaces render. It is copy data, not Flutter navigation.
+      if (entry.name === 'care_messages.dart') continue;
+      files.push(fs.readFileSync(full, 'utf8'));
     }
   };
   walk(path.join(repoRoot, 'apps/sdkwork-doctor-flutter-mobile/lib'));
   return files.join('\n');
 }
 
-test('every client exposes the same three care blocks', () => {
+test('every client exposes the same four care blocks', () => {
   const contract = JSON.parse(read(COMPOSITION));
-  const required = ['chat', 'doctor', 'me'];
+  const required = ['chat', 'doctor', 'records', 'me'];
   for (const id of required) {
     const block = contract.blocks.find((entry) => entry.id === id);
     assert.ok(block, 'the composition contract must declare the ' + id + ' block');
@@ -44,32 +52,26 @@ test('every client exposes the same three care blocks', () => {
       const segment = contract.blocks.find((entry) => entry.id === id).route.split('/').pop();
       assert.match(routes, new RegExp('path="' + segment + '"', 'u'), 'browser routes must implement ' + id);
     }
-    assert.match(routes, /path="me\/records"/u, 'records must be a sub-screen of 我的');
-    assert.doesNotMatch(routes, /path="records"/u, 'records must not be a tab');
+    assert.match(routes, /path="me\/records"/u, 'older records links still resolve');
   }
 
   const mp = JSON.parse(read('apps/sdkwork-doctor-mini-program/src/app.json'));
   assert.deepEqual(mp.pages, [
     'pages/conversation/index',
     'pages/doctor/index',
-    'pages/profile/index',
     'pages/records/index',
+    'pages/profile/index',
   ]);
-  assert.deepEqual(mp.tabBar.list.map((tab) => tab.text), [CHAT, DOCTOR, ME]);
+  assert.deepEqual(mp.tabBar.list.map((tab) => tab.text), [CHAT, DOCTOR, RECORDS, ME]);
   assert.equal(mp.tabBar.list.length, required.length);
-  assert.equal(
-    mp.tabBar.list.some((tab) => tab.pagePath === 'pages/records/index'),
-    false,
-    'the mini program must not expose records as a tab',
-  );
 
   const flutter = flutterSources();
   assert.equal(
     flutter.split('NavigationDestination(').length - 1,
     required.length,
-    'Flutter must render exactly three navigation destinations',
+    'Flutter must render every resolved navigation destination',
   );
-  assert.doesNotMatch(flutter, /nav\.records/u, 'Flutter must not keep a records destination label');
+  assert.match(flutter, /nav\.records/u, 'Flutter renders the records destination label');
 });
 
 test('every client ships the patient-file and human-doctor capability', () => {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:sdkwork_doctor_flutter_mobile_care/sdkwork_doctor_flutter_mobile_care.dart';
 
 /// Tech-blue, flat, borderless theme.
 ///
@@ -18,6 +19,17 @@ const Color kSurfaceAlt = Color(0xFFE6EDF8);
 const Color kInk = Color(0xFF0A1324);
 const Color kMuted = Color(0xFF5A6B85);
 const Color kDanger = Color(0xFFE5484D);
+
+/// Tokens of the care session drawer, so the package never forks the contract.
+const CareSessionsDrawerStyle doctorSessionsDrawerStyle = CareSessionsDrawerStyle(
+  background: kSurface,
+  primary: kTechBlue,
+  primarySoft: kTechBlueSoft,
+  ink: kInk,
+  muted: kMuted,
+  danger: kDanger,
+  divider: kSurfaceAlt,
+);
 
 ThemeData buildDoctorTheme() {
   final ColorScheme scheme = ColorScheme.fromSeed(seedColor: kTechBlue, brightness: Brightness.light).copyWith(

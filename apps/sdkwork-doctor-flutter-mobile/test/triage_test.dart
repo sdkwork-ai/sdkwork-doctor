@@ -3,12 +3,14 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sdkwork_doctor_flutter_mobile/triage.dart';
+import 'package:sdkwork_doctor_flutter_mobile/triage_copy.dart';
 
 void main() {
   test('emergency red flag escalates', () {
     final TriageResult result = triageSymptoms('chest pain since 10 minutes');
     expect(result.level, TriageLevel.emergency);
-    expect(result.actions.first, contains('emergency'));
+    expect(careTriageActions('en-US', result.level).first, contains('emergency'));
+    expect(careTriageActions('zh-CN', result.level).first, contains('急救'));
   });
 
   test('routine symptom stays routine', () {

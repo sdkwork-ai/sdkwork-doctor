@@ -72,8 +72,8 @@ test('both app shells pass the composed port into the tab pages', () => {
     const routes = fs.readFileSync(routesFile, 'utf8');
     assert.match(routes, /<ChatPage[^>]*agent=\{agent\}/u, routesFile);
     assert.match(routes, /<MePage[^>]*agent=\{agent\}/u, routesFile);
-    assert.match(routes, /path="me\/records"/u, routesFile);
-    assert.doesNotMatch(routes, /path="records"/u, 'records is a sub-screen, not a tab');
+    assert.match(routes, /path="records"/u, routesFile);
+    assert.match(routes, /path="me\/records"/u, routesFile, 'older records links redirect');
     assert.match(routes, /<DoctorPage[^>]*selection=\{selection\}/u, routesFile);
   }
 });

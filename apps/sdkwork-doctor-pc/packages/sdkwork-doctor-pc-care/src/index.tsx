@@ -461,8 +461,8 @@ export interface RecordsPageProps {
 }
 
 /**
- * Visit records: every completed consultation, newest first. Reached from 我的
- * (it is no longer a tab of its own), so it carries an explicit way back.
+ * Visit records: every completed consultation, newest first. It is a tab of its
+ * own, so the page carries no way back; the rail is the navigation.
  */
 export function RecordsPage({ records }: RecordsPageProps) {
   const { t, i18n } = useTranslation();
@@ -482,7 +482,6 @@ export function RecordsPage({ records }: RecordsPageProps) {
           <h1 className="doctor-page-title">{t('platform.care.records.title')}</h1>
           <p className="doctor-page-subtitle">{t('platform.care.records.subtitle')}</p>
         </div>
-        <Link className="doctor-link" to="/doctor/me">{t('platform.care.records.back')}</Link>
       </header>
       <Panel title={t('platform.care.records.count', { count: items.length })}>
         {items.length === 0 ? (
@@ -593,7 +592,7 @@ export function MePage({ context, agent, patients, records, selection, roster, a
       <Panel title={t('platform.care.me.records')}>
         <p className="doctor-check-summary">{t('platform.care.me.recordsCount', { count: items.length })}</p>
         <div className="doctor-card-actions">
-          <Link className="doctor-link" to="/doctor/me/records">{t('platform.care.records.title')}</Link>
+          <Link className="doctor-link" to="/doctor/records">{t('platform.care.records.title')}</Link>
         </div>
       </Panel>
 

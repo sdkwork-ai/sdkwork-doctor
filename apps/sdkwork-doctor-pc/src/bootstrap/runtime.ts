@@ -1,3 +1,5 @@
+import i18n from 'i18next';
+
 import type { AgentConversationPort, CareAgentCatalogPort } from '@sdkwork/doctor-common-agent';
 import { applyThemeToStyle, resolveAppBlocks, resolveAppTheme, type ResolvedAppBlock } from '@sdkwork/doctor-common-blocks';
 import { createDoctorRuntimeContext, type DoctorRuntimeContext } from '@sdkwork/doctor-common-diagnostics';
@@ -50,6 +52,8 @@ export function bootstrapDoctorPc(): Promise<DoctorPcRuntime> {
       const careAgent = await createDoctorPcCareAgent({
         agentsApiBaseUrl: environment.agentsApiBaseUrl,
         accessToken: session.current().accessToken,
+        // Live translator: the language toggle changes this without a reload.
+        translate: (key, params) => (params ? i18n.t(key, params) : i18n.t(key)),
       });
       const blocks = resolveAppBlocks('pc', environment.appBlocks);
       // Personalization: deployment theme tokens become CSS variables before the

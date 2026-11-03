@@ -1,4 +1,5 @@
 import type { CareAgentEntrySurface } from './contract';
+import type { CareTranslate } from './care-copy';
 import { createHostedCareAgent, type CareAgentAccessTokenPort, type CareAgentFetch, type HostedCareAgentOptions } from './hosted';
 import { resolveCareAgentMode } from './mode';
 import { createLocalCareAgent } from './offline';
@@ -16,6 +17,8 @@ export interface CreateCareAgentRuntimeOptions {
   readonly createId?: () => string;
   readonly onDelta?: (delta: string) => void;
   readonly stream?: boolean;
+  /** Host i18n translator for the visible care copy (both transports). */
+  readonly translate?: CareTranslate;
 }
 
 /**
@@ -31,7 +34,7 @@ export async function createCareAgentRuntime(options: CreateCareAgentRuntimeOpti
   const hasAccessToken = typeof token === 'string' && token.trim().length > 0;
   const mode = resolveCareAgentMode({ agentsApiBaseUrl: options.agentsApiBaseUrl, hasAccessToken });
   if (mode === 'offline' || !options.accessTokens) {
-    return Object.freeze({ mode: 'offline', port: createLocalCareAgent() });
+    return Object.freeze({ mode: 'offline', port: createLocalCareAgent({ translate: options.translate }) });
   }
   const hosted = createHostedCareAgent({
     agentsApiBaseUrl: options.agentsApiBaseUrl ?? '',
@@ -45,6 +48,7 @@ export async function createCareAgentRuntime(options: CreateCareAgentRuntimeOpti
     createId: options.createId,
     onDelta: options.onDelta,
     stream: options.stream,
+    translate: options.translate,
   });
   return Object.freeze({ mode: 'hosted', port: hosted });
 }

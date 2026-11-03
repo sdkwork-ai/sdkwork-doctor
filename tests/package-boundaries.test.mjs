@@ -24,6 +24,41 @@ function listPackageRoots() {
 
 const packageRoots = listPackageRoots();
 
+/**
+ * Names of sibling-repository packages declared by pnpm-workspace.yaml as
+ * `../sdkwork-*` paths. Cross-repository components are consumed through the
+ * same workspace protocol as in-repository packages, so they count as declared
+ * workspace packages.
+ */
+function crossRepoWorkspacePackageNames() {
+  const configPath = path.join(repoRoot, 'pnpm-workspace.yaml');
+  if (!fs.existsSync(configPath)) return [];
+  const names = [];
+  for (const match of fs.readFileSync(configPath, 'utf8').matchAll(/^\s*-\s*"([^"]+)"/gmu)) {
+    const entry = match[1];
+    if (!entry.startsWith('../')) continue;
+    let candidates = [repoRoot];
+    for (const segment of entry.split('/')) {
+      candidates = candidates.flatMap((base) => {
+        if (segment !== '*') return [path.resolve(base, segment)];
+        if (!fs.existsSync(base)) return [];
+        return fs
+          .readdirSync(base, { withFileTypes: true })
+          .filter((child) => child.isDirectory())
+          .map((child) => path.join(base, child.name));
+      });
+    }
+    for (const candidate of candidates) {
+      const manifestPath = path.join(candidate, 'package.json');
+      if (fs.existsSync(manifestPath)) {
+        names.push(JSON.parse(fs.readFileSync(manifestPath, 'utf8')).name);
+      }
+    }
+  }
+  return names;
+}
+
+
 test('the workspace contains every authored package', () => {
   const names = packageRoots.map((root) => JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).name);
   for (const expected of [
@@ -62,7 +97,10 @@ test('every authored package owns a component spec', () => {
 });
 
 test('workspace dependencies resolve to a declared package name', () => {
-  const names = new Set(packageRoots.map((root) => JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).name));
+  const names = new Set([
+    ...packageRoots.map((root) => JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).name),
+    ...crossRepoWorkspacePackageNames(),
+  ]);
   for (const root of packageRoots) {
     const manifest = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
     for (const section of ['dependencies', 'peerDependencies', 'devDependencies']) {

@@ -19,6 +19,8 @@ Page({
     placeholder: '',
     send: '',
     sending: '',
+    voiceLabel: '',
+    attachLabel: '',
     error: '',
     draft: '',
     busy: false,
@@ -43,6 +45,8 @@ Page({
       placeholder: careText('platform.care.chat.placeholder'),
       send: careText('platform.care.chat.send'),
       sending: careText('platform.care.chat.sending'),
+      voiceLabel: careText('platform.care.chat.voice'),
+      attachLabel: careText('platform.care.chat.attach'),
       patientTitle: careText('platform.care.chat.patient'),
       switchHint: careText('platform.care.chat.switchPatient'),
       noPatient: careText('platform.care.chat.noPatient'),
@@ -97,11 +101,13 @@ Page({
   },
 
   onInput(event) {
-    this.setData({ draft: event.detail.value });
+    const detail = event && event.detail ? event.detail : {};
+    this.setData({ draft: detail.value || '' });
   },
 
-  onSend() {
-    const text = (this.data.draft || '').trim();
+  onSend(event) {
+    const detail = event && event.detail ? event.detail : {};
+    const text = String(detail.text || this.data.draft || '').trim();
     const member = this.member;
     if (!member || !text || this.data.busy) return;
     this.setData({ busy: true, error: '' });

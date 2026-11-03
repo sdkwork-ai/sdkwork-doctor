@@ -1,0 +1,28 @@
+name: sdkwork_doctor_flutter_mobile_care
+description: SDKWork Doctor care capability - agent conversation sessions, the session service port, and the session drawer.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+  flutter: ">=3.24.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  shared_preferences: ^2.5.6
+  # Generated Dart app SDK for the sdkwork-agents `/app/v3/api` surface. SDK
+  # clients are constructed by the application bootstrap, never here.
+  sdkwork_agents_app_sdk:
+    path: ../../../../../sdkwork-agents/sdks/sdkwork-agents-app-sdk/sdkwork-agents-app-sdk-flutter/generated/server-openapi
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+dependency_overrides:
+  # The generated SDK resolves its shared transport primitives from the
+  # SDKWork SDK commons workspace rather than the public pub registry.
+  sdkwork_common_flutter:
+    path: ../../../../../sdkwork-sdk-commons/sdkwork-sdk-common-flutter

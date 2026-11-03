@@ -1,12 +1,17 @@
 /// Emergency-first triage shared in shape with @sdkwork/doctor-common-doctor.
+///
+/// This file owns the red-flag vocabulary and the level it produces; every word
+/// a user reads comes from the care catalog through `triage_copy.dart`, so no
+/// user-facing copy in any locale lives here.
 enum TriageLevel { emergency, urgent, routine, selfCare }
 
 class TriageResult {
-  const TriageResult(this.level, this.reason, this.actions);
+  const TriageResult(this.level);
+
   final TriageLevel level;
-  final String reason;
-  final List<String> actions;
-  bool get escalate => level == TriageLevel.emergency || level == TriageLevel.urgent;
+
+  bool get escalate =>
+      level == TriageLevel.emergency || level == TriageLevel.urgent;
 }
 
 final List<RegExp> _emergency = <RegExp>[
@@ -20,16 +25,32 @@ final List<RegExp> _emergency = <RegExp>[
 TriageResult triageSymptoms(String text) {
   final String value = text.trim();
   if (value.isEmpty) {
-    return const TriageResult(TriageLevel.selfCare, 'No symptom text.', <String>['Describe the symptom, onset, and severity.']);
+    return const TriageResult(TriageLevel.selfCare);
   }
-  if (_emergency.any((RegExp p) => p.hasMatch(value))) {
-    return const TriageResult(TriageLevel.emergency, 'Emergency red flag detected.', <String>[
-      'Call local emergency services now.',
-      'Do not drive yourself.',
-    ]);
+  if (_emergency.any((RegExp pattern) => pattern.hasMatch(value))) {
+    return const TriageResult(TriageLevel.emergency);
   }
-  return const TriageResult(TriageLevel.routine, 'No red flag detected.', <String>[
-    'Monitor for 24-48 hours.',
-    'Book a routine consultation if symptoms persist.',
-  ]);
+  return const TriageResult(TriageLevel.routine);
+}
+
+/// Rank used to promote, never downgrade, a triage level.
+int triageRank(TriageLevel level) {
+  switch (level) {
+    case TriageLevel.emergency:
+      return 3;
+    case TriageLevel.urgent:
+      return 2;
+    case TriageLevel.routine:
+      return 1;
+    case TriageLevel.selfCare:
+      return 0;
+  }
+}
+
+/// The user's text sets the floor; a red flag inside the hosted answer can only
+/// raise it.
+TriageLevel resolveReplyLevel(String userText, String replyText) {
+  final TriageLevel fromUser = triageSymptoms(userText).level;
+  final TriageLevel fromReply = triageSymptoms(replyText).level;
+  return triageRank(fromReply) > triageRank(fromUser) ? fromReply : fromUser;
 }

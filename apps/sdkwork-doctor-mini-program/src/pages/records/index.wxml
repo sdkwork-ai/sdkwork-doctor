@@ -1,7 +1,6 @@
 <view class="card">
   <view class="row">
     <text class="h1">{{title}}</text>
-    <text class="badge" bindtap="onBack">{{backLabel}}</text>
   </view>
   <view class="muted">{{subtitle}}</view>
   <view class="muted">{{countLabel}}</view>

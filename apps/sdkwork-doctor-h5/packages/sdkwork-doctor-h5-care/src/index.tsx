@@ -5,6 +5,7 @@ export * from './roster';
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { SdkworkChatComposer } from '@sdkwork/chat-composer-mobile-react';
 import {
   FAMILY_DOCTOR_AGENT_ID,
   findCareAgent,
@@ -85,19 +86,19 @@ export function ChatPage({ agent, records, patients }: ChatPageProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const send = () => {
-    const text = draft.trim();
-    if (!text || busy || !active) return;
+  const send = (text: string) => {
+    const symptom = text.trim();
+    if (!symptom || busy || !active) return;
     setBusy(true);
     setError(null);
     void agent
-      .send(text, { member: active })
+      .send(symptom, { member: active })
       .then((reply) => {
         setMessages([...agent.history()]);
         setDraft('');
         records.add(createVisitRecord({
           member: active,
-          symptom: text,
+          symptom,
           advice: reply.text,
           level: reply.triage?.level ?? 'routine',
           mode: agent.mode,
@@ -111,7 +112,7 @@ export function ChatPage({ agent, records, patients }: ChatPageProps) {
   };
 
   return (
-    <div>
+    <div className="doctor-chat-page">
       <header className="doctor-page-header">
         <div>
           <h1 className="doctor-page-title">{t('platform.care.chat.title')}</h1>
@@ -143,21 +144,29 @@ export function ChatPage({ agent, records, patients }: ChatPageProps) {
             </li>
           ))}
         </ul>
-        <div className="doctor-chat-compose">
-          <input
-            aria-label={t('platform.care.chat.inputLabel')}
-            className="doctor-input"
-            disabled={!active}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => { if (event.key === 'Enter') send(); }}
-            placeholder={active ? t('platform.care.chat.placeholder') : t('platform.care.chat.noPatient')}
-            value={draft}
-          />
-          <ActionButton tone="primary" onClick={send} disabled={busy || !active}>
-            {busy ? t('platform.care.chat.sending') : t('platform.care.chat.send')}
-          </ActionButton>
-        </div>
       </MobileCard>
+
+      <div className="doctor-chat-dock">
+        <SdkworkChatComposer
+          busy={busy}
+          disabled={!active}
+          labels={{
+            attach: t('platform.care.chat.attach'),
+            busy: t('platform.care.chat.sending'),
+            inputLabel: t('platform.care.chat.inputLabel'),
+            mode: t('platform.care.me.mode'),
+            placeholder: active ? t('platform.care.chat.placeholder') : t('platform.care.chat.noPatient'),
+            send: t('platform.care.chat.send'),
+            voice: t('platform.care.chat.voice'),
+          }}
+          mode={active
+            ? { label: agent.mode === 'hosted' ? t('platform.care.mode.hosted') : t('platform.care.mode.offline') }
+            : null}
+          onSend={send}
+          onValueChange={setDraft}
+          value={draft}
+        />
+      </div>
     </div>
   );
 }
@@ -461,8 +470,8 @@ export interface RecordsPageProps {
 }
 
 /**
- * Visit records: every completed consultation, newest first. Reached from 我的
- * (it is no longer a tab of its own), so it carries an explicit way back.
+ * Visit records: every completed consultation, newest first. It is a tab of its
+ * own, so the page carries no way back; the tab bar is the navigation.
  */
 export function RecordsPage({ records }: RecordsPageProps) {
   const { t, i18n } = useTranslation();
@@ -482,7 +491,6 @@ export function RecordsPage({ records }: RecordsPageProps) {
           <h1 className="doctor-page-title">{t('platform.care.records.title')}</h1>
           <p className="doctor-page-subtitle">{t('platform.care.records.subtitle')}</p>
         </div>
-        <Link className="doctor-link" to="/doctor/me">{t('platform.care.records.back')}</Link>
       </header>
       <MobileCard title={t('platform.care.records.count', { count: items.length })}>
         {items.length === 0 ? (
@@ -593,7 +601,7 @@ export function MePage({ context, agent, patients, records, selection, roster, a
       <MobileCard title={t('platform.care.me.records')}>
         <p className="doctor-check-summary">{t('platform.care.me.recordsCount', { count: items.length })}</p>
         <div className="doctor-card-actions">
-          <Link className="doctor-link" to="/doctor/me/records">{t('platform.care.records.title')}</Link>
+          <Link className="doctor-link" to="/doctor/records">{t('platform.care.records.title')}</Link>
         </div>
       </MobileCard>
 

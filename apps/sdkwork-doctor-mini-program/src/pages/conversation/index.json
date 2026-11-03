@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": "对话"
+  "navigationBarTitleText": "对话",
+  "usingComponents": {
+    "chat-composer": "/components/chat-composer/index"
+  }
 }

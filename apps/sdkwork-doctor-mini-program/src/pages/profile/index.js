@@ -339,9 +339,9 @@ Page({
 
   onOpenRecords() {
     try {
-      wx.navigateTo({ url: '/pages/records/index' });
+      wx.switchTab({ url: '/pages/records/index' });
     } catch (error) {
-      // Without a navigation stack the record count stays the fallback.
+      // The records tab remains reachable from the tab bar.
     }
   },
 

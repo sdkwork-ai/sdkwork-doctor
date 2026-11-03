@@ -6,6 +6,7 @@ import {
   type CareAgentCatalogPort,
   type CareAgentMode,
   type CareAgentRuntime,
+  type CareTranslate,
 } from '@sdkwork/doctor-common-agent';
 
 /** Runtime inputs that decide the conversation transport for this surface. */
@@ -13,6 +14,8 @@ export interface DoctorPcAgentsEnvironment {
   readonly agentsApiBaseUrl: string;
   /** IAM/appbase session token, or null before sign-in. Never a `VITE_*` value. */
   readonly accessToken: string | null;
+  /** Live i18n translator; absence keeps the transport's English fallback. */
+  readonly translate?: CareTranslate;
 }
 
 /**
@@ -37,6 +40,7 @@ export function createDoctorPcCareAgent(environment: DoctorPcAgentsEnvironment):
     agentsApiBaseUrl: environment.agentsApiBaseUrl,
     accessTokens: createDoctorPcAccessTokenPort(environment),
     entrySurface: 'pc',
+    translate: environment.translate,
   });
 }
 

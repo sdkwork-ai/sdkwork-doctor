@@ -3,6 +3,16 @@ page {
   background: #f2f5fa;
   color: #0a1324;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Shared conversation composer (appbase projection) bound to the tokens. */
+  --sdkwork-chat-composer-accent: #0a5cff;
+  --sdkwork-chat-composer-chip: #e6edf8;
+  --sdkwork-chat-composer-disabled-control: #e6edf8;
+  --sdkwork-chat-composer-foreground: #0a1324;
+  --sdkwork-chat-composer-on-accent: #ffffff;
+  --sdkwork-chat-composer-placeholder: #5a6b85;
+  --sdkwork-chat-composer-radius-card: 14px;
+  --sdkwork-chat-composer-surface: #ffffff;
 }
 
 .card {

@@ -2,8 +2,8 @@
   "pages": [
     "pages/conversation/index",
     "pages/doctor/index",
-    "pages/profile/index",
-    "pages/records/index"
+    "pages/records/index",
+    "pages/profile/index"
   ],
   "window": {
     "navigationBarTitleText": "SDKWork Doctor",
@@ -28,6 +28,12 @@
         "text": "医生",
         "iconPath": "assets/tabbar/doctor-outline.png",
         "selectedIconPath": "assets/tabbar/doctor-filled.png"
+      },
+      {
+        "pagePath": "pages/records/index",
+        "text": "看病记录",
+        "iconPath": "assets/tabbar/records-outline.png",
+        "selectedIconPath": "assets/tabbar/records-filled.png"
       },
       {
         "pagePath": "pages/profile/index",

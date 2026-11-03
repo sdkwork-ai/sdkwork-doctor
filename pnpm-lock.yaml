@@ -12,6 +12,15 @@ importers:
         specifier: ^5.8.2
         version: 5.9.3
 
+  ../sdkwork-appbase/packages/mobile-react/foundation/sdkwork-chat-composer-mobile-react:
+    dependencies:
+      react:
+        specifier: '>=18.2.0 <20.0.0'
+        version: 19.3.1
+      react-dom:
+        specifier: '>=18.2.0 <20.0.0'
+        version: 19.3.1(react@19.3.1)
+
   apps/sdkwork-doctor-common/packages/sdkwork-doctor-common-agent:
     dependencies:
       '@sdkwork/doctor-common-doctor':
@@ -87,6 +96,9 @@ importers:
 
   apps/sdkwork-doctor-h5/packages/sdkwork-doctor-h5-care:
     dependencies:
+      '@sdkwork/chat-composer-mobile-react':
+        specifier: workspace:*
+        version: link:../../../../../sdkwork-appbase/packages/mobile-react/foundation/sdkwork-chat-composer-mobile-react
       '@sdkwork/doctor-common-agent':
         specifier: workspace:*
         version: link:../../../sdkwork-doctor-common/packages/sdkwork-doctor-common-agent

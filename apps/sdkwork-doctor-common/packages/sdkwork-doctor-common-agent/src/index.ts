@@ -22,6 +22,20 @@ export type {
 export { createCareAgentRuntime } from './runtime';
 export type { CreateCareAgentRuntimeOptions } from './runtime';
 export {
+  careComposeHostedReply,
+  careDescribePrompt,
+  careEmergencyLead,
+  careEmergencyLeadFor,
+  careNoRedFlag,
+  careOfflineAnswer,
+  careSafetyLine,
+  careTriageActions,
+  careUrgentLeadFor,
+  careWhoLabel,
+  careWhoSelf,
+} from './care-copy';
+export type { CareTranslate } from './care-copy';
+export {
   CARE_AGENTS_API_PREFIX,
   CARE_AGENT_SESSION_KIND,
   CARE_AGENT_TURN_MODE,

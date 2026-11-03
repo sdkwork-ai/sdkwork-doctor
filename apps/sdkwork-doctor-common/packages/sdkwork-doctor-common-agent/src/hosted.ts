@@ -1,4 +1,5 @@
 import { triageSymptoms, type FamilyMember, type TriageLevel, type TriageResult } from '@sdkwork/doctor-common-doctor';
+import { careComposeHostedReply, type CareTranslate } from './care-copy';
 import {
   CARE_AGENT_ASSISTANT_ITEM_KIND,
   CARE_AGENT_SESSION_KIND,
@@ -25,12 +26,6 @@ export const FAMILY_DOCTOR_AGENT_ID = 'agent.family-doctor';
 
 /** Session title sent once, before the conversation has any content. */
 const SESSION_TITLE = 'Family doctor conversation';
-
-const SAFETY_LINE = 'This is general guidance, not a diagnosis. For emergencies call your local emergency number.';
-
-const EMERGENCY_LEAD = 'Emergency red flag detected. Call local emergency services now. Do not drive yourself. Stay with the person until help arrives.';
-
-const URGENT_LEAD = 'This needs a same-day clinician review.';
 
 /** Rank used to promote, never downgrade, a triage level. */
 const TRIAGE_RANK: Readonly<Record<TriageLevel, number>> = Object.freeze({
@@ -77,6 +72,8 @@ export interface HostedCareAgentOptions {
   readonly onDelta?: (delta: string) => void;
   /** Defaults to streaming; set false to use the idempotent non-stream turn. */
   readonly stream?: boolean;
+  /** Host i18n translator for the visible escalation copy; absent keeps English. */
+  readonly translate?: CareTranslate;
 }
 
 /** Base error for every hosted-transport failure. */
@@ -389,7 +386,7 @@ export function createHostedCareAgent(options: HostedCareAgentOptions): AgentCon
       const reply: ChatMessage = {
         id: 'assistant-' + String(messages.length + 2),
         role: 'assistant',
-        text: composeSafeReply(triage, replyText, context.member),
+        text: composeSafeReply(triage, replyText, context.member, options.translate),
         createdAt: now().toISOString(),
         triage,
       };
@@ -419,14 +416,15 @@ export function resolveReplyTriage(userText: string, replyText: string): TriageR
 /**
  * Composes the visible answer. Escalation guidance leads the message and the
  * hosted answer is kept after it, so a model reply can never bury a red flag.
+ *
+ * `translate` localizes the lead, the actions, and the safety line; without it
+ * the historical English copy is used, which keeps the fixtures stable.
  */
-export function composeSafeReply(triage: TriageResult, replyText: string, member: FamilyMember): string {
-  const who = member.displayName === 'Me' ? 'you' : member.displayName;
-  const lead = triage.level === 'emergency'
-    ? EMERGENCY_LEAD
-    : triage.level === 'urgent'
-      ? URGENT_LEAD + ' for ' + who + ' ' + triage.actions.join(' ')
-      : '';
-  const body = replyText.includes(SAFETY_LINE) ? replyText : replyText + ' ' + SAFETY_LINE;
-  return lead ? lead + ' ' + body : body;
+export function composeSafeReply(
+  triage: TriageResult,
+  replyText: string,
+  member: FamilyMember,
+  translate?: CareTranslate,
+): string {
+  return careComposeHostedReply(triage.level, replyText, member, translate);
 }

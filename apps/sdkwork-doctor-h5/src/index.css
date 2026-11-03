@@ -434,14 +434,35 @@ body { min-height: 100vh; }
   color: #fff;
 }
 
-.doctor-chat-compose {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
+/* 对话: the transcript flows under the page chrome while the composer stays
+   docked above the tab bar in the shared idle-pill / focused-card shape. */
+.doctor-chat-page {
+  padding-bottom: 84px;
 }
 
-.doctor-chat-compose .doctor-input {
-  flex: 1;
+.doctor-chat-dock {
+  position: fixed;
+  inset-inline: 0;
+  bottom: calc(56px + env(safe-area-inset-bottom));
+  z-index: 9;
+  background: var(--doctor-bg);
+  padding-block: 6px;
+}
+
+.doctor-chat-dock .sdkwork-chat-composer {
+  --sdkwork-chat-composer-accent: var(--doctor-accent);
+  --sdkwork-chat-composer-chip: var(--doctor-surface-alt);
+  --sdkwork-chat-composer-disabled-control: var(--doctor-surface-alt);
+  --sdkwork-chat-composer-disabled-ink: var(--doctor-muted);
+  --sdkwork-chat-composer-dock-gap: 0px;
+  --sdkwork-chat-composer-foreground: var(--doctor-text);
+  --sdkwork-chat-composer-inline-gap: 16px;
+  --sdkwork-chat-composer-on-accent: #ffffff;
+  --sdkwork-chat-composer-placeholder: var(--doctor-muted);
+  --sdkwork-chat-composer-radius-card: var(--doctor-radius);
+  --sdkwork-chat-composer-ring: color-mix(in srgb, var(--doctor-accent) 38%, transparent);
+  --sdkwork-chat-composer-shadow: none;
+  --sdkwork-chat-composer-surface: var(--doctor-surface);
 }
 
 .doctor-notice {

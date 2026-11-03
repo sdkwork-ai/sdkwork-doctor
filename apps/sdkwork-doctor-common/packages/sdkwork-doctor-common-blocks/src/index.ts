@@ -4,7 +4,7 @@
  * Authority: `specs/app-composition.contract.json`. A block is one composable
  * tab with a stable id, a canonical cross-client page id, a route, an i18n label
  * key, and the surfaces that render it. The browser workbench landing is a route
- * outside the catalogue, so every client keeps exactly three tabs.
+ * outside the catalogue, so every client keeps the same four tabs.
  *
  * Clients resolve blocks instead of hard-coding navigation, and a deployment can
  * hide optional blocks, reorder them, relabel them, and override theme tokens
@@ -13,9 +13,9 @@
  */
 
 export type AppSurface = 'pc' | 'h5' | 'flutter' | 'mini_program';
-export type AppBlockId = 'chat' | 'doctor' | 'me';
+export type AppBlockId = 'chat' | 'doctor' | 'records' | 'me';
 export type AppBlockKind = 'navigation' | 'insight' | 'record';
-export type AppBlockIcon = 'chat' | 'doctor' | 'user';
+export type AppBlockIcon = 'chat' | 'doctor' | 'records' | 'user';
 
 export interface AppBlockDescriptor {
   readonly id: AppBlockId;
@@ -60,8 +60,14 @@ export const APP_BLOCKS: readonly AppBlockDescriptor[] = Object.freeze([
     description: 'Human doctor directory, family-doctor selection, and human consultation.',
   }),
   Object.freeze({
+    id: 'records', kind: 'navigation', pageId: 'app.doctor.records.index', route: '/doctor/records',
+    labelKey: 'platform.care.nav.records', icon: 'records', order: 30,
+    surfaces: Object.freeze(['pc', 'h5', 'flutter', 'mini_program'] as const), optional: false,
+    description: 'Every visit record on this device, newest first, with the doctor and site of human consultations.',
+  }),
+  Object.freeze({
     id: 'me', kind: 'navigation', pageId: 'app.doctor.profile.index', route: '/doctor/me',
-    labelKey: 'platform.care.nav.me', icon: 'user', order: 30,
+    labelKey: 'platform.care.nav.me', icon: 'user', order: 40,
     surfaces: Object.freeze(['pc', 'h5', 'flutter', 'mini_program'] as const), optional: false,
     description: 'Patient files, my doctors, visit records, active mode, device checks.',
   }),

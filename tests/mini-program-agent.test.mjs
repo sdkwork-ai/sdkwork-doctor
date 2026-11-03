@@ -1,11 +1,18 @@
 import assert from 'node:assert/strict';
-import { test } from 'node:test';
+import { beforeEach, test } from 'node:test';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
 const require = createRequire(import.meta.url);
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const agent = require(path.join(repoRoot, 'apps/sdkwork-doctor-mini-program/src/lib/agent.js'));
+const i18n = require(path.join(repoRoot, 'apps/sdkwork-doctor-mini-program/src/lib/i18n.js'));
+
+// The mini program defaults to zh-CN; these contract assertions are written
+// against the catalog's en-US copy, and one test below proves the zh-CN copy.
+beforeEach(() => {
+  i18n.setLocale('en-US');
+});
 
 const MEMBER = Object.freeze({
   displayName: 'Me',
@@ -209,4 +216,14 @@ test('the offline adapter still escalates emergencies', async () => {
   assert.equal(reply.level, 'emergency');
   assert.match(reply.text, /emergency services/iu);
   assert.doesNotMatch(reply.text, /take (medicine|ibuprofen|paracetamol)/iu);
+});
+
+test('the same escalation reads in zh-CN from the shared catalog', async () => {
+  i18n.setLocale('zh-CN');
+  const care = agent.createCareAgent({ agentsApiBaseUrl: '', getAccessToken: () => null });
+  const reply = await care.send('chest pain', MEMBER);
+  assert.equal(reply.level, 'emergency');
+  assert.match(reply.text, /检测到 你 的急症红旗信号。/u);
+  assert.match(reply.text, /立即拨打当地急救电话。/u);
+  assert.match(reply.text, /以上为一般性建议/u);
 });

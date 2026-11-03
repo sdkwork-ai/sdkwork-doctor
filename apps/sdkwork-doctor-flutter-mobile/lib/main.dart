@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:sdkwork_doctor_flutter_mobile_care/sdkwork_doctor_flutter_mobile_care.dart';
 
 import 'agent/care_agent.dart';
 import 'bootstrap/sdkwork_tls_trust.dart';
@@ -60,6 +63,7 @@ class DoctorApp extends StatefulWidget {
     required this.patients,
     required this.doctors,
     this.directory,
+    this.conversationService,
     this.initialLocale,
   });
 
@@ -77,6 +81,11 @@ class DoctorApp extends StatefulWidget {
   /// the authored fallback roster answers.
   final DoctorDirectory? directory;
 
+  /// Conversation transport. Null builds one from the compiled deployment
+  /// (hosted when an agents API base URL and an IAM token exist, offline
+  /// otherwise); tests inject a local service with in-memory storage.
+  final CareConversationService? conversationService;
+
   /// Forces the starting locale (tests and host overrides); otherwise the
   /// platform locale decides.
   final String? initialLocale;
@@ -87,9 +96,8 @@ class DoctorApp extends StatefulWidget {
 
 class _DoctorAppState extends State<DoctorApp> {
   late String _locale;
-  late CareAgent _agent;
   late final DoctorDirectory _directory;
-  int _consultation = 0;
+  late final CareConversationsController _conversations;
 
   @override
   void initState() {
@@ -98,27 +106,30 @@ class _DoctorAppState extends State<DoctorApp> {
       widget.initialLocale ??
           WidgetsBinding.instance.platformDispatcher.locale.toLanguageTag(),
     );
-    _agent = _newAgent();
     _directory = widget.directory ?? DoctorDirectory(directoryUrl: '');
+    final CareConversationService service = widget.conversationService ??
+        createCareConversationService(
+          agentsApiBaseUrl: _agentsApiBaseUrl,
+          getAccessToken: _hostAccessToken,
+          locale: () => _locale,
+          localSessionTitle: careText(_locale, 'platform.care.sessions.defaultTitle'),
+        );
+    _conversations = CareConversationsController(service: service);
+    // Fire and forget: the drawer renders its own loading and failure states.
+    unawaited(_conversations.load());
   }
-
-  CareAgent _newAgent() => createCareAgent(
-      agentsApiBaseUrl: _agentsApiBaseUrl, getAccessToken: _hostAccessToken);
 
   /// Replaced by the platform host once IAM sign-in exists; null means offline.
   String? _hostAccessToken() => null;
 
-  void _toggleLocale() {
-    setState(() => _locale = _locale == 'zh-CN' ? 'en-US' : 'zh-CN');
+  @override
+  void dispose() {
+    _conversations.dispose();
+    super.dispose();
   }
 
-  /// Starts a fresh consultation: a new agent instance and an empty transcript.
-  /// Visit records are owned by the store and survive this action.
-  void _startNewConsultation() {
-    setState(() {
-      _agent = _newAgent();
-      _consultation += 1;
-    });
+  void _toggleLocale() {
+    setState(() => _locale = _locale == 'zh-CN' ? 'en-US' : 'zh-CN');
   }
 
   @override
@@ -128,43 +139,38 @@ class _DoctorAppState extends State<DoctorApp> {
       theme: buildDoctorTheme(),
       home: DoctorHome(
         locale: _locale,
-        agent: _agent,
+        conversations: _conversations,
         records: widget.records,
         patients: widget.patients,
         doctors: widget.doctors,
         directory: _directory,
-        consultation: _consultation,
-        onNewConsultation: _startNewConsultation,
         onToggleLocale: _toggleLocale,
       ),
     );
   }
 }
 
-/// The care shell: a drawer, exactly three destinations (对话 / 医生 / 我的),
-/// and a "+" sheet that starts a consultation or opens 看病记录.
+/// The care shell: a session drawer, exactly four destinations (对话 / 医生 /
+/// 看病记录 / 我的), and a "+" sheet that starts a consultation or opens the
+/// records tab.
 class DoctorHome extends StatefulWidget {
   const DoctorHome({
     super.key,
     required this.locale,
-    required this.agent,
+    required this.conversations,
     required this.records,
     required this.patients,
     required this.doctors,
     required this.directory,
-    required this.consultation,
-    required this.onNewConsultation,
     required this.onToggleLocale,
   });
 
   final String locale;
-  final CareAgent agent;
+  final CareConversationsController conversations;
   final VisitRecordStore records;
   final PatientProfileStore patients;
   final DoctorSelectionStore doctors;
   final DoctorDirectory directory;
-  final int consultation;
-  final VoidCallback onNewConsultation;
   final VoidCallback onToggleLocale;
 
   @override
@@ -178,6 +184,7 @@ class _DoctorHomeState extends State<DoctorHome> {
   static const List<String> _tabLabelKeys = <String>[
     'platform.care.nav.chat',
     'platform.care.nav.doctor',
+    'platform.care.nav.records',
     'platform.care.nav.me',
   ];
 
@@ -211,14 +218,9 @@ class _DoctorHomeState extends State<DoctorHome> {
     setState(() => _index = index);
   }
 
-  Future<void> _openRecords() async {
-    await Navigator.of(context).push(MaterialPageRoute<void>(
-      builder: (BuildContext _) => RecordsScreen(
-        locale: widget.locale,
-        records: widget.records,
-      ),
-    ));
-  }
+  /// Visit records are the third destination, so 我的 and the "+" sheet switch
+  /// tabs instead of pushing a second copy of the screen.
+  void _openRecords() => _openTab(2);
 
   Future<void> _openActions() async {
     final String? action = await showModalBottomSheet<String>(
@@ -233,10 +235,11 @@ class _DoctorHomeState extends State<DoctorHome> {
     );
     if (!mounted || action == null) return;
     if (action == 'records') {
-      await _openRecords();
+      _openRecords();
       return;
     }
-    widget.onNewConsultation();
+    await widget.conversations.createNew();
+    if (!mounted) return;
     _openTab(0);
   }
 
@@ -262,48 +265,46 @@ class _DoctorHomeState extends State<DoctorHome> {
           ),
         ],
       ),
-      drawer: AnimatedBuilder(
-        animation: widget.patients,
-        builder: (BuildContext context, Widget? _) => CareDrawer(
-          agent: widget.agent,
-          index: _index,
-          locale: locale,
-          patient: widget.patients.active,
-          onSelect: (int value) {
-            Navigator.of(context).maybePop();
-            _openTab(value);
-          },
-          onToggleLocale: widget.onToggleLocale,
-        ),
+      drawer: CareSessionsDrawer(
+        controller: widget.conversations,
+        agentName: 'SDKWork Doctor',
+        style: doctorSessionsDrawerStyle,
+        translate: (String key, {Map<String, String> params = const <String, String>{}}) =>
+            careText(locale, key, params: params),
+        onSelected: (CareConversationSession session) => _openTab(0),
       ),
       body: IndexedStack(
         index: _index,
         children: <Widget>[
           ChatTab(
-            key: ValueKey<int>(widget.consultation),
             locale: locale,
-            agent: widget.agent,
+            conversations: widget.conversations,
             records: widget.records,
             patients: widget.patients,
-            onOpenMe: () => _openTab(2),
+            onOpenMe: () => _openTab(3),
           ),
           DoctorTab(
             locale: locale,
-            agent: widget.agent,
+            mode: widget.conversations.mode,
             patients: widget.patients,
             records: widget.records,
             selection: widget.doctors,
             roster: _roster,
           ),
+          RecordsScreen(
+            locale: locale,
+            records: widget.records,
+          ),
           MeTab(
             locale: locale,
-            agentMode: widget.agent.mode,
+            agentMode: widget.conversations.mode,
             records: widget.records,
             patients: widget.patients,
             selection: widget.doctors,
             roster: _roster,
             onOpenDoctors: () => _openTab(1),
             onOpenRecords: _openRecords,
+            onToggleLocale: widget.onToggleLocale,
           ),
         ],
       ),
@@ -320,6 +321,11 @@ class _DoctorHomeState extends State<DoctorHome> {
             icon: const Icon(Icons.medical_information_outlined),
             selectedIcon: const Icon(Icons.medical_information),
             label: careText(locale, 'platform.care.nav.doctor'),
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.receipt_long_outlined),
+            selectedIcon: const Icon(Icons.receipt_long),
+            label: careText(locale, 'platform.care.nav.records'),
           ),
           NavigationDestination(
             icon: const Icon(Icons.person_outline),

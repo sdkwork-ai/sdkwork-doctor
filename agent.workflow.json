@@ -14,6 +14,12 @@
   },
   "dependencies": [
     {
+      "id": "sdkwork-appbase",
+      "repository": "sdkwork-ai/sdkwork-appbase",
+      "refInput": "SDKWORK_APPBASE_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
       "id": "sdkwork-specs",
       "repository": "sdkwork-ai/sdkwork-specs",
       "refInput": "SDKWORK_SPECS_REF",

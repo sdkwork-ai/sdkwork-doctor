@@ -4,6 +4,8 @@ packages:
   - "apps/sdkwork-doctor-pc/packages/*"
   - "apps/sdkwork-doctor-h5"
   - "apps/sdkwork-doctor-h5/packages/*"
+  # Shared SDKWork component families consumed through workspace:*.
+  - "../sdkwork-appbase/packages/mobile-react/foundation/sdkwork-chat-composer-mobile-react"
 
 onlyBuiltDependencies:
   - esbuild

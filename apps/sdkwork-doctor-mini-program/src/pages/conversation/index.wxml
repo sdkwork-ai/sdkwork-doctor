@@ -1,41 +1,50 @@
-<view class="card">
-  <view class="h1">{{title}}</view>
-  <view class="row">
-    <text>{{patientTitle}}</text>
-    <text class="muted">{{switchHint}}</text>
-  </view>
-  <scroll-view wx:if="{{patients.length > 0}}" class="chips" scroll-x="true">
-    <view
-      wx:for="{{patients}}"
-      wx:key="id"
-      class="chip {{item.active ? 'on' : ''}}"
-      data-id="{{item.id}}"
-      bindtap="onSelectPatient"
-    >{{item.label}}</view>
-  </scroll-view>
-  <view wx:if="{{!hasPatient}}" class="row">
-    <text>{{noPatient}}</text>
-    <text class="badge" bindtap="onGoProfile">{{goProfile}}</text>
-  </view>
-  <view class="muted">{{subtitle}}</view>
-  <view class="muted">{{modeLabel}}</view>
-  <view wx:if="{{error}}" class="error">{{error}}</view>
-  <view wx:if="{{messages.length === 0}}" class="muted">{{empty}}</view>
-  <view wx:for="{{messages}}" wx:key="id">
+<view class="conversation">
+  <view class="card">
+    <view class="h1">{{title}}</view>
     <view class="row">
-      <text>{{item.role}}</text>
-      <text class="badge {{item.warn ? 'warn' : ''}}">{{item.level}}</text>
+      <text>{{patientTitle}}</text>
+      <text class="muted">{{switchHint}}</text>
     </view>
-    <view class="muted">{{item.text}}</view>
+    <scroll-view wx:if="{{patients.length > 0}}" class="chips" scroll-x="true">
+      <view
+        wx:for="{{patients}}"
+        wx:key="id"
+        class="chip {{item.active ? 'on' : ''}}"
+        data-id="{{item.id}}"
+        bindtap="onSelectPatient"
+      >{{item.label}}</view>
+    </scroll-view>
+    <view wx:if="{{!hasPatient}}" class="row">
+      <text>{{noPatient}}</text>
+      <text class="badge" bindtap="onGoProfile">{{goProfile}}</text>
+    </view>
+    <view class="muted">{{subtitle}}</view>
+    <view class="muted">{{modeLabel}}</view>
+    <view wx:if="{{error}}" class="error">{{error}}</view>
+    <view wx:if="{{messages.length === 0}}" class="muted">{{empty}}</view>
+    <view wx:for="{{messages}}" wx:key="id">
+      <view class="row">
+        <text>{{item.role}}</text>
+        <text class="badge {{item.warn ? 'warn' : ''}}">{{item.level}}</text>
+      </view>
+      <view class="muted">{{item.text}}</view>
+    </view>
   </view>
-  <view style="display:flex;margin-top:12px">
-    <input
-      class="input"
-      value="{{draft}}"
-      bindinput="onInput"
-      placeholder="{{placeholder}}"
+
+  <view class="composer-dock">
+    <chat-composer
+      attach-enabled="{{false}}"
+      attach-label="{{attachLabel}}"
+      busy="{{busy}}"
       disabled="{{!hasPatient}}"
+      mode-label="{{modeLabel}}"
+      placeholder="{{hasPatient ? placeholder : noPatient}}"
+      send-label="{{send}}"
+      value="{{draft}}"
+      voice-enabled="{{false}}"
+      voice-label="{{voiceLabel}}"
+      bind:input="onInput"
+      bind:send="onSend"
     />
-    <button class="btn" bindtap="onSend" disabled="{{busy || !hasPatient}}">{{busy ? sending : send}}</button>
   </view>
 </view>

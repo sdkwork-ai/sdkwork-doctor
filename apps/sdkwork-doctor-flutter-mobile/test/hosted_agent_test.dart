@@ -2,219 +2,388 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sdkwork_agents_app_sdk/sdkwork_agents_app_sdk.dart';
 import 'package:sdkwork_doctor_flutter_mobile/agent/care_agent.dart';
-import 'package:sdkwork_doctor_flutter_mobile/family.dart';
-import 'package:sdkwork_doctor_flutter_mobile/triage.dart';
+import 'package:sdkwork_doctor_flutter_mobile_care/sdkwork_doctor_flutter_mobile_care.dart';
 
-const String _sessionId = 'session.family.001';
-final List<Map<String, dynamic>> _received = <Map<String, dynamic>>[];
+/// Integration evidence for the hosted care transport: every call is a
+/// generated Agents app SDK operation against `/app/v3/api`, carries the IAM
+/// access token, and speaks the session / item / turn contract the PC, H5, and
+/// mini program roots speak.
 
-HttpServer? _server;
-String _baseUrl = '';
+const String _accessToken = 'test-access-token';
+const String _agentBasePath = '/app/v3/api/ai/agents/agent.family-doctor';
 
-Map<String, dynamic> _envelope(Object item) => <String, dynamic>{
+class RecordedRequest {
+  RecordedRequest(this.method, this.path, this.query, this.headers, this.body);
+
+  final String method;
+  final String path;
+  final String query;
+  final Map<String, String> headers;
+  final String body;
+
+  Map<String, dynamic> get json =>
+      body.isEmpty ? const <String, dynamic>{} : jsonDecode(body) as Map<String, dynamic>;
+
+  String? header(String name) {
+    for (final MapEntry<String, String> entry in headers.entries) {
+      if (entry.key.toLowerCase() == name.toLowerCase()) {
+        return entry.value;
+      }
+    }
+    return null;
+  }
+}
+
+typedef RequestHandler = Future<void> Function(
+  RecordedRequest request,
+  HttpResponse response,
+);
+
+class FakeAgentsServer {
+  FakeAgentsServer._(this._server);
+
+  final HttpServer _server;
+  final List<RecordedRequest> requests = <RecordedRequest>[];
+
+  int get port => _server.port;
+
+  static Future<FakeAgentsServer> start(RequestHandler handler) async {
+    final HttpServer server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final FakeAgentsServer fake = FakeAgentsServer._(server);
+    server.listen((HttpRequest request) async {
+      final String body = await utf8.decoder.bind(request).join();
+      final RecordedRequest recorded = RecordedRequest(
+        request.method,
+        request.uri.path,
+        request.uri.query,
+        <String, String>{
+          for (final String name in <String>[
+            'access-token',
+            'authorization',
+            'content-type',
+            'accept',
+          ])
+            if (request.headers.value(name) != null)
+              name: request.headers.value(name)!,
+        },
+        body,
+      );
+      fake.requests.add(recorded);
+      try {
+        await handler(recorded, request.response);
+      } finally {
+        await request.response.close();
+      }
+    });
+    return fake;
+  }
+
+  Future<void> close() => _server.close(force: true);
+}
+
+void writeJson(HttpResponse response, Object payload, {int status = 200}) {
+  response.statusCode = status;
+  response.headers.contentType = ContentType.json;
+  response.write(jsonEncode(payload));
+}
+
+Map<String, Object?> itemEnvelope(Map<String, Object?> item) => <String, Object?>{
       'code': 0,
-      'traceId': 'trace-test',
-      'data': <String, dynamic>{'item': item},
+      'data': <String, Object?>{'item': item},
+      'traceId': 'trace-item',
     };
 
-Map<String, dynamic> _item(String text, {String status = 'completed'}) => <String, dynamic>{
-      'session': <String, dynamic>{'sessionId': _sessionId},
-      'turn': <String, dynamic>{'turnId': 'turn.1', 'status': status},
-      'items': <Map<String, dynamic>>[
-        <String, dynamic>{'itemId': 'item.user.1', 'kind': 'user_input', 'content': 'symptom'},
-        <String, dynamic>{'itemId': 'item.assistant.1', 'kind': 'assistant_output', 'content': text},
-      ],
+Map<String, Object?> pageEnvelope(List<Map<String, Object?>> items) => <String, Object?>{
+      'code': 0,
+      'data': <String, Object?>{
+        'items': items,
+        'pageInfo': <String, Object?>{'hasMore': false, 'nextCursor': null},
+      },
+      'traceId': 'trace-page',
     };
 
-Future<void> _json(HttpRequest request, int status, Object payload) async {
-  request.response.statusCode = status;
-  request.response.headers.contentType = ContentType.json;
-  request.response.write(jsonEncode(payload));
-  await request.response.close();
-}
-
-Future<void> _sse(HttpRequest request, Map<String, dynamic> item) async {
-  request.response.headers.contentType = ContentType('text', 'event-stream');
-  request.response.write('data: ${jsonEncode(<String, dynamic>{'eventType': 'delta', 'delta': 'Rest '})}\r\n\r\n');
-  request.response.write('data: ${jsonEncode(<String, dynamic>{'eventType': 'delta', 'delta': 'and fluids.'})}\r\n\r\n');
-  request.response.write('data: ${jsonEncode(<String, dynamic>{'eventType': 'completion', 'response': _envelope(item)})}\r\n\r\n');
-  await request.response.close();
-}
-
-Future<void> _handle(HttpRequest request) async {
-  final String raw = await utf8.decoder.bind(request).join();
-  final Map<String, dynamic> body = raw.isEmpty ? <String, dynamic>{} : jsonDecode(raw) as Map<String, dynamic>;
-  _received.add(<String, dynamic>{
-    'path': request.uri.path,
-    'query': request.uri.query,
-    'authorization': request.headers.value(HttpHeaders.authorizationHeader),
-    'body': body,
-  });
-  if (request.headers.value(HttpHeaders.authorizationHeader) != 'Bearer test-token') {
-    await _json(request, 401, <String, dynamic>{'status': 401, 'code': 40101, 'detail': 'missing access token'});
-    return;
-  }
-  final String path = request.uri.path;
-  if (path.endsWith('/sessions') && request.method == 'POST') {
-    await _json(request, 201, _envelope(<String, dynamic>{'sessionId': _sessionId}));
-    return;
-  }
-  if (path.endsWith('/turns') && request.method == 'POST') {
-    final String content = (body['content'] as String?) ?? '';
-    if (content.contains('FORBIDDEN')) {
-      await _json(request, 403, <String, dynamic>{
-        'status': 403,
-        'code': 40301,
-        'traceId': 'trace-forbidden',
-        'detail': 'permission ai.agents.use denied',
-      });
-      return;
-    }
-    if (content.contains('FAIL_TURN')) {
-      await _json(request, 200, _envelope(_item('', status: 'failed')));
-      return;
-    }
-    final String text = content.contains('REASSURANCE')
-        ? 'Probably nothing serious. Take a rest and drink water.'
-        : content.contains('REPLY_REDFLAG')
-            ? 'If you develop chest pain or cannot breathe, call emergency services.'
-            : 'Rest and fluids. Monitor for 24 hours.';
-    if (request.uri.query.contains('stream=true')) {
-      await _sse(request, _item(text));
-      return;
-    }
-    await _json(request, 200, _envelope(_item(text)));
-    return;
-  }
-  await _json(request, 404, <String, dynamic>{'status': 404, 'code': 40401, 'detail': 'unknown route'});
-}
+AgentsCareConversationService serviceFor(FakeAgentsServer server) =>
+    AgentsCareConversationService(
+      client: SdkworkAppClient.withBaseUrl(
+        baseUrl: 'http://127.0.0.1:${server.port}',
+        accessToken: _accessToken,
+      ),
+      agentId: 'agent.family-doctor',
+      signer: const DoctorCarePayloadSigner(),
+      now: () => DateTime.utc(2026, 11, 3, 4, 0),
+      createId: () => 'care-id-1',
+    );
 
 void main() {
-  setUpAll(() async {
-    _server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    _baseUrl = 'http://127.0.0.1:${_server!.port}';
-    _server!.listen((HttpRequest request) {
-      _handle(request).catchError((Object error) async {
-        request.response.statusCode = 500;
-        await request.response.close();
-      });
+  group('transport mode', () {
+    test('mode resolution never silently falls back from hosted', () {
+      expect(
+        resolveCareConversationMode(
+            agentsApiBaseUrl: 'https://agents.example.com', hasAccessToken: true),
+        'hosted',
+      );
+      expect(
+        resolveCareConversationMode(
+            agentsApiBaseUrl: 'https://agents.example.com', hasAccessToken: false),
+        'offline',
+      );
+      expect(
+        resolveCareConversationMode(agentsApiBaseUrl: '', hasAccessToken: true),
+        'offline',
+      );
+      expect(
+        createCareConversationService(
+          agentsApiBaseUrl: '',
+          getAccessToken: () => 'token',
+          locale: () => 'en-US',
+          localSessionTitle: 'On-device triage',
+        ).mode,
+        'offline',
+      );
+      expect(
+        createCareConversationService(
+          agentsApiBaseUrl: 'https://agents.example.com',
+          getAccessToken: () => null,
+          locale: () => 'en-US',
+          localSessionTitle: 'On-device triage',
+        ).mode,
+        'offline',
+      );
+    });
+
+    test('the agents base URL normalizes to the transport root', () {
+      expect(resolveCareAgentsBaseUrl('https://agents.example.com/'),
+          'https://agents.example.com');
+      expect(
+        resolveCareAgentsTransportBaseUrl('https://agents.example.com$kAgentsApiPrefix/'),
+        'https://agents.example.com',
+      );
+      expect(
+        () => resolveCareAgentsBaseUrl('https://agents.example.com/x$kAgentsApiPrefix/y'),
+        throwsA(isA<CareConversationException>()),
+      );
+      expect(() => resolveCareAgentsBaseUrl('  '),
+          throwsA(isA<CareConversationException>()));
     });
   });
 
-  tearDownAll(() async {
-    await _server?.close(force: true);
+  test('listSessions reads the paged envelope and orders newest first', () async {
+    final FakeAgentsServer server = await FakeAgentsServer.start(
+      (RecordedRequest request, HttpResponse response) async {
+        writeJson(
+          response,
+          pageEnvelope(<Map<String, Object?>>[
+            <String, Object?>{
+              'sessionId': 'session-old',
+              'title': 'Yesterday',
+              'updatedAt': '2026-11-02T03:00:00Z',
+            },
+            <String, Object?>{
+              'sessionId': 'session-new',
+              'title': 'Today',
+              'updatedAt': '2026-11-03T03:00:00Z',
+            },
+          ]),
+        );
+      },
+    );
+    addTearDown(server.close);
+
+    final List<CareConversationSession> sessions =
+        await serviceFor(server).listSessions();
+
+    expect(sessions.map((CareConversationSession session) => session.id).toList(),
+        <String>['session-new', 'session-old']);
+    final RecordedRequest request = server.requests.single;
+    expect(request.method, 'GET');
+    expect(request.path, '$_agentBasePath/sessions');
+    expect(request.query, contains('page_size=50'));
+    expect(request.header('access-token'), _accessToken,
+        reason: 'the IAM access token is carried by the generated SDK client');
   });
 
-  setUp(() => _received.clear());
+  test('createSession posts the agents session contract', () async {
+    final FakeAgentsServer server = await FakeAgentsServer.start(
+      (RecordedRequest request, HttpResponse response) async {
+        writeJson(
+          response,
+          itemEnvelope(<String, Object?>{
+            'sessionId': 'session-created',
+            'title': 'New chat',
+            'updatedAt': '2026-11-03T04:00:00Z',
+          }),
+          status: 201,
+        );
+      },
+    );
+    addTearDown(server.close);
 
-  HostedCareAgent agent({String? Function()? token, bool stream = false, void Function(String)? onDelta}) =>
-      HostedCareAgent(
-        agentsApiBaseUrl: _baseUrl,
-        getAccessToken: token ?? () => 'test-token',
-        stream: stream,
-        onDelta: onDelta,
-      );
+    final CareConversationSession session =
+        await serviceFor(server).createSession(title: 'New chat');
 
-  test('creates one session and completes a non-streaming turn', () async {
-    final HostedCareAgent care = agent();
-    final CareMessage reply = await care.send('LEGACY_OK headache since yesterday', demoSelfMember);
-
-    expect(reply.role, 'assistant');
-    expect(reply.text, contains('Rest and fluids'));
-    expect(care.history.length, 2);
-
-    final List<Map<String, dynamic>> sessions =
-        _received.where((Map<String, dynamic> r) => (r['path'] as String).endsWith('/sessions')).toList();
-    expect(sessions.length, 1);
-    final Map<String, dynamic> sessionBody = sessions.single['body'] as Map<String, dynamic>;
-    expect(sessionBody['sessionKind'], 'assistant');
-    expect(sessionBody['entrySurface'], 'flutter');
-    expect(sessionBody['payloadHash'], startsWith('care.v1:'));
-
-    final Map<String, dynamic> turn =
-        _received.firstWhere((Map<String, dynamic> r) => (r['path'] as String).endsWith('/turns'));
-    expect(turn['query'], 'stream=false');
-    expect(turn['authorization'], 'Bearer test-token');
-    final Map<String, dynamic> turnBody = turn['body'] as Map<String, dynamic>;
-    expect(turnBody['turnMode'], 'interactive');
-    expect(turnBody['contentType'], 'text/plain');
-    expect(turnBody['idempotencyKey'], turnBody['clientRequestId']);
-    expect(turnBody['payloadHash'], startsWith('care.v1:'));
-    expect(turnBody['systemPrompt'], contains('family private doctor'));
+    expect(session.id, 'session-created');
+    final RecordedRequest request = server.requests.single;
+    expect(request.method, 'POST');
+    expect(request.path, '$_agentBasePath/sessions');
+    expect(request.json['sessionKind'], 'assistant');
+    expect(request.json['entrySurface'], 'flutter');
+    expect(request.json['title'], 'New chat');
+    expect(request.json['idempotencyKey'], 'care-id-1');
+    expect(request.json['payloadHash'] as String, startsWith('care.v1:'));
+    expect(request.json['requestedAt'], '2026-11-03T04:00:00.000Z');
   });
 
-  test('a second send reuses the session', () async {
-    final HostedCareAgent care = agent();
-    await care.send('LEGACY_OK first', demoSelfMember);
-    await care.send('LEGACY_OK second', demoSelfMember);
-    expect(_received.where((Map<String, dynamic> r) => (r['path'] as String).endsWith('/sessions')).length, 1);
-    expect(care.history.length, 4);
+  test('renameSession and deleteSession address the session resource', () async {
+    final FakeAgentsServer server = await FakeAgentsServer.start(
+      (RecordedRequest request, HttpResponse response) async {
+        if (request.method == 'DELETE') {
+          response.statusCode = 204;
+          return;
+        }
+        writeJson(
+          response,
+          itemEnvelope(<String, Object?>{
+            'sessionId': 'session-1',
+            'title': 'Renamed',
+            'updatedAt': '2026-11-03T04:00:00Z',
+          }),
+        );
+      },
+    );
+    addTearDown(server.close);
+
+    final AgentsCareConversationService service = serviceFor(server);
+    await service.renameSession('session-1', 'Renamed');
+    await service.deleteSession('session-1');
+
+    expect(server.requests, hasLength(2));
+    expect(server.requests.first.method, 'PATCH');
+    expect(server.requests.first.path, '$_agentBasePath/sessions/session-1');
+    expect(server.requests.first.json['title'], 'Renamed');
+    expect(server.requests.last.method, 'DELETE');
+    expect(server.requests.last.path, '$_agentBasePath/sessions/session-1');
   });
 
-  test('the streaming transport surfaces deltas', () async {
-    final List<String> deltas = <String>[];
-    final HostedCareAgent care = agent(stream: true, onDelta: deltas.add);
-    final CareMessage reply = await care.send('LEGACY_OK streaming', demoSelfMember);
-    expect(deltas, <String>['Rest ', 'and fluids.']);
-    expect(reply.text, contains('Rest and fluids.'));
-    final Map<String, dynamic> turn =
-        _received.firstWhere((Map<String, dynamic> r) => (r['path'] as String).endsWith('/turns'));
-    expect(turn['query'], contains('stream=true'));
-    expect(turn['query'], contains('event_protocol=kernel-v1'));
+  test('listMessages renders only the visible transcript, oldest first',
+      () async {
+    final FakeAgentsServer server = await FakeAgentsServer.start(
+      (RecordedRequest request, HttpResponse response) async {
+        writeJson(
+          response,
+          pageEnvelope(<Map<String, Object?>>[
+            <String, Object?>{
+              'itemId': 'item-3',
+              'kind': 'assistant_output',
+              'content': 'Monitor for 24-48 hours.',
+              'sequence': '3',
+              'createdAt': '2026-11-03T04:01:00Z',
+            },
+            <String, Object?>{
+              'itemId': 'item-2',
+              'kind': 'reasoning',
+              'content': 'internal thinking',
+              'sequence': '2',
+              'createdAt': '2026-11-03T04:00:30Z',
+            },
+            <String, Object?>{
+              'itemId': 'item-1',
+              'kind': 'user_input',
+              'content': 'Child has a fever',
+              'sequence': '1',
+              'createdAt': '2026-11-03T04:00:00Z',
+            },
+          ]),
+        );
+      },
+    );
+    addTearDown(server.close);
+
+    final List<CareConversationMessage> messages =
+        await serviceFor(server).listMessages('session-1');
+
+    expect(messages, hasLength(2));
+    expect(messages.first.isUser, isTrue);
+    expect(messages.first.text, 'Child has a fever');
+    expect(messages.last.isUser, isFalse);
+    expect(messages.last.text, 'Monitor for 24-48 hours.');
+    expect(server.requests.single.path, '$_agentBasePath/sessions/session-1/items');
+    expect(server.requests.single.query, contains('sort=-sequence'));
   });
 
-  test('a hosted answer never softens an emergency red flag', () async {
-    final CareMessage reply = await agent().send('chest pain for 10 minutes REASSURANCE', demoSelfMember);
-    expect(reply.level, TriageLevel.emergency);
-    expect(reply.text, startsWith('Emergency red flag detected.'));
-    expect(reply.text, contains('Call local emergency services now.'));
-    expect(reply.text, contains('Probably nothing serious'));
+  test('sendTurn streams the kernel-v1 frames and returns the answer', () async {
+    final FakeAgentsServer server = await FakeAgentsServer.start(
+      (RecordedRequest request, HttpResponse response) async {
+        response.statusCode = 200;
+        response.headers.contentType = ContentType('text', 'event-stream');
+        response.write('data: {"eventType":"delta","delta":"Call local "}\n\n');
+        response.write('data: {"eventType":"delta","delta":"emergency services now."}\n\n');
+        response.write('data: ${jsonEncode(<String, Object?>{
+          'eventType': 'completion',
+          'response': <String, Object?>{
+            'code': 0,
+            'data': <String, Object?>{
+              'item': <String, Object?>{
+                'items': <Map<String, Object?>>[
+                  <String, Object?>{
+                    'kind': 'assistant_output',
+                    'content': 'Call local emergency services now.',
+                  },
+                ],
+              },
+            },
+            'traceId': 'trace-turn',
+          },
+        })}\n\n');
+      },
+    );
+    addTearDown(server.close);
+
+    final String answer = await serviceFor(server).sendTurn(
+      sessionId: 'session-1',
+      content: 'chest pain',
+      systemPrompt: 'You are the family doctor.',
+      decorate: (String raw) => 'LEAD $raw',
+    );
+
+    expect(answer, 'LEAD Call local emergency services now.');
+    final RecordedRequest request = server.requests.single;
+    expect(request.method, 'POST');
+    expect(request.path, '$_agentBasePath/sessions/session-1/turns');
+    expect(request.query, contains('stream=true'));
+    expect(request.query, contains('event_protocol=kernel-v1'));
+    expect(request.header('accept'), 'text/event-stream');
+    expect(request.json['turnMode'], 'interactive');
+    expect(request.json['contentType'], 'text/plain');
+    expect(request.json['systemPrompt'], 'You are the family doctor.');
+    expect(request.json['payloadHash'] as String, startsWith('care.v1:'));
   });
 
-  test('a red flag inside the hosted answer promotes the turn', () async {
-    final CareMessage reply = await agent().send('mild headache REPLY_REDFLAG', demoSelfMember);
-    expect(reply.level, TriageLevel.emergency);
-    expect(reply.text, startsWith('Emergency red flag detected.'));
-  });
+  test('an API failure surfaces as CareConversationException', () async {
+    final FakeAgentsServer server = await FakeAgentsServer.start(
+      (RecordedRequest request, HttpResponse response) async {
+        writeJson(
+          response,
+          <String, Object?>{
+            'code': 403,
+            'detail': 'ai.agents.manage is required',
+            'traceId': 'trace-forbidden',
+          },
+          status: 403,
+        );
+      },
+    );
+    addTearDown(server.close);
 
-  test('a problem response raises a typed transport error', () async {
-    final HostedCareAgent care = agent();
     await expectLater(
-      care.send('FORBIDDEN topic', demoSelfMember),
-      throwsA(isA<CareAgentException>()
-          .having((CareAgentException e) => e.status, 'status', 403)
-          .having((CareAgentException e) => e.traceId, 'traceId', 'trace-forbidden')),
+      serviceFor(server).listSessions(),
+      throwsA(isA<CareConversationException>()
+          .having((CareConversationException error) => error.status, 'status', 403)
+          .having((CareConversationException error) => error.traceId,
+              'traceId', 'trace-forbidden')
+          .having((CareConversationException error) => error.message, 'message',
+              'ai.agents.manage is required')),
     );
-    expect(care.history, isEmpty);
-  });
-
-  test('a failed durable turn raises a typed error', () async {
-    await expectLater(agent().send('FAIL_TURN headache', demoSelfMember), throwsA(isA<CareAgentException>()));
-  });
-
-  test('a hosted configuration without a token is rejected, never downgraded', () async {
-    await expectLater(
-      agent(token: () => null).send('LEGACY_OK hi', demoSelfMember),
-      throwsA(isA<CareAgentException>()),
-    );
-  });
-
-  test('runtime selection is explicit and observable', () {
-    expect(resolveCareAgentMode(agentsApiBaseUrl: _baseUrl, hasAccessToken: true), 'hosted');
-    expect(resolveCareAgentMode(agentsApiBaseUrl: _baseUrl, hasAccessToken: false), 'offline');
-    expect(resolveCareAgentMode(agentsApiBaseUrl: '', hasAccessToken: true), 'offline');
-    expect(createCareAgent(agentsApiBaseUrl: '', getAccessToken: () => 'token').mode, 'offline');
-    expect(createCareAgent(agentsApiBaseUrl: _baseUrl, getAccessToken: () => null).mode, 'offline');
-  });
-
-  test('base URL normalization rejects an embedded surface prefix', () {
-    expect(resolveCareAgentsBaseUrl('https://agents.example.com/'), 'https://agents.example.com');
-    expect(
-      resolveCareAgentsBaseUrl('https://agents.example.com$kAgentsApiPrefix/'),
-      'https://agents.example.com',
-    );
-    expect(() => resolveCareAgentsBaseUrl('https://agents.example.com/x$kAgentsApiPrefix/y'), throwsA(isA<CareAgentException>()));
-    expect(() => resolveCareAgentsBaseUrl('  '), throwsA(isA<CareAgentException>()));
   });
 }

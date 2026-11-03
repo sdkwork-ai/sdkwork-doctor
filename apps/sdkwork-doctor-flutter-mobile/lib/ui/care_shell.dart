@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../agent/care_agent.dart';
 import '../i18n/care_i18n.dart';
-import '../patients/patient_store.dart';
 import '../theme/doctor_theme.dart';
-import 'care_widgets.dart';
 
-/// Shell building blocks shared by the home surface: the chat-first landing, the
-/// left drawer, and the "+" action sheet. They mirror the sdkwork-agents home
-/// chrome (menu / centered title / single primary action) while keeping the
-/// Doctor copy and care-specific actions.
+/// Shell building blocks shared by the home surface: the chat-first landing and
+/// the "+" action sheet. They mirror the sdkwork-agents home chrome (menu /
+/// centered title / single primary action) while keeping the Doctor copy and
+/// care-specific actions. The drawer itself is the care package's session list.
 class CareChatLanding extends StatelessWidget {
   const CareChatLanding(
       {super.key, required this.locale, required this.onPick});
@@ -71,156 +68,6 @@ class CareChatLanding extends StatelessWidget {
                   ),
                 ),
               ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Left drawer: identity, the three care destinations, locale, and the mode.
-class CareDrawer extends StatelessWidget {
-  const CareDrawer({
-    super.key,
-    required this.agent,
-    required this.index,
-    required this.locale,
-    required this.patient,
-    required this.onSelect,
-    required this.onToggleLocale,
-  });
-
-  final CareAgent agent;
-  final int index;
-  final String locale;
-
-  /// The active patient file, or null when the household has none.
-  final PatientProfile? patient;
-  final ValueChanged<int> onSelect;
-  final VoidCallback onToggleLocale;
-
-  static const List<(IconData, IconData, String)> _items =
-      <(IconData, IconData, String)>[
-    (Icons.chat_bubble_outline, Icons.chat_bubble, 'platform.care.nav.chat'),
-    (
-      Icons.medical_information_outlined,
-      Icons.medical_information,
-      'platform.care.nav.doctor',
-    ),
-    (Icons.person_outline, Icons.person, 'platform.care.nav.me'),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final String modeLabel = careText(
-      locale,
-      agent.mode == 'hosted'
-          ? 'platform.care.mode.hosted'
-          : 'platform.care.mode.offline',
-    );
-    return Drawer(
-      backgroundColor: kSurface,
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-              child: Row(
-                children: <Widget>[
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                        color: kTechBlue,
-                        borderRadius: BorderRadius.circular(12)),
-                    alignment: Alignment.center,
-                    child: const Text('D',
-                        style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.w700)),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        const Text('SDKWork Doctor',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w600, color: kInk)),
-                        Text(
-                          patient == null
-                              ? careText(locale, 'platform.care.chat.noPatient')
-                              : carePatientLabel(locale, patient!),
-                          style: const TextStyle(fontSize: 12, color: kMuted),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                      color: kTechBlueSoft,
-                      borderRadius: BorderRadius.circular(999)),
-                  child: Text(
-                    modeLabel,
-                    style: const TextStyle(
-                        fontSize: 12,
-                        color: kTechBlueStrong,
-                        fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            for (int i = 0; i < _items.length; i += 1)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                child: ListTile(
-                  selected: index == i,
-                  selectedTileColor: kTechBlueSoft,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  leading: Icon(
-                    index == i ? _items[i].$2 : _items[i].$1,
-                    color: index == i ? kTechBlueStrong : kMuted,
-                  ),
-                  title: Text(
-                    careText(locale, _items[i].$3),
-                    style: TextStyle(
-                      color: index == i ? kTechBlueStrong : kInk,
-                      fontWeight:
-                          index == i ? FontWeight.w600 : FontWeight.w500,
-                    ),
-                  ),
-                  onTap: () => onSelect(i),
-                ),
-              ),
-            const Spacer(),
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.translate, color: kMuted),
-              title: Text(careText(locale, 'platform.care.language.label')),
-              trailing: Text(
-                locale == 'zh-CN' ? '中文' : 'English',
-                style: const TextStyle(color: kMuted, fontSize: 12),
-              ),
-              onTap: onToggleLocale,
-            ),
-            ListTile(
-              leading: const Icon(Icons.shield_outlined, color: kMuted),
-              title: Text(
-                careText(locale, 'platform.care.privacy.local'),
-                style: const TextStyle(fontSize: 12, color: kMuted),
-              ),
-            ),
           ],
         ),
       ),

@@ -140,6 +140,26 @@ test('the conversation tab switches patients and disables sending without one', 
   });
 });
 
+test('the conversation composer sends the drafted symptom and records it', async () => {
+  const page = loadPage('src/pages/conversation/index.js');
+  page.onLoad();
+  const before = app.globalData.records.list().length;
+
+  page.onInput({ detail: { value: '  fever since last night  ' } });
+  assert.equal(page.data.draft, '  fever since last night  ');
+
+  // The shared composer emits the trimmed text, so the page never re-reads it.
+  page.onSend({ detail: { text: 'fever since last night' } });
+  await flush();
+
+  const records = app.globalData.records.list();
+  assert.equal(records.length, before + 1);
+  assert.equal(records[0].symptom, 'fever since last night');
+  assert.equal(page.data.draft, '');
+  assert.equal(page.data.busy, false);
+  page.onUnload();
+});
+
 test('the doctor tab selects doctors and records a human consultation', async () => {
   app.globalData.doctors.clear();
   const page = loadPage('src/pages/doctor/index.js');

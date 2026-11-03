@@ -41,8 +41,9 @@ export interface DoctorH5RoutesProps {
 }
 
 /**
- * Route composition for the H5 surface: the same three tabs as every other
- * client, a workbench landing at `/doctor`, and visit records nested under 我的.
+ * Route composition for the H5 surface: the same four tabs as every other
+ * client, a workbench landing at `/doctor`, and a `/doctor/me/records` redirect
+ * that keeps older links working.
  */
 export function DoctorH5Routes({
   runtime,
@@ -77,7 +78,8 @@ export function DoctorH5Routes({
           )}
         />
         <Route path="me" element={<MePage agent={agent} agents={catalogState.agents} context={runtime} patients={patients} records={records} roster={rosterState.roster} selection={selection} />} />
-        <Route path="me/records" element={<RecordsPage records={records} />} />
+        <Route path="records" element={<RecordsPage records={records} />} />
+        <Route path="me/records" element={<Navigate replace to="/doctor/records" />} />
         <Route path="*" element={<Navigate replace to="/doctor" />} />
       </Routes>
     </MobileShell>
