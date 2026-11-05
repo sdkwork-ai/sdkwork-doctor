@@ -1,29 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:sdkwork_doctor_flutter_mobile_care/sdkwork_doctor_flutter_mobile_care.dart';
 
 import '../doctors/doctor_browse.dart';
 import '../doctors/doctor_directory.dart';
 import '../doctors/doctor_labels.dart';
+import '../doctors/doctor_selection.dart';
 import '../i18n/care_i18n.dart';
+import '../patients/patient_store.dart';
+import '../records/visit_store.dart';
 import '../theme/doctor_theme.dart';
 import 'care_widgets.dart';
+import 'doctor_detail_screen.dart';
 
 /// 医生搜索: the search page the doctor tab's navbar opens.
 ///
 /// The interaction follows the WeChat mobile search page: the search field sits
 /// in the app bar and takes focus immediately, a cancel action leaves the page,
-/// results appear while typing, and a row opens that doctor. The page only
-/// *finds* a doctor; selection, details, and the consultation form stay on the
-/// doctor tab, so there is one place that owns them. The chosen doctor id is
-/// returned to the caller, which expands and scrolls to that card.
+/// results appear while typing, and tapping a result opens that doctor's detail
+/// page on top of the results.
 class DoctorSearchScreen extends StatefulWidget {
   const DoctorSearchScreen({
     super.key,
     required this.locale,
     required this.doctors,
+    required this.conversations,
+    required this.selection,
+    required this.records,
+    required this.patients,
+    this.onOpenChat,
   });
 
   final String locale;
   final List<DoctorProfile> doctors;
+
+  /// Conversation controller; a consultation opens a human conversation on it.
+  final CareConversationsController conversations;
+  final DoctorSelectionStore selection;
+  final VisitRecordStore records;
+  final PatientProfileStore patients;
+
+  /// Switches the shell to the conversation home after a consultation opens.
+  final VoidCallback? onOpenChat;
 
   @override
   State<DoctorSearchScreen> createState() => _DoctorSearchScreenState();
@@ -40,7 +57,23 @@ class _DoctorSearchScreenState extends State<DoctorSearchScreen> {
 
   void _cancel() => Navigator.of(context).pop();
 
-  void _open(DoctorProfile doctor) => Navigator.of(context).pop(doctor.id);
+  void _open(DoctorProfile doctor) {
+    final NavigatorState navigator = Navigator.of(context);
+    navigator.push<void>(MaterialPageRoute<void>(
+      builder: (BuildContext context) => DoctorDetailScreen(
+        locale: widget.locale,
+        doctor: doctor,
+        conversations: widget.conversations,
+        selection: widget.selection,
+        records: widget.records,
+        patients: widget.patients,
+        onStarted: () {
+          navigator.popUntil((Route<void> route) => route.isFirst);
+          widget.onOpenChat?.call();
+        },
+      ),
+    ));
+  }
 
   @override
   Widget build(BuildContext context) {

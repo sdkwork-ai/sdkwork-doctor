@@ -77,7 +77,7 @@
       }
     ],
     "requiredPorts": [],
-    "runtimeEntrypoints": ["StatTile", "BlockTile", "BlockList", "EmptyState"],
+    "runtimeEntrypoints": ["StatTile", "BlockTile", "BlockList", "EmptyState", "DoctorIcon"],
     "routeManifest": null,
     "sdkClients": [],
     "sdkDependencies": [],

@@ -51,7 +51,10 @@
       ".",
       "lib/patients/patient_store.dart",
       "lib/doctors/doctor_directory.dart",
-      "lib/doctors/doctor_selection.dart"
+      "lib/doctors/doctor_selection.dart",
+      "lib/records/medical_record_store.dart",
+      "lib/care/attachment_picker.dart",
+      "lib/care/scan/care_qr_ports.dart"
     ],
     "providedPorts": [
       {
@@ -69,22 +72,45 @@
       {
         "name": "doctorSelection",
         "export": "lib/doctors/doctor_selection.dart"
+      },
+      {
+        "name": "medicalRecords",
+        "export": "lib/records/medical_record_store.dart"
+      },
+      {
+        "name": "careAttachments",
+        "export": "lib/care/attachment_picker.dart"
+      },
+      {
+        "name": "careQrScanner",
+        "export": "lib/care/scan/care_qr_ports.dart"
       }
     ],
     "requiredPorts": [],
     "runtimeEntrypoints": [
       "CareChatLanding",
       "CareSessionsDrawer",
-      "NewConsultationSheet",
+      "CareActionMenu",
       "ChatTab",
       "DoctorTab",
       "MeTab",
+      "PatientFilesScreen",
+      "DeviceScreen",
       "RecordsScreen",
       "PatientEditorScreen",
       "CareCallScreen",
       "CareVoiceCallController",
       "CareVoiceCallEnvironment",
-      "createCareConversationService"
+      "CareScanScreen",
+      "CareQrScannerPort",
+      "CareQrScanEnvironment",
+      "createCareConversationService",
+      "MedicalRecordStore",
+      "createMedicalRecord",
+      "confirmAiDiagnosis",
+      "addDoctorDiagnosis",
+      "summarizeCareConversation",
+      "FilePickerCareAttachmentPicker"
     ],
     "routeManifest": null,
     "sdkClients": [

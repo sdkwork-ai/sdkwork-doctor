@@ -49,6 +49,8 @@
       "lib/src/services/agents_care_conversation_service.dart",
       "lib/src/services/local_care_conversation_service.dart",
       "lib/src/state/care_conversations_controller.dart",
+      "lib/src/state/care_human_consultations.dart",
+      "lib/src/state/care_session_pins.dart",
       "lib/src/widgets/care_sessions_drawer.dart",
       "lib/src/sdk/care_fingerprint.dart"
     ],
@@ -62,6 +64,10 @@
         "export": "lib/src/state/care_conversations_controller.dart"
       },
       {
+        "name": "careHumanConsultations",
+        "export": "lib/src/state/care_human_consultations.dart"
+      },
+      {
         "name": "careSessionsDrawer",
         "export": "lib/src/widgets/care_sessions_drawer.dart"
       }
@@ -70,6 +76,7 @@
     "runtimeEntrypoints": [
       "CareSessionsDrawer",
       "CareConversationsController",
+      "CareHumanConsultationStore",
       "AgentsCareConversationService",
       "LocalCareConversationService"
     ],

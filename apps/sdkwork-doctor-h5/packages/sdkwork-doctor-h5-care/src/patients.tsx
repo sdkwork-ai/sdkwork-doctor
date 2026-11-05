@@ -9,7 +9,7 @@ import {
   type PatientProfileStore,
   type Sex,
 } from '@sdkwork/doctor-common-doctor';
-import { ActionButton } from '@sdkwork/doctor-h5-commons';
+import { ActionButton, DoctorAvatar } from '@sdkwork/doctor-h5-commons';
 
 const RELATIONS: readonly FamilyRelation[] = ['self', 'spouse', 'child', 'parent', 'other'];
 const SEXES: readonly Sex[] = ['female', 'male', 'unspecified'];
@@ -181,7 +181,6 @@ export function PatientPanel({ patients }: PatientPanelProps) {
   return (
     <div>
       <div className="doctor-panel-head">
-        <p className="doctor-check-detail">{t('platform.care.profile.subtitle')}</p>
         <ActionButton
           tone="primary"
           disabled={profiles.length >= PATIENT_PROFILE_LIMIT}
@@ -200,11 +199,14 @@ export function PatientPanel({ patients }: PatientPanelProps) {
           {profiles.map((profile) => (
             <li className="doctor-list-card" key={profile.id}>
               <div className="doctor-card-head">
-                <div>
-                  <h3 className="doctor-check-title">{profile.displayName}</h3>
-                  <p className="doctor-check-detail">
-                    {t('platform.care.profile.relation.' + profile.relation)} · {profile.birthYear} · {t('platform.care.profile.sex.' + profile.sex)}
-                  </p>
+                <div className="doctor-card-identity">
+                  <DoctorAvatar name={profile.displayName} src="" />
+                  <div className="doctor-card-copy">
+                    <h3 className="doctor-check-title">{profile.displayName}</h3>
+                    <p className="doctor-check-detail">
+                      {t('platform.care.profile.relation.' + profile.relation)} · {profile.birthYear} · {t('platform.care.profile.sex.' + profile.sex)}
+                    </p>
+                  </div>
                 </div>
                 {profile.id === activeId ? <span className="doctor-badge" data-status="ok">{t('platform.care.active')}</span> : null}
               </div>

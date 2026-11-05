@@ -4,7 +4,7 @@ import '../i18n/care_i18n.dart';
 import '../theme/doctor_theme.dart';
 
 /// Shell building blocks shared by the home surface: the chat-first landing and
-/// the "+" action sheet. They mirror the sdkwork-agents home chrome (menu /
+/// the "+" action menu. They mirror the sdkwork-agents home chrome (menu /
 /// centered title / single primary action) while keeping the Doctor copy and
 /// care-specific actions. The drawer itself is the care package's session list.
 class CareChatLanding extends StatelessWidget {
@@ -75,58 +75,78 @@ class CareChatLanding extends StatelessWidget {
   }
 }
 
-/// Right-hand "+": start a fresh consultation, or open 看病记录.
-class NewConsultationSheet extends StatelessWidget {
-  const NewConsultationSheet({
+/// One destination of the right-hand "+" menu.
+enum CareShellAction {
+  /// Starts a fresh care consultation.
+  newConsultation,
+
+  /// Opens 看病记录 as the records tab.
+  records,
+
+  /// Opens the 扫一扫 QR scanner.
+  scan,
+}
+
+/// Right-hand "+": a WeChat-style dropdown anchored under the plus.
+///
+/// A tap opens a compact dark menu with one row per destination instead of a
+/// bottom sheet, so the choices appear under the button that opened them.
+class CareActionMenu extends StatelessWidget {
+  const CareActionMenu({
     super.key,
     required this.locale,
-    required this.onNewConsultation,
-    required this.onOpenRecords,
+    required this.onSelected,
   });
 
+  /// Catalog locale of the menu labels.
   final String locale;
-  final VoidCallback onNewConsultation;
-  final VoidCallback onOpenRecords;
+
+  /// Receives the row the user tapped, after the menu closes.
+  final ValueChanged<CareShellAction> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Text(
-              careText(locale, 'platform.care.action.newConsultation'),
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600, color: kInk),
+    return PopupMenuButton<CareShellAction>(
+      tooltip: careText(locale, 'platform.care.action.more'),
+      icon: const Icon(Icons.add),
+      position: PopupMenuPosition.under,
+      offset: const Offset(0, 4),
+      color: kChromeNavy,
+      elevation: 8,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      onSelected: onSelected,
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<CareShellAction>>[
+        _item(CareShellAction.newConsultation, Icons.add_comment_outlined,
+            'platform.care.action.newConsultation'),
+        _item(CareShellAction.records, Icons.receipt_long_outlined,
+            'platform.care.records.title'),
+        const PopupMenuDivider(height: 1, color: Colors.white12),
+        _item(CareShellAction.scan, Icons.qr_code_scanner,
+            'platform.care.action.scan'),
+      ],
+    );
+  }
+
+  PopupMenuItem<CareShellAction> _item(
+      CareShellAction action, IconData icon, String labelKey) {
+    return PopupMenuItem<CareShellAction>(
+      value: action,
+      height: 48,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(icon, size: 20, color: kChromeInk),
+          const SizedBox(width: 12),
+          Text(
+            careText(locale, labelKey),
+            style: const TextStyle(
+              color: kChromeInk,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
             ),
-            const SizedBox(height: 6),
-            Text(
-              careText(locale, 'platform.care.action.newConsultationHint'),
-              style: const TextStyle(fontSize: 12, color: kMuted),
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: onNewConsultation,
-              icon: const Icon(Icons.add_comment_outlined),
-              label: Text(
-                  careText(locale, 'platform.care.action.newConsultation')),
-            ),
-            const SizedBox(height: 8),
-            FilledButton.tonalIcon(
-              style: FilledButton.styleFrom(
-                  backgroundColor: kSurfaceAlt,
-                  foregroundColor: kTechBlueStrong),
-              onPressed: onOpenRecords,
-              icon: const Icon(Icons.receipt_long_outlined),
-              label: Text(careText(locale, 'platform.care.records.title')),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

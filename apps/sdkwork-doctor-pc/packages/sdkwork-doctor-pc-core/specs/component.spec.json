@@ -88,6 +88,14 @@
         "export": "./records"
       },
       {
+        "name": "doctorPCMedicalRecordStore",
+        "export": "./records"
+      },
+      {
+        "name": "doctorPCMedicalAttachmentStore",
+        "export": "./records"
+      },
+      {
         "name": "doctorPCPatientProfileStore",
         "export": "."
       },
@@ -128,6 +136,8 @@
       "createDoctorPCCareAgent",
       "createDoctorPCAgentCatalog",
       "createDoctorPCVisitRecordStore",
+      "createDoctorPCMedicalRecordStore",
+      "createDoctorPCMedicalAttachmentStore",
       "createDoctorPCPatientProfileStore",
       "createDoctorPCDoctorDirectoryPort",
       "createDoctorPCDoctorSelectionStore"

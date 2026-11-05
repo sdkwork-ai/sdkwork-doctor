@@ -87,7 +87,18 @@
     ]
   },
   "consultation": {
-    "rule": "A human consultation chooses one affiliation (the primary one by default), opens that affiliation's preferred channel, and records the doctor plus organizationId, hospital label, and employment type in the visit record so the history stays accurate after the roster changes."
+    "rule": "A human consultation chooses one affiliation (the primary one by default) and opens a conversation session addressed to that doctor in the conversation home, with the consultation reason as the patient's first turn; the visit record snapshots the doctor plus organizationId, hospital label, and employment type so the history stays accurate after the roster changes. The site's channels are displayed, not launched: the consultation itself happens in the conversation.",
+    "session": {
+      "mode": "human",
+      "doctorAttribution": ["id", "displayName", "department", "hospitalName", "organizationId", "employmentType"],
+      "doctorReply": "the attending doctor writes the reply on this device; the family sees it unread until the conversation is opened",
+      "unread": "per-session read marks; the conversation list badges the assistant turns newer than the mark",
+      "storage": {
+        "shared": "sdkwork.doctor.care-sessions.v1 + sdkwork.doctor.care-session-reads.v1",
+        "flutter": "sdkwork.doctor.care.human-consultations.v1",
+        "mini_program": "sdkwork.doctor.care.human-consultations.v1"
+      }
+    }
   },
   "clients": {
     "pc": { "module": "@sdkwork/doctor-pc-core#createDoctorPcDoctorDirectoryPort", "selection": "@sdkwork/doctor-pc-core#createDoctorPcDoctorSelectionStore" },

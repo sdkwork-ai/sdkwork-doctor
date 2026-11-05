@@ -1,0 +1,97 @@
+/* 问诊详情: four-tab record page. Flat and borderless; the shared card, row,
+   badge, muted, input, and button primitives live in app.wxss. */
+
+.tabs {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px 10px;
+  background: #f2f5fa;
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 10px 4px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #5a6b85;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tab.on {
+  background: #0a5cff;
+  color: #ffffff;
+}
+
+.fact {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 13px;
+}
+
+.summary {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #0a1324;
+}
+
+.message {
+  background: #e6edf8;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 8px 0;
+}
+
+.message.active {
+  background: #e7efff;
+  box-shadow: inset 3px 0 0 #0a5cff;
+}
+
+.call-marker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin: 8px 0;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.playback-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.btn-quiet {
+  background: #e6edf8;
+  color: #0a1324;
+}
+
+.progress {
+  height: 4px;
+  margin-top: 10px;
+  border-radius: 999px;
+  background: #e6edf8;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0;
+  background: #0a5cff;
+}
+
+.badge.skipped {
+  background: #eef1f6;
+  color: #5a6b85;
+}

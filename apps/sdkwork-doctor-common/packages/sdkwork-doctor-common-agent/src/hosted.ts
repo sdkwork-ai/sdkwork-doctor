@@ -1,6 +1,13 @@
 import { triageSymptoms, type FamilyMember, type TriageLevel, type TriageResult } from '@sdkwork/doctor-common-doctor';
 import { careComposeHostedReply, type CareTranslate } from './care-copy';
 import {
+  CARE_SUMMARY_SYSTEM_PROMPT,
+  buildCareSummaryRequest,
+  parseCareSummaryReply,
+  type CareSummaryDraft,
+  type CareSummaryInput,
+} from './summary';
+import {
   CARE_AGENT_ASSISTANT_ITEM_KIND,
   CARE_AGENT_SESSION_KIND,
   CARE_AGENT_STREAM_QUERY,
@@ -241,6 +248,7 @@ export function createHostedCareAgent(options: HostedCareAgentOptions): AgentCon
   const createId = options.createId ?? defaultCreateId;
   const messages: ChatMessage[] = [];
   let sessionPromise: Promise<string> | null = options.sessionId ? Promise.resolve(options.sessionId) : null;
+  let resolvedSessionId: string | null = options.sessionId ?? null;
 
   async function accessToken(): Promise<string> {
     const token = await options.accessTokens.getAccessToken();
@@ -296,14 +304,13 @@ export function createHostedCareAgent(options: HostedCareAgentOptions): AgentCon
         throw error;
       });
     }
-    return sessionPromise;
+    const sessionId = await sessionPromise;
+    resolvedSessionId = sessionId;
+    return sessionId;
   }
 
-  function buildTurnRequest(content: string, context: AgentTurnContext): CareAgentCreateTurnRequest {
+  function buildTurnRequestWith(content: string, systemPrompt: string): CareAgentCreateTurnRequest {
     const requestId = createId();
-    const systemPrompt = typeof options.systemPrompt === 'function'
-      ? options.systemPrompt(context)
-      : options.systemPrompt ?? buildFamilyDoctorSystemPrompt(context.member);
     return {
       content,
       contentType: 'text/plain',
@@ -314,6 +321,13 @@ export function createHostedCareAgent(options: HostedCareAgentOptions): AgentCon
       clientRequestId: requestId,
       requestedAt: now().toISOString(),
     };
+  }
+
+  function buildTurnRequest(content: string, context: AgentTurnContext): CareAgentCreateTurnRequest {
+    const systemPrompt = typeof options.systemPrompt === 'function'
+      ? options.systemPrompt(context)
+      : options.systemPrompt ?? buildFamilyDoctorSystemPrompt(context.member);
+    return buildTurnRequestWith(content, systemPrompt);
   }
 
   async function completeTurn(token: string, sessionId: string, body: CareAgentCreateTurnRequest): Promise<CareAgentTurnExecutionItem> {
@@ -362,12 +376,20 @@ export function createHostedCareAgent(options: HostedCareAgentOptions): AgentCon
   return {
     mode: 'hosted',
     history: () => messages,
+    sessionId: () => resolvedSessionId,
     async send(input, context) {
       const text = input.trim();
-      if (!text) throw new Error('message must not be empty');
+      const attachments = context.attachments ?? [];
+      if (!text && attachments.length === 0) throw new Error('message must not be empty');
       const token = await accessToken();
       const sessionId = await ensureSession(token);
-      const body = buildTurnRequest(text, context);
+      const attachmentNote = attachments.length > 0
+        ? 'Attached files: ' + attachments.map((attachment) => attachment.name + ' (' + attachment.kind + ')').join(', ')
+        : '';
+      const turnContent = attachmentNote
+        ? (text ? text + '\n\n' + attachmentNote : attachmentNote)
+        : text;
+      const body = buildTurnRequest(turnContent, context);
       const item = options.stream === false
         ? await completeTurn(token, sessionId, body)
         : await streamTurn(token, sessionId, body);
@@ -375,13 +397,15 @@ export function createHostedCareAgent(options: HostedCareAgentOptions): AgentCon
       if (!replyText) {
         throw new CareAgentContractError('agent turn produced no assistant_output content', item.turn.traceId ?? undefined);
       }
-      const triage = resolveReplyTriage(text, replyText);
+      const triage = resolveReplyTriage(text || attachments.map((attachment) => attachment.name).join(' '), replyText);
+      const createdAt = now().toISOString();
       const userMessage: ChatMessage = {
         id: 'user-' + String(messages.length + 1),
         role: 'user',
         text,
-        createdAt: now().toISOString(),
+        createdAt,
         triage,
+        ...(attachments.length > 0 ? { attachments } : {}),
       };
       const reply: ChatMessage = {
         id: 'assistant-' + String(messages.length + 2),
@@ -392,6 +416,28 @@ export function createHostedCareAgent(options: HostedCareAgentOptions): AgentCon
       };
       messages.push(userMessage, reply);
       return reply;
+    },
+    async summarize(input: CareSummaryInput): Promise<CareSummaryDraft> {
+      const token = await accessToken();
+      const sessionId = await ensureSession(token);
+      // Summarization is a non-stream turn: the case record is one JSON object,
+      // and its draft text must never leak into the visible conversation.
+      const body = buildTurnRequestWith(buildCareSummaryRequest(input), CARE_SUMMARY_SYSTEM_PROMPT);
+      const item = await completeTurn(token, sessionId, body);
+      const replyText = readItemText(item.items);
+      if (!replyText) {
+        throw new CareAgentContractError('summary turn produced no assistant_output content', item.turn.traceId ?? undefined);
+      }
+      const draft = parseCareSummaryReply(replyText, input);
+      if (!draft) {
+        throw new CareAgentContractError('summary turn did not return the case-record JSON', item.turn.traceId ?? undefined);
+      }
+      return draft;
+    },
+    reset() {
+      messages.length = 0;
+      sessionPromise = null;
+      resolvedSessionId = null;
     },
   };
 }

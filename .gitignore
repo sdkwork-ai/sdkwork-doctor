@@ -63,3 +63,12 @@ tmp/
 temp/
 *.tmp
 *.temp
+
+# ---- auto-audited: local artifacts that must never be committed ----
+*.key
+*.pem
+*.p12
+*.pfx
+*.keystore
+.next/
+target/

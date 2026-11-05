@@ -27,8 +27,10 @@ abstract interface class CareConversationStorage {
 }
 
 /// `shared_preferences` implementation of [CareConversationStorage].
-class SharedPreferencesCareConversationStorage implements CareConversationStorage {
-  const SharedPreferencesCareConversationStorage({this.namespace = 'sdkwork.doctor.care'});
+class SharedPreferencesCareConversationStorage
+    implements CareConversationStorage {
+  const SharedPreferencesCareConversationStorage(
+      {this.namespace = 'sdkwork.doctor.care'});
 
   final String namespace;
 
@@ -115,7 +117,8 @@ class LocalCareConversationService implements CareConversationService {
 
   @override
   Future<CareConversationSession> createSession({String? title}) async {
-    final String resolved = (title ?? '').trim().isEmpty ? defaultTitle : title!.trim();
+    final String resolved =
+        (title ?? '').trim().isEmpty ? defaultTitle : title!.trim();
     final CareConversationSession session = CareConversationSession(
       id: _newId(),
       title: resolved,
@@ -136,11 +139,7 @@ class LocalCareConversationService implements CareConversationService {
     final List<CareConversationSession> next = <CareConversationSession>[
       for (final CareConversationSession session in sessions)
         if (session.id == sessionId)
-          CareConversationSession(
-            id: session.id,
-            title: resolved,
-            updatedAt: session.updatedAt,
-          )
+          session.copyWith(title: resolved)
         else
           session,
     ];
@@ -173,7 +172,8 @@ class LocalCareConversationService implements CareConversationService {
         continue;
       }
       final Map<String, dynamic> record = entry.map<String, dynamic>(
-        (Object? key, Object? value) => MapEntry<String, dynamic>('$key', value),
+        (Object? key, Object? value) =>
+            MapEntry<String, dynamic>('$key', value),
       );
       final String id = record['id']?.toString() ?? '';
       final String text = record['text']?.toString() ?? '';
@@ -220,15 +220,17 @@ class LocalCareConversationService implements CareConversationService {
         createdAt: at,
       ),
     ];
-    await storage.write(messagesKey(sessionId), jsonEncode(<Map<String, Object?>>[
-      for (final CareConversationMessage message in messages)
-        <String, Object?>{
-          'id': message.id,
-          'isUser': message.isUser,
-          'text': message.text,
-          'createdAt': message.createdAt?.toUtc().toIso8601String(),
-        },
-    ]));
+    await storage.write(
+        messagesKey(sessionId),
+        jsonEncode(<Map<String, Object?>>[
+          for (final CareConversationMessage message in messages)
+            <String, Object?>{
+              'id': message.id,
+              'isUser': message.isUser,
+              'text': message.text,
+              'createdAt': message.createdAt?.toUtc().toIso8601String(),
+            },
+        ]));
     await _touch(sessionId, at);
     return answer;
   }
@@ -238,7 +240,7 @@ class LocalCareConversationService implements CareConversationService {
     await _writeSessions(<CareConversationSession>[
       for (final CareConversationSession session in sessions)
         if (session.id == sessionId)
-          CareConversationSession(id: session.id, title: session.title, updatedAt: at)
+          session.copyWith(updatedAt: at)
         else
           session,
     ]);
@@ -259,7 +261,8 @@ class LocalCareConversationService implements CareConversationService {
         continue;
       }
       final Map<String, dynamic> record = entry.map<String, dynamic>(
-        (Object? key, Object? value) => MapEntry<String, dynamic>('$key', value),
+        (Object? key, Object? value) =>
+            MapEntry<String, dynamic>('$key', value),
       );
       final String id = record['id']?.toString() ?? '';
       if (id.isEmpty) {
@@ -268,7 +271,10 @@ class LocalCareConversationService implements CareConversationService {
       sessions.add(CareConversationSession(
         id: id,
         title: record['title']?.toString() ?? '',
-        updatedAt: DateTime.tryParse(record['updatedAt']?.toString() ?? '') ?? _now(),
+        updatedAt:
+            DateTime.tryParse(record['updatedAt']?.toString() ?? '') ?? _now(),
+        doctor: CareConversationDoctor.fromJson(record['doctor']) ??
+            const CareConversationDoctor.ai(),
       ));
     }
     sessions.sort(
@@ -279,14 +285,17 @@ class LocalCareConversationService implements CareConversationService {
   }
 
   Future<void> _writeSessions(List<CareConversationSession> sessions) async {
-    await storage.write(sessionsKey, jsonEncode(<Map<String, Object?>>[
-      for (final CareConversationSession session in sessions)
-        <String, Object?>{
-          'id': session.id,
-          'title': session.title,
-          'updatedAt': session.updatedAt.toUtc().toIso8601String(),
-        },
-    ]));
+    await storage.write(
+        sessionsKey,
+        jsonEncode(<Map<String, Object?>>[
+          for (final CareConversationSession session in sessions)
+            <String, Object?>{
+              'id': session.id,
+              'title': session.title,
+              'updatedAt': session.updatedAt.toUtc().toIso8601String(),
+              'doctor': session.doctor.toJson(),
+            },
+        ]));
   }
 }
 

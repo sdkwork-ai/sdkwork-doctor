@@ -72,6 +72,18 @@
       {
         "name": "doctorPCDoctorDirectoryPage",
         "export": "."
+      },
+      {
+        "name": "doctorPCMedicalRecordSection",
+        "export": "."
+      },
+      {
+        "name": "doctorPCCareSessionPanel",
+        "export": "."
+      },
+      {
+        "name": "doctorPCHumanConversationPage",
+        "export": "."
       }
     ],
     "requiredPorts": [
@@ -111,6 +123,26 @@
         "provider": "@sdkwork/doctor-common-doctor"
       },
       {
+        "name": "doctorMedicalRecords",
+        "export": ".",
+        "provider": "@sdkwork/doctor-common-doctor"
+      },
+      {
+        "name": "doctorMedicalAttachments",
+        "export": ".",
+        "provider": "@sdkwork/doctor-common-doctor"
+      },
+      {
+        "name": "doctorCareSessions",
+        "export": ".",
+        "provider": "@sdkwork/doctor-common-doctor"
+      },
+      {
+        "name": "doctorCareSessionReads",
+        "export": ".",
+        "provider": "@sdkwork/doctor-common-doctor"
+      },
+      {
         "name": "doctorAppBlocks",
         "export": ".",
         "provider": "@sdkwork/doctor-common-blocks"
@@ -122,9 +154,14 @@
       "DoctorPage",
       "RecordsPage",
       "MePage",
+      "MedicalRecordsSection",
+      "AttachmentList",
+      "AttachmentPicker",
       "PatientPanel",
       "PatientEditor",
       "PatientSwitcher",
+      "CareSessionPanel",
+      "HumanConversationPage",
       "useDoctorRoster"
     ],
     "routeManifest": null,

@@ -24,6 +24,10 @@ function channelLabel(channel) {
   return channel ? careText('platform.care.doctors.channel.' + channel.kind) : '';
 }
 
+function patientLabel(profile) {
+  return careText('platform.care.profile.relation.' + profile.relation) + ' · ' + profile.displayName;
+}
+
 function employmentLabel(employmentType) {
   return careText('platform.care.doctors.employment.' + employmentType);
 }
@@ -194,7 +198,7 @@ Page({
     const active = patients ? patients.getActive() : null;
     this.setData({
       consultHasPatient: Boolean(active),
-      consultReady: this.data.consultHasChannel && Boolean(active),
+      consultReady: Boolean(active),
     });
   },
 
@@ -352,7 +356,7 @@ Page({
       consultChannelLabel: channelLabel(channel),
       consultHasChannel: Boolean(channel),
       consultHasPatient: Boolean(active),
-      consultReady: Boolean(channel) && Boolean(active),
+      consultReady: Boolean(active),
       consultStatus: '',
       consultError: '',
     };
@@ -379,7 +383,7 @@ Page({
     const doctor = this.findDoctor(this.data.consultDoctorId);
     if (!doctor) return;
     const site = this.currentAffiliation();
-    if (!this.data.consultHasChannel) {
+    if (!site) {
       this.toast(this.data.noChannelLabel);
       return;
     }
@@ -396,15 +400,26 @@ Page({
       this.toast(this.data.noPatientLabel);
       return;
     }
-    const channel = preferredDoctorChannel(site);
-    if (!channel) {
-      this.setData({ consultHasChannel: false });
-      this.toast(this.data.noChannelLabel);
-      return;
-    }
     const advice = careText('platform.care.doctors.consultStarted', { doctor: doctor.displayName });
     const store = app.globalData.records;
     try {
+      // The consultation is a conversation: open the session addressed to this
+      // doctor, then land on the conversation home with that session open.
+      if (app.globalData.humanConsultations) {
+        const session = app.globalData.humanConsultations.start({
+          doctor: {
+            id: doctor.id,
+            displayName: doctor.displayName,
+            department: site.department,
+            hospitalName: site.hospitalName,
+            organizationId: site.organizationId,
+            employmentType: site.employmentType,
+          },
+          memberLabel: patientLabel(active),
+          reason: reason,
+        });
+        app.globalData.openHumanConsultationId = session.id;
+      }
       if (store) {
         store.add(createVisitRecord({
           member: active,
@@ -419,32 +434,24 @@ Page({
           doctorEmploymentType: site.employmentType,
         }));
       }
-      this.copyConsultTarget(channel.target, advice);
-      this.setData({ consultStatus: advice, consultError: '', consultReason: '' });
+      this.setData({
+        consultStatus: advice,
+        consultError: '',
+        consultReason: '',
+        consultOpen: false,
+      });
+      this.toast(advice);
+      try {
+        wx.switchTab({ url: '/pages/conversation/index' });
+      } catch (error) {
+        // A host without the tab bar keeps the status text.
+      }
     } catch (error) {
       this.setData({
         consultError: careText('platform.care.doctors.consultFailed', {
           message: (error && error.message) || String(error),
         }),
       });
-    }
-  },
-
-  /**
-   * Mini programs cannot open an arbitrary external https page without a
-   * web-view page, so the preferred channel target is copied for the user and a
-   * toast confirms the human consultation was requested.
-   */
-  copyConsultTarget(target, title) {
-    const toastTitle = title || careText('platform.care.doctors.consult');
-    try {
-      wx.setClipboardData({
-        data: target,
-        success: () => this.toast(toastTitle),
-        fail: () => this.toast(toastTitle),
-      });
-    } catch (error) {
-      this.toast(toastTitle);
     }
   },
 

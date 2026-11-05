@@ -5,6 +5,7 @@ import type { AgentConversationPort } from '@sdkwork/doctor-common-agent';
 import type { ResolvedAppBlock } from '@sdkwork/doctor-common-blocks';
 import {
   resolvePrimaryDoctor,
+  type CareSessionStore,
   type DoctorRoster,
   type DoctorSelectionStore,
   type PatientProfileStore,
@@ -17,6 +18,8 @@ export interface HomePageProps {
   readonly blocks: readonly ResolvedAppBlock[];
   readonly agent: AgentConversationPort;
   readonly records: VisitRecordStore;
+  /** One session per visit; the tile counts visits, not exchanges. */
+  readonly careSessions: CareSessionStore;
   readonly patients: PatientProfileStore;
   readonly selection: DoctorSelectionStore;
   readonly roster: DoctorRoster | null;
@@ -31,9 +34,10 @@ function markOf(label: string): string {
  * the tab count stays three; it is composed from the same blocks as the rail so
  * hiding or reordering a block changes both places at once.
  */
-export function HomePage({ blocks, agent, records, patients, selection, roster }: HomePageProps) {
+export function HomePage({ blocks, agent, records, careSessions, patients, selection, roster }: HomePageProps) {
   const { t, i18n } = useTranslation();
   const items = useSyncExternalStore(records.subscribe, records.list, records.list);
+  const sessions = useSyncExternalStore(careSessions.subscribe, careSessions.list, careSessions.list);
   const profiles = useSyncExternalStore(patients.subscribe, patients.list, patients.list);
   const selectionState = useSyncExternalStore(selection.subscribe, selection.state, selection.state);
   const recent = items.slice(0, 3);
@@ -55,7 +59,7 @@ export function HomePage({ blocks, agent, records, patients, selection, roster }
             label={t('platform.care.me.mode')}
             value={<span className="doctor-badge" data-status={agent.mode === 'hosted' ? 'ok' : 'skipped'}>{modeLabel}</span>}
           />
-          <StatTile label={t('platform.care.home.tile.records')} value={items.length} />
+          <StatTile label={t('platform.care.home.tile.records')} value={sessions.length} />
           <StatTile label={t('platform.care.home.tile.members')} value={profiles.length} />
           <StatTile label={t('platform.care.doctors.primary')} value={primary ? primary.displayName : t('platform.care.me.noDoctor')} />
         </StatRow>

@@ -41,9 +41,13 @@ export default function App() {
               <DoctorPcRoutes
                 agent={runtime.agent}
                 agentCatalog={runtime.agentCatalog}
+                attachments={runtime.attachments}
                 blocks={runtime.blocks}
+                careSessions={runtime.careSessions}
+                careSessionReads={runtime.careSessionReads}
                 doctorDirectory={runtime.doctorDirectory}
                 hostLabel={runtime.environment.deploymentProfile}
+                medicalRecords={runtime.medicalRecords}
                 patients={runtime.patients}
                 records={runtime.records}
                 runtime={runtime.context}

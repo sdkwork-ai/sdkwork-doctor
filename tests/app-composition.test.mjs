@@ -162,3 +162,29 @@ test('both browser route tables implement the four tabs', () => {
     assert.match(routes, /<Route index element=\{<HomePage/u, 'the landing is the index route');
   }
 });
+
+test('the H5 我的 hub links every capability cell into its module', () => {
+  const routes = read('apps/sdkwork-doctor-h5/packages/sdkwork-doctor-h5-shell/src/DoctorH5Routes.tsx');
+  assert.match(routes, /path="me\/patients"/u, 'patient files are a 我的 sub-screen');
+  assert.match(routes, /path="me\/device"/u, 'the device environment is a 我的 sub-screen');
+  assert.match(routes, /path="call"/u, 'the video call is a full-screen route');
+  assert.match(routes, /<CareCallPage[\s\S]*patients=\{patients\}/u, 'the call shares the runtime stores');
+  const care = read('apps/sdkwork-doctor-h5/packages/sdkwork-doctor-h5-care/src/me.tsx');
+  for (const target of ['/doctor/me/patients', '/doctor/me/device', '/doctor/doctor', '/doctor/chat', '/doctor/records']) {
+    assert.match(care, new RegExp('to="' + target + '"', 'u'), 'the hub must link to ' + target);
+  }
+  assert.match(care, /to="\/doctor\/call\?video=1"/u, 'the hub starts the video call with the camera on');
+  assert.match(care, /className="doctor-cell"/u, 'each capability is a grouped cell');
+  assert.match(care, /doctor-me-identity/u, 'the avatar identity block is part of the hub');
+});
+
+test('the call is a chromeless full-screen mode of the shared session', () => {
+  const shell = read('apps/sdkwork-doctor-h5/packages/sdkwork-doctor-h5-shell/src/MobileShell.tsx');
+  assert.match(shell, /CHROMELESS_PATHS/u, 'the shell owns the list of full-screen routes');
+  assert.match(shell, /'\/doctor\/call'/u, 'the call route hides the app bar and tab bar');
+  const call = read('apps/sdkwork-doctor-h5/packages/sdkwork-doctor-h5-care/src/call.tsx');
+  assert.match(call, /createVisitRecord\(/u, 'a spoken turn is recorded like a typed turn');
+  assert.match(call, /agent\.send\(/u, 'the call goes through the same conversation transport');
+  assert.match(call, /navigate\('\/doctor\/chat'/u, 'hanging up returns to the text transcript');
+  assert.match(call, /createBrowserSpeechRecognizer/u, 'the call degrades when speech is unavailable');
+});

@@ -3,7 +3,10 @@
     "pages/conversation/index",
     "pages/doctor/index",
     "pages/records/index",
-    "pages/profile/index"
+    "pages/record-detail/index",
+    "pages/profile/index",
+    "pages/patients/index",
+    "pages/device/index"
   ],
   "window": {
     "navigationBarTitleText": "SDKWork Doctor",

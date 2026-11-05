@@ -13,6 +13,15 @@ dependencies:
   camera: ^0.12.2
   flutter_tts: ^4.2.5
   speech_to_text: ^7.5.0
+  # 扫一扫: QR decoding stays behind the typed port in `lib/care/scan/`; no
+  # widget imports a plugin class.
+  mobile_scanner: ^7.5.0
+  # Conversation attachments: capture a photo, pick photos/videos, or pick any
+  # file, then keep a copy in the application documents directory. All three
+  # stay behind typed adapters in `lib/care/`; no widget imports a plugin class.
+  file_picker: ^8.3.7
+  image_picker: ^1.2.4
+  path_provider: ^2.1.6
   # Shared SDKWork conversation composer (idle pill / focus-expanded card).
   sdkwork_chat_composer_flutter:
     path: ../../../sdkwork-appbase/packages/mobile-flutter/foundation/sdkwork_chat_composer_flutter

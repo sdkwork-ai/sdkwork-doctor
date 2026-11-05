@@ -19,7 +19,8 @@ void main() {
     expect(careLocales, source['locales']);
   });
 
-  test('every authored key resolves to the authored Dart value in both locales', () {
+  test('every authored key resolves to the authored Dart value in both locales',
+      () {
     final Map<String, dynamic> source = contract();
     final List<dynamic> messages = source['messages'] as List<dynamic>;
     expect(messages.length, greaterThan(30));
@@ -68,7 +69,8 @@ void main() {
 
   test('careText interpolates and falls back', () {
     expect(
-      careText('zh-CN', 'platform.care.chat.subtitle', params: <String, String>{'member': '妈妈'}),
+      careText('zh-CN', 'platform.care.chat.subtitle',
+          params: <String, String>{'member': '妈妈'}),
       contains('妈妈'),
     );
     expect(careText('de-DE', 'platform.care.chat.send'), 'Send');

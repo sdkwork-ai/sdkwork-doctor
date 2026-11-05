@@ -45,7 +45,8 @@ void main() {
     );
   });
 
-  test('the roster parser accepts a document, a bare array, and an envelope', () {
+  test('the roster parser accepts a document, a bare array, and an envelope',
+      () {
     final Map<String, dynamic> source = contract();
     final List<dynamic> doctors = source['doctors'] as List<dynamic>;
     expect(parseDoctorRoster(rosterFile.readAsStringSync()),
@@ -94,12 +95,14 @@ void main() {
       ],
     });
     expect(mixed, hasLength(2),
-        reason: 'duplicate ids, missing identities, and doctors without a site are dropped');
+        reason:
+            'duplicate ids, missing identities, and doctors without a site are dropped');
     expect(mixed[1].affiliations.single.channels, isEmpty,
         reason: 'an unknown channel kind is dropped, not the doctor');
   });
 
-  test('a pre-affiliation flat document migrates into one primary affiliation', () {
+  test('a pre-affiliation flat document migrates into one primary affiliation',
+      () {
     final List<DoctorProfile> migrated = parseDoctorRoster(<String, Object?>{
       'doctors': <Object?>[
         <String, Object?>{
@@ -119,7 +122,11 @@ void main() {
             },
           ],
           'availability': <Object?>[
-            <String, Object?>{'weekday': 1, 'startTime': '09:00', 'endTime': '12:00'},
+            <String, Object?>{
+              'weekday': 1,
+              'startTime': '09:00',
+              'endTime': '12:00'
+            },
           ],
           'acceptingNewPatients': false,
           'verified': true,
@@ -182,19 +189,22 @@ void main() {
     expect(preferredDoctorChannel(site)?.kind, DoctorChannelKind.video);
     expect(preferredDoctorChannel(null), isNull);
 
-    final DoctorAffiliation phoneOnly = _affiliation(doctor: site!, channels: <DoctorChannel>[
+    final DoctorAffiliation phoneOnly =
+        _affiliation(doctor: site!, channels: <DoctorChannel>[
       const DoctorChannel(
           kind: DoctorChannelKind.phone, target: 'tel:+10000000000'),
     ]);
     expect(preferredDoctorChannel(phoneOnly)?.kind, DoctorChannelKind.phone);
 
-    final DoctorAffiliation emptyTargets = _affiliation(doctor: site, channels: <DoctorChannel>[
+    final DoctorAffiliation emptyTargets =
+        _affiliation(doctor: site, channels: <DoctorChannel>[
       const DoctorChannel(kind: DoctorChannelKind.video, target: '  '),
       const DoctorChannel(
           kind: DoctorChannelKind.clinic,
           target: 'https://care.sdkwork.com/visit'),
     ]);
-    expect(preferredDoctorChannel(emptyTargets)?.kind, DoctorChannelKind.clinic);
+    expect(
+        preferredDoctorChannel(emptyTargets)?.kind, DoctorChannelKind.clinic);
     expect(
       preferredDoctorChannel(
           _affiliation(doctor: site, channels: const <DoctorChannel>[])),
@@ -202,7 +212,9 @@ void main() {
     );
   });
 
-  test('an unconfigured directory answers with the fallback roster and never fetches', () async {
+  test(
+      'an unconfigured directory answers with the fallback roster and never fetches',
+      () async {
     final DoctorDirectory directory = DoctorDirectory(
       directoryUrl: '   ',
       fetch: (String url) async => throw StateError('must not fetch $url'),
@@ -213,7 +225,8 @@ void main() {
     expect(roster.doctors, kCatalogDoctorRoster.doctors);
   });
 
-  test('an unreachable or malformed directory falls back to the roster', () async {
+  test('an unreachable or malformed directory falls back to the roster',
+      () async {
     final DoctorDirectory unreachable = DoctorDirectory(
       directoryUrl: 'https://care.sdkwork.com/doctor-roster.json',
       fetch: (String url) async => throw const SocketException('offline'),

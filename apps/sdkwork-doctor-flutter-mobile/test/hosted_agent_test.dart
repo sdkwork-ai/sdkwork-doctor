@@ -23,8 +23,9 @@ class RecordedRequest {
   final Map<String, String> headers;
   final String body;
 
-  Map<String, dynamic> get json =>
-      body.isEmpty ? const <String, dynamic>{} : jsonDecode(body) as Map<String, dynamic>;
+  Map<String, dynamic> get json => body.isEmpty
+      ? const <String, dynamic>{}
+      : jsonDecode(body) as Map<String, dynamic>;
 
   String? header(String name) {
     for (final MapEntry<String, String> entry in headers.entries) {
@@ -50,7 +51,8 @@ class FakeAgentsServer {
   int get port => _server.port;
 
   static Future<FakeAgentsServer> start(RequestHandler handler) async {
-    final HttpServer server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final HttpServer server =
+        await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     final FakeAgentsServer fake = FakeAgentsServer._(server);
     server.listen((HttpRequest request) async {
       final String body = await utf8.decoder.bind(request).join();
@@ -89,13 +91,15 @@ void writeJson(HttpResponse response, Object payload, {int status = 200}) {
   response.write(jsonEncode(payload));
 }
 
-Map<String, Object?> itemEnvelope(Map<String, Object?> item) => <String, Object?>{
+Map<String, Object?> itemEnvelope(Map<String, Object?> item) =>
+    <String, Object?>{
       'code': 0,
       'data': <String, Object?>{'item': item},
       'traceId': 'trace-item',
     };
 
-Map<String, Object?> pageEnvelope(List<Map<String, Object?>> items) => <String, Object?>{
+Map<String, Object?> pageEnvelope(List<Map<String, Object?>> items) =>
+    <String, Object?>{
       'code': 0,
       'data': <String, Object?>{
         'items': items,
@@ -121,12 +125,14 @@ void main() {
     test('mode resolution never silently falls back from hosted', () {
       expect(
         resolveCareConversationMode(
-            agentsApiBaseUrl: 'https://agents.example.com', hasAccessToken: true),
+            agentsApiBaseUrl: 'https://agents.example.com',
+            hasAccessToken: true),
         'hosted',
       );
       expect(
         resolveCareConversationMode(
-            agentsApiBaseUrl: 'https://agents.example.com', hasAccessToken: false),
+            agentsApiBaseUrl: 'https://agents.example.com',
+            hasAccessToken: false),
         'offline',
       );
       expect(
@@ -157,11 +163,13 @@ void main() {
       expect(resolveCareAgentsBaseUrl('https://agents.example.com/'),
           'https://agents.example.com');
       expect(
-        resolveCareAgentsTransportBaseUrl('https://agents.example.com$kAgentsApiPrefix/'),
+        resolveCareAgentsTransportBaseUrl(
+            'https://agents.example.com$kAgentsApiPrefix/'),
         'https://agents.example.com',
       );
       expect(
-        () => resolveCareAgentsBaseUrl('https://agents.example.com/x$kAgentsApiPrefix/y'),
+        () => resolveCareAgentsBaseUrl(
+            'https://agents.example.com/x$kAgentsApiPrefix/y'),
         throwsA(isA<CareConversationException>()),
       );
       expect(() => resolveCareAgentsBaseUrl('  '),
@@ -169,7 +177,8 @@ void main() {
     });
   });
 
-  test('listSessions reads the paged envelope and orders newest first', () async {
+  test('listSessions reads the paged envelope and orders newest first',
+      () async {
     final FakeAgentsServer server = await FakeAgentsServer.start(
       (RecordedRequest request, HttpResponse response) async {
         writeJson(
@@ -194,7 +203,8 @@ void main() {
     final List<CareConversationSession> sessions =
         await serviceFor(server).listSessions();
 
-    expect(sessions.map((CareConversationSession session) => session.id).toList(),
+    expect(
+        sessions.map((CareConversationSession session) => session.id).toList(),
         <String>['session-new', 'session-old']);
     final RecordedRequest request = server.requests.single;
     expect(request.method, 'GET');
@@ -235,7 +245,8 @@ void main() {
     expect(request.json['requestedAt'], '2026-11-03T04:00:00.000Z');
   });
 
-  test('renameSession and deleteSession address the session resource', () async {
+  test('renameSession and deleteSession address the session resource',
+      () async {
     final FakeAgentsServer server = await FakeAgentsServer.start(
       (RecordedRequest request, HttpResponse response) async {
         if (request.method == 'DELETE') {
@@ -308,34 +319,37 @@ void main() {
     expect(messages.first.text, 'Child has a fever');
     expect(messages.last.isUser, isFalse);
     expect(messages.last.text, 'Monitor for 24-48 hours.');
-    expect(server.requests.single.path, '$_agentBasePath/sessions/session-1/items');
+    expect(server.requests.single.path,
+        '$_agentBasePath/sessions/session-1/items');
     expect(server.requests.single.query, contains('sort=-sequence'));
   });
 
-  test('sendTurn streams the kernel-v1 frames and returns the answer', () async {
+  test('sendTurn streams the kernel-v1 frames and returns the answer',
+      () async {
     final FakeAgentsServer server = await FakeAgentsServer.start(
       (RecordedRequest request, HttpResponse response) async {
         response.statusCode = 200;
         response.headers.contentType = ContentType('text', 'event-stream');
         response.write('data: {"eventType":"delta","delta":"Call local "}\n\n');
-        response.write('data: {"eventType":"delta","delta":"emergency services now."}\n\n');
+        response.write(
+            'data: {"eventType":"delta","delta":"emergency services now."}\n\n');
         response.write('data: ${jsonEncode(<String, Object?>{
-          'eventType': 'completion',
-          'response': <String, Object?>{
-            'code': 0,
-            'data': <String, Object?>{
-              'item': <String, Object?>{
-                'items': <Map<String, Object?>>[
-                  <String, Object?>{
-                    'kind': 'assistant_output',
-                    'content': 'Call local emergency services now.',
+              'eventType': 'completion',
+              'response': <String, Object?>{
+                'code': 0,
+                'data': <String, Object?>{
+                  'item': <String, Object?>{
+                    'items': <Map<String, Object?>>[
+                      <String, Object?>{
+                        'kind': 'assistant_output',
+                        'content': 'Call local emergency services now.',
+                      },
+                    ],
                   },
-                ],
+                },
+                'traceId': 'trace-turn',
               },
-            },
-            'traceId': 'trace-turn',
-          },
-        })}\n\n');
+            })}\n\n');
       },
     );
     addTearDown(server.close);
@@ -379,9 +393,10 @@ void main() {
     await expectLater(
       serviceFor(server).listSessions(),
       throwsA(isA<CareConversationException>()
-          .having((CareConversationException error) => error.status, 'status', 403)
-          .having((CareConversationException error) => error.traceId,
-              'traceId', 'trace-forbidden')
+          .having(
+              (CareConversationException error) => error.status, 'status', 403)
+          .having((CareConversationException error) => error.traceId, 'traceId',
+              'trace-forbidden')
           .having((CareConversationException error) => error.message, 'message',
               'ai.agents.manage is required')),
     );

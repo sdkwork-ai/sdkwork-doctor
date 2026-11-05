@@ -72,6 +72,18 @@
       {
         "name": "doctorH5DoctorDirectoryPage",
         "export": "."
+      },
+      {
+        "name": "doctorH5MedicalRecordSection",
+        "export": "."
+      },
+      {
+        "name": "doctorH5CareSessionPanel",
+        "export": "."
+      },
+      {
+        "name": "doctorH5HumanConversationPage",
+        "export": "."
       }
     ],
     "requiredPorts": [
@@ -111,6 +123,26 @@
         "provider": "@sdkwork/doctor-common-doctor"
       },
       {
+        "name": "doctorMedicalRecords",
+        "export": ".",
+        "provider": "@sdkwork/doctor-common-doctor"
+      },
+      {
+        "name": "doctorMedicalAttachments",
+        "export": ".",
+        "provider": "@sdkwork/doctor-common-doctor"
+      },
+      {
+        "name": "doctorCareSessions",
+        "export": ".",
+        "provider": "@sdkwork/doctor-common-doctor"
+      },
+      {
+        "name": "doctorCareSessionReads",
+        "export": ".",
+        "provider": "@sdkwork/doctor-common-doctor"
+      },
+      {
         "name": "doctorAppBlocks",
         "export": ".",
         "provider": "@sdkwork/doctor-common-blocks"
@@ -119,12 +151,19 @@
     "runtimeEntrypoints": [
       "HomePage",
       "ChatPage",
+      "CareCallPage",
       "DoctorPage",
       "RecordsPage",
       "MePage",
+      "PatientFilesPage",
+      "DevicePage",
+      "MedicalRecordsSection",
+      "AttachmentList",
       "PatientPanel",
       "PatientEditor",
       "PatientSwitcher",
+      "CareSessionPanel",
+      "HumanConversationPage",
       "useDoctorRoster"
     ],
     "routeManifest": null,

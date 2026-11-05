@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 2,
+  "kind": "sdkwork.doctor.care-session",
+  "purpose": "One conversation session is one visit. A session starts with the first turn or call, keeps every turn with its channel (typed text, spoken voice, or video call) and every call segment, and ends when the patient ends it. Ending an AI visit produces exactly one MedicalRecord; the session keeps the link so the 4-tab detail page can show 病历 / AI总结 / 医生人工确认 / 通话回放. A `human` session is a consultation the family holds with one of its own human doctors: the doctor replies on this device and the family reads it in the conversation list, where unread replies are counted from a separate per-session read mark. The TypeScript, Dart, and mini program ports read and write this exact shape.",
+  "storageKey": "sdkwork.doctor.care-sessions.v1",
+  "readStateStorageKey": "sdkwork.doctor.care-session-reads.v1",
+  "readState": "one object keyed by session id; each value is the ISO time the family last read that conversation. Kept apart from the session so reading never reorders the list.",
+  "limit": 200,
+  "ordering": "newest first by updatedAt; an append, a doctor reply, or a call update replaces the session in place",
+  "record": {
+    "fields": {
+      "id": "string (the session id; the transport session id when hosted)",
+      "memberId": "string",
+      "memberLabel": "string (name plus relationship, as shown in the list)",
+      "mode": "hosted | offline | human",
+      "doctor": "CareSessionDoctor (required when mode is human, absent on an AI session)",
+      "title": "string (first patient turn, trimmed; falls back to the doctor name or the member label)",
+      "status": "active | ended",
+      "startedAt": "ISO-8601 date-time string",
+      "updatedAt": "ISO-8601 date-time string",
+      "endedAt": "ISO-8601 date-time string (optional until the patient ends the session)",
+      "medicalRecordId": "string (optional; the 病历 the session produced)",
+      "transcript": "CareSessionMessage[] (ordered turns; may be empty for an active call session)",
+      "calls": "CareSessionCall[] (voice and video segments; empty for a text-only session)"
+    },
+    "required": [
+      "id",
+      "memberId",
+      "memberLabel",
+      "mode",
+      "title",
+      "status",
+      "startedAt",
+      "updatedAt",
+      "transcript",
+      "calls"
+    ]
+  },
+  "doctor": {
+    "fields": {
+      "id": "string (roster doctor id)",
+      "displayName": "string (the name shown on every session row)",
+      "department": "string (optional; the practice department)",
+      "hospitalName": "string (optional; the site chosen for this consultation)",
+      "organizationId": "string (optional; the employing organization at consultation time)",
+      "employmentType": "full_time | part_time | contract | visiting (optional)",
+      "avatarUrl": "string (optional; roster portrait URL)"
+    },
+    "required": ["id", "displayName"]
+  },
+  "message": {
+    "fields": {
+      "id": "string",
+      "role": "patient | assistant (assistant is the agent on an AI session and the human doctor on a human session)",
+      "text": "string (may be empty only when attachmentIds is non-empty)",
+      "at": "ISO-8601 date-time string",
+      "channel": "text | voice | video",
+      "level": "emergency | urgent | routine | self-care (optional, patient turns only)",
+      "attachmentIds": "string[] (optional)"
+    },
+    "required": ["id", "role", "text", "at", "channel"]
+  },
+  "call": {
+    "fields": {
+      "id": "string",
+      "mode": "voice | video",
+      "startedAt": "ISO-8601 date-time string",
+      "endedAt": "ISO-8601 date-time string (optional while the call is open)"
+    },
+    "required": ["id", "mode", "startedAt"]
+  },
+  "playback": {
+    "purpose": "The 通话回放 tab replays the session timeline. Every message and every call segment becomes one ordered item with offsetMs from the session start. The device speaks message text with its own TTS; no original audio is stored, and the UI labels the replay accordingly.",
+    "item": {
+      "kind": "message | call",
+      "offsetMs": "non-negative integer",
+      "message": "id, at, role, text, channel, optional level",
+      "call": "id, at, mode, durationMs, open"
+    }
+  },
+  "example": {
+    "id": "session-20261103-190000",
+    "memberId": "member-child",
+    "memberLabel": "Xiaoman (child)",
+    "mode": "offline",
+    "title": "Child has had a 39C fever since last night",
+    "status": "ended",
+    "startedAt": "2026-11-03T11:00:00.000Z",
+    "updatedAt": "2026-11-03T11:18:00.000Z",
+    "endedAt": "2026-11-03T11:18:00.000Z",
+    "medicalRecordId": "9d1f0c4e-8a2b-4c3d-9e5f-7a6b5c4d3e2f",
+    "transcript": [
+      {
+        "id": "entry-1",
+        "role": "patient",
+        "text": "Child has had a 39C fever since last night",
+        "at": "2026-11-03T11:01:00.000Z",
+        "channel": "voice",
+        "level": "urgent"
+      }
+    ],
+    "calls": [
+      {
+        "id": "call-1",
+        "mode": "voice",
+        "startedAt": "2026-11-03T11:00:30.000Z",
+        "endedAt": "2026-11-03T11:12:00.000Z"
+      }
+    ]
+  }
+}

@@ -15,4 +15,6 @@ export 'src/services/agents_care_conversation_service.dart';
 export 'src/services/care_conversation_service.dart';
 export 'src/services/local_care_conversation_service.dart';
 export 'src/state/care_conversations_controller.dart';
+export 'src/state/care_human_consultations.dart';
+export 'src/state/care_session_pins.dart';
 export 'src/widgets/care_sessions_drawer.dart';

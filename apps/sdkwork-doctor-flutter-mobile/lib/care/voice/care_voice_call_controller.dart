@@ -112,6 +112,9 @@ class CareVoiceCallController extends ChangeNotifier {
   /// Prepares the ports, speaks the greeting, and starts listening.
   Future<void> start() async {
     final int turn = _turn;
+    // A fresh call starts clean; a camera-denied notice is set after this point
+    // and therefore survives while the call continues in voice mode.
+    _notice = null;
     _synthesizerReady = await synthesizer.initialize(localeTag: locale);
     final bool recognized = await recognizer.initialize(localeTag: locale);
     if (_disposed || turn != _turn) {
@@ -121,7 +124,6 @@ class CareVoiceCallController extends ChangeNotifier {
       _fail();
       return;
     }
-    _notice = null;
     final String? line = greeting;
     if (line != null && line.trim().isNotEmpty) {
       await _speak(line);
@@ -188,9 +190,13 @@ class CareVoiceCallController extends ChangeNotifier {
     }
   }
 
+  /// True once the call cannot continue or has already ended.
+  bool get _isClosed =>
+      _phase == CareCallPhase.unavailable || _phase == CareCallPhase.ended;
+
   /// Turns the camera on (video mode) or off (voice mode).
   Future<void> toggleCamera() async {
-    if (_disposed) {
+    if (_disposed || _isClosed) {
       return;
     }
     if (_videoEnabled) {
@@ -206,6 +212,12 @@ class CareVoiceCallController extends ChangeNotifier {
     if (!opened) {
       _notice = careText(locale, 'platform.care.call.cameraDenied');
       _notify();
+      return;
+    }
+    if (_isClosed) {
+      // The call ended or could not start while the lens was opening: release
+      // it instead of leaving a live preview over a dead call.
+      await camera.close();
       return;
     }
     _videoEnabled = true;
@@ -354,7 +366,14 @@ class CareVoiceCallController extends ChangeNotifier {
           : careText(locale, 'platform.care.call.failed',
               params: <String, String>{'message': result.error!});
       _notify();
-      await _resume(turn);
+      // A turn that produced no answer must not strand the call in "thinking":
+      // the microphone reopens so the patient can simply say it again.
+      if (_micEnabled) {
+        await _listen();
+      } else {
+        _phase = CareCallPhase.listening;
+        _notify();
+      }
       return;
     }
     _replyText = reply;
@@ -385,6 +404,10 @@ class CareVoiceCallController extends ChangeNotifier {
   void _fail() {
     _phase = CareCallPhase.unavailable;
     _notice = careText(locale, 'platform.care.call.unavailable');
+    if (_videoEnabled) {
+      _videoEnabled = false;
+      unawaited(camera.close());
+    }
     _notify();
   }
 

@@ -41,9 +41,13 @@ export default function App() {
               <DoctorH5Routes
                 agent={runtime.agent}
                 agentCatalog={runtime.agentCatalog}
+                attachments={runtime.attachments}
                 blocks={runtime.blocks}
+                careSessions={runtime.careSessions}
+                careSessionReads={runtime.careSessionReads}
                 doctorDirectory={runtime.doctorDirectory}
                 hostPlatform={runtime.environment.deploymentProfile}
+                medicalRecords={runtime.medicalRecords}
                 patients={runtime.patients}
                 records={runtime.records}
                 runtime={runtime.context}

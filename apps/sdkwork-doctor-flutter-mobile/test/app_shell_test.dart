@@ -1,30 +1,42 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sdkwork_chat_composer_flutter/sdkwork_chat_composer_flutter.dart';
 import 'package:sdkwork_doctor_flutter_mobile_care/sdkwork_doctor_flutter_mobile_care.dart';
+import 'package:sdkwork_doctor_flutter_mobile/care/scan/care_qr_ports.dart';
 import 'package:sdkwork_doctor_flutter_mobile/doctors/doctor_directory.dart';
 import 'package:sdkwork_doctor_flutter_mobile/doctors/doctor_selection.dart';
 import 'package:sdkwork_doctor_flutter_mobile/family.dart';
 import 'package:sdkwork_doctor_flutter_mobile/i18n/care_i18n.dart';
 import 'package:sdkwork_doctor_flutter_mobile/main.dart';
 import 'package:sdkwork_doctor_flutter_mobile/patients/patient_store.dart';
+import 'package:sdkwork_doctor_flutter_mobile/records/care_session_store.dart';
+import 'package:sdkwork_doctor_flutter_mobile/records/medical_record_store.dart';
 import 'package:sdkwork_doctor_flutter_mobile/records/visit_store.dart';
 import 'package:sdkwork_doctor_flutter_mobile/triage.dart';
 import 'package:sdkwork_doctor_flutter_mobile/triage_copy.dart';
+import 'package:sdkwork_doctor_flutter_mobile/ui/care_shell.dart';
 import 'package:sdkwork_doctor_flutter_mobile/ui/care_widgets.dart';
 import 'package:sdkwork_doctor_flutter_mobile/ui/chat_tab.dart';
+import 'package:sdkwork_doctor_flutter_mobile/ui/doctor_detail_screen.dart';
 import 'package:sdkwork_doctor_flutter_mobile/ui/doctor_search_screen.dart';
 import 'package:sdkwork_doctor_flutter_mobile/ui/doctor_tab.dart';
 import 'package:sdkwork_doctor_flutter_mobile/ui/me_tab.dart';
+import 'package:sdkwork_doctor_flutter_mobile/ui/patient_files_screen.dart';
 import 'package:sdkwork_doctor_flutter_mobile/ui/patient_form_screen.dart';
+import 'package:sdkwork_doctor_flutter_mobile/ui/record_detail_screen.dart';
 import 'package:sdkwork_doctor_flutter_mobile/ui/records_screen.dart';
+import 'package:sdkwork_doctor_flutter_mobile/ui/scan_screen.dart';
 
 const String _zh = 'zh-CN';
 
 /// Send control of the shared conversation composer.
 const Key _composerSendKey = Key('sdkwork-chat-composer-send');
 
-String _t(String key, {Map<String, String> params = const <String, String>{}}) =>
+String _t(String key,
+        {Map<String, String> params = const <String, String>{}}) =>
     careText(_zh, key, params: params);
 
 /// Widget-level evidence that the shell renders exactly three care
@@ -36,11 +48,17 @@ class Harness {
     required this.records,
     required this.patients,
     required this.doctors,
+    required this.careSessions,
+    required this.medicalRecords,
+    required this.humanConsultations,
   });
 
   final VisitRecordStore records;
   final PatientProfileStore patients;
   final DoctorSelectionStore doctors;
+  final CareSessionStore careSessions;
+  final MedicalRecordStore medicalRecords;
+  final CareHumanConsultationStore humanConsultations;
 }
 
 Future<Harness> pumpApp(
@@ -49,7 +67,11 @@ Future<Harness> pumpApp(
   VisitRecordStore? records,
   PatientProfileStore? patients,
   DoctorSelectionStore? doctors,
+  CareSessionStore? careSessions,
+  MedicalRecordStore? medicalRecords,
   CareConversationService? conversations,
+  CareHumanConsultationStore? humanConsultations,
+  CareQrScanEnvironment? scanEnvironment,
 }) async {
   tester.view.physicalSize = const Size(1200, 3200);
   tester.view.devicePixelRatio = 1.0;
@@ -62,12 +84,21 @@ Future<Harness> pumpApp(
       patients ?? PatientProfileStore.memory();
   final DoctorSelectionStore doctorStore =
       doctors ?? DoctorSelectionStore.memory();
+  final CareSessionStore sessionStore = careSessions ?? CareSessionStore.memory();
+  final MedicalRecordStore medicalStore =
+      medicalRecords ?? MedicalRecordStore.memory();
+  final CareHumanConsultationStore humanStore =
+      humanConsultations ?? CareHumanConsultationStore();
   await tester.pumpWidget(DoctorApp(
     records: recordStore,
+    medicalRecords: medicalStore,
+    careSessions: sessionStore,
+    humanConsultations: humanStore,
     patients: patientStore,
     doctors: doctorStore,
     directory: DoctorDirectory(directoryUrl: ''),
     conversationService: conversations ?? memoryConversationService(locale),
+    qrScanEnvironment: scanEnvironment,
     initialLocale: locale,
   ));
   await tester.pumpAndSettle();
@@ -75,6 +106,9 @@ Future<Harness> pumpApp(
     records: recordStore,
     patients: patientStore,
     doctors: doctorStore,
+    careSessions: sessionStore,
+    medicalRecords: medicalStore,
+    humanConsultations: humanStore,
   );
 }
 
@@ -91,15 +125,85 @@ CareConversationService memoryConversationService([
       defaultTitle: careText(locale, 'platform.care.sessions.defaultTitle'),
     );
 
+/// One row of the right-hand "+" dropdown, by its catalog label.
+Finder menuItem(String labelKey) => find.descendant(
+      of: find.byType(PopupMenuItem<CareShellAction>),
+      matching: find.text(_t(labelKey)),
+    );
+
+/// Deterministic QR scanner: no camera, no permission dialog.
+class FakeQrScanner implements CareQrScannerPort {
+  FakeQrScanner({this.failure, this.torchCapability = CareQrTorch.off});
+
+  /// Status the next open reports; null means the camera works.
+  CareQrScanStatus? failure;
+
+  /// Torch capability reported while the scanner is open.
+  final CareQrTorch torchCapability;
+
+  final ValueNotifier<CareQrScanStatus> _status =
+      ValueNotifier<CareQrScanStatus>(CareQrScanStatus.idle);
+  final ValueNotifier<CareQrTorch> _torch =
+      ValueNotifier<CareQrTorch>(CareQrTorch.unavailable);
+  ValueChanged<String>? _onDetected;
+
+  @override
+  ValueListenable<CareQrScanStatus> get status => _status;
+
+  @override
+  ValueListenable<CareQrTorch> get torch => _torch;
+
+  @override
+  void open({required ValueChanged<String> onDetected}) {
+    _onDetected = onDetected;
+    _torch.value = torchCapability;
+    _status.value = failure ?? CareQrScanStatus.scanning;
+  }
+
+  @override
+  Widget buildPreview(BuildContext context) =>
+      const ColoredBox(color: Colors.black);
+
+  @override
+  Future<void> toggleTorch() async {
+    if (_torch.value == CareQrTorch.unavailable) {
+      return;
+    }
+    _torch.value =
+        _torch.value == CareQrTorch.on ? CareQrTorch.off : CareQrTorch.on;
+  }
+
+  @override
+  Future<void> close() async {
+    _status.value = CareQrScanStatus.idle;
+    _torch.value = CareQrTorch.unavailable;
+  }
+
+  /// Delivers one decoded QR code to the scan screen.
+  void emit(String value) => _onDetected?.call(value);
+}
+
+class FakeQrScanEnvironment implements CareQrScanEnvironment {
+  FakeQrScanEnvironment(this.scanner);
+
+  final FakeQrScanner scanner;
+
+  @override
+  CareQrScannerPort createScanner() => scanner;
+}
+
 Finder inChat(Finder matching) =>
     find.descendant(of: find.byType(ChatTab), matching: matching);
 
 Finder inDoctor(Finder matching) =>
     find.descendant(of: find.byType(DoctorTab), matching: matching);
 
-/// The 医生 navbar: title, search action, and the category tabs.
-Finder inDoctorNavbar(Finder matching) =>
+/// The shell navbar: title, actions, and the category tabs.
+Finder inNavbar(Finder matching) =>
     find.descendant(of: find.byType(AppBar), matching: matching);
+
+/// The 医生 navbar: title, search action, and the category tabs.
+Finder inDoctorNavbar(Finder matching) => inNavbar(matching);
 
 Finder inMe(Finder matching) =>
     find.descendant(of: find.byType(MeTab), matching: matching);
@@ -117,6 +221,12 @@ Future<void> openTab(WidgetTester tester, int index,
     of: find.byType(NavigationBar),
     matching: find.text(careText(locale, _tabLabelKeys[index])),
   ));
+  await tester.pumpAndSettle();
+}
+
+/// Opens one doctor's detail page from the directory card.
+Future<void> openDoctorDetail(WidgetTester tester, String doctorId) async {
+  await tester.tap(find.byKey(Key('doctor-card-$doctorId')));
   await tester.pumpAndSettle();
 }
 
@@ -144,27 +254,99 @@ void main() {
     expect((destinations[0].selectedIcon as Icon).icon, Icons.chat_bubble);
     expect((destinations[1].icon as Icon).icon,
         Icons.medical_information_outlined);
-    expect((destinations[1].selectedIcon as Icon).icon,
-        Icons.medical_information);
+    expect(
+        (destinations[1].selectedIcon as Icon).icon, Icons.medical_information);
     expect((destinations[2].icon as Icon).icon, Icons.receipt_long_outlined);
     expect((destinations[2].selectedIcon as Icon).icon, Icons.receipt_long);
     expect((destinations[3].icon as Icon).icon, Icons.person_outline);
     expect((destinations[3].selectedIcon as Icon).icon, Icons.person);
   });
 
-  testWidgets('the navbar keeps the drawer button, centered title, and plus action',
+  testWidgets(
+      'the navbar keeps the drawer button, centered title, and plus action',
       (WidgetTester tester) async {
     await pumpApp(tester);
 
     expect(find.byTooltip(_t('platform.care.nav.menu')), findsOneWidget);
     expect(
-      find.byTooltip(_t('platform.care.action.newConsultation')),
+      find.byTooltip(_t('platform.care.action.more')),
       findsOneWidget,
     );
     expect(
       find.widgetWithText(AppBar, _t('platform.care.nav.chat')),
       findsOneWidget,
     );
+  });
+
+  testWidgets('the plus opens a dropdown menu with the care actions',
+      (WidgetTester tester) async {
+    await pumpApp(tester);
+
+    await tester.tap(find.byTooltip(_t('platform.care.action.more')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BottomSheet), findsNothing,
+        reason: 'the plus opens a dropdown, not a bottom sheet');
+    expect(find.byType(PopupMenuItem<CareShellAction>), findsNWidgets(3));
+    expect(menuItem('platform.care.action.newConsultation'), findsOneWidget);
+    expect(menuItem('platform.care.records.title'), findsOneWidget);
+    expect(menuItem('platform.care.action.scan'), findsOneWidget);
+  });
+
+  testWidgets('对话 navbar names the human doctor the family talks to',
+      (WidgetTester tester) async {
+    await pumpApp(tester);
+
+    expect(inNavbar(find.text(_t('platform.care.nav.chat'))), findsOneWidget,
+        reason: 'with no human doctor the tab keeps its own label');
+
+    await openTab(tester, 1);
+    await openDoctorDetail(tester, 'doctor-lin-qinghe');
+    await tester.tap(find.byKey(const Key('doctor-detail-select')));
+    await tester.pumpAndSettle();
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await openTab(tester, 0);
+
+    final DoctorProfile lin = kCatalogDoctorRoster.doctors.first;
+    expect(inNavbar(find.text(lin.displayName)), findsOneWidget,
+        reason: 'the conversation states the real doctor instead of "对话"');
+    expect(inNavbar(find.text(_t('platform.care.nav.chat'))), findsNothing);
+  });
+
+  testWidgets('对话 navbar follows the human doctor a session is attributed to',
+      (WidgetTester tester) async {
+    final InMemoryCareConversationStorage storage =
+        InMemoryCareConversationStorage();
+    await storage.write(
+      LocalCareConversationService.sessionsKey,
+      jsonEncode(<Map<String, Object?>>[
+        <String, Object?>{
+          'id': 'session-human',
+          'title': 'Heart follow-up',
+          'updatedAt': DateTime.utc(2026, 11, 3, 4).toIso8601String(),
+          'doctor': <String, Object?>{
+            'kind': 'human',
+            'id': 'doctor-he-zhiyuan',
+            'displayName': 'He Zhiyuan',
+            'department': 'General practice',
+          },
+        },
+      ]),
+    );
+    await pumpApp(
+      tester,
+      conversations: memoryConversationService(_zh, storage),
+      doctors: DoctorSelectionStore.memory(const DoctorSelectionState(
+        selectedIds: <String>['doctor-lin-qinghe'],
+        primaryId: 'doctor-lin-qinghe',
+      )),
+    );
+
+    expect(inNavbar(find.text('He Zhiyuan')), findsOneWidget,
+        reason: 'the open session is attributed to this clinician');
+    expect(inNavbar(find.text('Lin Qinghe')), findsNothing,
+        reason: 'the session attribution outranks the household primary');
   });
 
   testWidgets('the drawer is the care agent conversation list',
@@ -192,6 +374,13 @@ void main() {
           matching: find.text(_t('platform.care.sessions.defaultTitle'))),
       findsOneWidget,
     );
+    // The row states which doctor it belongs to instead of leaving that blank.
+    expect(
+      find.descendant(
+          of: drawer, matching: find.text(_t('platform.care.doctors.ai'))),
+      findsOneWidget,
+      reason: 'every care conversation is with the AI family doctor',
+    );
     expect(
       find.descendant(
           of: drawer,
@@ -201,11 +390,13 @@ void main() {
     );
     expect(
       find.descendant(of: drawer, matching: find.byIcon(Icons.edit_outlined)),
-      findsWidgets,
+      findsNothing,
+      reason: 'row actions live in the long-press menu, not inline icons',
     );
     expect(
       find.descendant(of: drawer, matching: find.byIcon(Icons.delete_outline)),
-      findsWidgets,
+      findsNothing,
+      reason: 'row actions live in the long-press menu, not inline icons',
     );
     expect(
       find.descendant(
@@ -230,8 +421,8 @@ void main() {
 
     await tester.tap(find.byTooltip(_t('platform.care.nav.menu')));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(
-        FilledButton, _t('platform.care.sessions.new')));
+    await tester.tap(
+        find.widgetWithText(FilledButton, _t('platform.care.sessions.new')));
     await tester.pumpAndSettle();
 
     expect(inChat(find.text(_t('platform.care.home.prompt'))), findsOneWidget);
@@ -240,28 +431,35 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       find.descendant(
-          of: find.byType(CareSessionsDrawer),
-          matching: find.byIcon(Icons.edit_outlined)),
+          of: find.byType(CareSessionsDrawer), matching: find.byType(ListTile)),
       findsNWidgets(2),
       reason: 'the new conversation joins the seeded one',
     );
+    expect(
+      find.descendant(
+          of: find.byType(CareSessionsDrawer),
+          matching: find.text(_t('platform.care.doctors.ai'))),
+      findsNWidgets(2),
+      reason: 'every session row states its doctor',
+    );
   });
 
-  testWidgets('a conversation can be renamed from the drawer',
+  testWidgets('a conversation is renamed from the long-press menu',
       (WidgetTester tester) async {
     await pumpApp(tester);
 
     await tester.tap(find.byTooltip(_t('platform.care.nav.menu')));
     await tester.pumpAndSettle();
-    await tester.tap(
-        find.descendant(
-            of: find.byType(CareSessionsDrawer),
-            matching: find.byIcon(Icons.edit_outlined))
-            .first);
+    await tester.longPress(find.descendant(
+      of: find.byType(CareSessionsDrawer),
+      matching: find.text(_t('platform.care.sessions.defaultTitle')),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(_t('platform.care.sessions.rename')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).last, 'Chest pain follow-up');
-    await tester.tap(find.widgetWithText(
-        FilledButton, _t('platform.care.action.confirm')));
+    await tester.tap(
+        find.widgetWithText(FilledButton, _t('platform.care.action.confirm')));
     await tester.pumpAndSettle();
 
     expect(
@@ -270,6 +468,28 @@ void main() {
           matching: find.text('Chest pain follow-up')),
       findsOneWidget,
     );
+  });
+
+  testWidgets('the row menu offers batch, rename, pin, and delete',
+      (WidgetTester tester) async {
+    await pumpApp(tester);
+
+    await tester.tap(find.byTooltip(_t('platform.care.nav.menu')));
+    await tester.pumpAndSettle();
+    await tester.longPress(find.descendant(
+      of: find.byType(CareSessionsDrawer),
+      matching: find.text(_t('platform.care.sessions.defaultTitle')),
+    ));
+    await tester.pumpAndSettle();
+
+    for (final String key in <String>[
+      'platform.care.sessions.batch',
+      'platform.care.sessions.rename',
+      'platform.care.sessions.pin',
+      'platform.care.sessions.delete',
+    ]) {
+      expect(find.text(_t(key)), findsOneWidget, reason: key);
+    }
   });
 
   testWidgets('the chat landing suggests symptoms and prefills the composer',
@@ -323,7 +543,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(harness.patients.activeId, added.id);
 
-    await tester.enterText(inChat(find.byType(TextField)), 'fever since last night');
+    await tester.enterText(
+        inChat(find.byType(TextField)), 'fever since last night');
     await tester.pump();
     await tester.tap(inChat(find.byKey(_composerSendKey)));
     await tester.pumpAndSettle();
@@ -414,8 +635,8 @@ void main() {
 
     final Finder page = find.byType(DoctorSearchScreen);
     expect(page, findsOneWidget);
-    final Finder search = find.descendant(
-        of: page, matching: find.byType(TextField));
+    final Finder search =
+        find.descendant(of: page, matching: find.byType(TextField));
 
     await tester.enterText(search, 'Lin Qinghe');
     await tester.pumpAndSettle();
@@ -436,19 +657,18 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(_t('platform.care.doctors.noResults')), findsOneWidget);
 
-    // The result opens that doctor on the 医生 tab: the page pops and the card
-    // is expanded, so selection and the consultation form stay on one surface.
+    // A result opens that doctor's detail page on top of the results, so closing
+    // it returns to the result list and search stays usable.
     await tester.enterText(search, 'Su Wanning');
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(InkWell, 'Su Wanning').first);
     await tester.pumpAndSettle();
 
-    expect(page, findsNothing);
-    expect(find.widgetWithText(AppBar, _t('platform.care.nav.doctor')),
+    expect(page, findsNothing, reason: 'the detail page covers the results');
+    expect(find.byType(DoctorDetailScreen), findsOneWidget);
+    expect(find.widgetWithText(AppBar, _t('platform.care.doctors.detail')),
         findsOneWidget);
-    expect(inDoctor(find.text(_t('platform.care.doctors.affiliationsHint'))),
-        findsOneWidget,
-        reason: 'the returned doctor card is expanded');
+    expect(find.text('Su Wanning'), findsWidgets);
   });
 
   testWidgets('医生 search cancels back to the directory',
@@ -460,7 +680,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.descendant(
         of: find.byType(DoctorSearchScreen),
-        matching: find.widgetWithText(TextButton, _t('platform.care.action.cancel'))));
+        matching: find.widgetWithText(
+            TextButton, _t('platform.care.action.cancel'))));
     await tester.pumpAndSettle();
 
     expect(find.byType(DoctorSearchScreen), findsNothing);
@@ -480,7 +701,8 @@ void main() {
       expect(inDoctor(find.text(doctor.displayName)), findsOneWidget,
           reason: doctor.id);
     }
-    expect(inDoctor(find.text(_t('platform.care.doctors.none'))), findsOneWidget);
+    expect(
+        inDoctor(find.text(_t('platform.care.doctors.none'))), findsOneWidget);
     expect(
       inDoctor(find.text(_t('platform.care.doctors.employment.full_time'))),
       findsWidgets,
@@ -498,34 +720,34 @@ void main() {
       reason: 'the multi-site doctor advertises the second site',
     );
 
-    await tester.tap(
-        inDoctor(find.text(_t('platform.care.doctors.select'))).first);
+    await tester
+        .tap(inDoctor(find.text(_t('platform.care.doctors.select'))).first);
     await tester.pumpAndSettle();
 
     expect(harness.doctors.primaryId, 'doctor-lin-qinghe');
     expect(harness.doctors.selectedIds, <String>['doctor-lin-qinghe']);
-    expect(inDoctor(find.text(_t('platform.care.doctors.primary'))), findsWidgets);
+    expect(
+        inDoctor(find.text(_t('platform.care.doctors.primary'))), findsWidgets);
     expect(
       inDoctor(find.text(_t('platform.care.doctors.selected'))),
       findsWidgets,
     );
   });
 
-  testWidgets('a human consultation records the reason against the active patient',
+  testWidgets(
+      'a human consultation records the reason against the active patient',
       (WidgetTester tester) async {
     final Harness harness = await pumpApp(tester);
     await openTab(tester, 1);
 
-    await tester.tap(
-        inDoctor(find.text(_t('platform.care.doctors.detail'))).first);
+    await openDoctorDetail(tester, 'doctor-lin-qinghe');
+    await tester.tap(find.byKey(const Key('doctor-detail-consult')));
     await tester.pumpAndSettle();
     await tester.enterText(
-      // Search lives in the navbar now; the only field on the page is the
-      // expanded doctor card's reason field.
-      inDoctor(find.byType(TextField)).last,
+      find.byType(TextField).last,
       'chest tightness after dinner',
     );
-    await tester.tap(inDoctor(find.text(_t('platform.care.doctors.consult'))));
+    await tester.tap(find.byKey(const Key('doctor-consult-submit')));
     await tester.pumpAndSettle();
 
     expect(harness.records.records, hasLength(1));
@@ -546,8 +768,28 @@ void main() {
       _t('platform.care.doctors.consultStarted',
           params: <String, String>{'doctor': 'Lin Qinghe'}),
     );
-    expect(inDoctor(find.text(record.advice)), findsOneWidget,
-        reason: 'the started consultation is confirmed on screen');
+    // The consultation opens the conversation home instead of launching an
+    // external channel: the detail page is gone, the human doctor strip is up,
+    // and the reason is the first turn of the new conversation.
+    expect(find.byType(DoctorDetailScreen), findsNothing,
+        reason: 'the consultation lands on the conversation home');
+    expect(find.text(_t('platform.care.chat.humanBadge')), findsWidgets,
+        reason: 'the conversation says it is a human consultation');
+    expect(find.text('chest tightness after dinner'), findsWidgets,
+        reason: 'the reason is the first patient turn');
+    expect(harness.humanConsultations.sessions, hasLength(1));
+    final CareConversationSession session =
+        harness.humanConsultations.sessions.first;
+    expect(session.doctor.id, 'doctor-lin-qinghe');
+    expect(session.doctor.displayName, 'Lin Qinghe');
+    expect(session.memberLabel,
+        '${_t('platform.care.profile.relation.self')} · Me');
+    expect(session.title, 'chest tightness after dinner');
+    expect(session.unreadCount, 0);
+    expect(harness.humanConsultations.messages(session.id),
+        hasLength(1));
+    expect(harness.humanConsultations.messages(session.id).first.text,
+        'chest tightness after dinner');
 
     final VisitRecord? reloaded = VisitRecord.fromJson(record.toJson());
     expect(reloaded, isNotNull);
@@ -563,28 +805,26 @@ void main() {
     final Harness harness = await pumpApp(tester);
     await openTab(tester, 1);
 
-    await tester.tap(
-        inDoctor(find.text(_t('platform.care.doctors.detail'))).first);
-    await tester.pumpAndSettle();
+    await openDoctorDetail(tester, 'doctor-lin-qinghe');
 
-    final Finder siteChoices = inDoctor(find.widgetWithText(
-        ChoiceChip, _t('platform.care.doctors.chooseAffiliation')));
-    expect(siteChoices, findsNWidgets(2),
-        reason: 'the multi-site doctor lists both practice sites');
-
-    await tester.tap(siteChoices.at(1));
+    // The detail page lists both practice sites; choosing the clinic routes the
+    // consultation to that organization and engagement.
+    await tester.tap(find
+        .text(_t('platform.care.doctors.hospital.sdkwork_community_clinic')));
     await tester.pumpAndSettle();
     expect(
-      inDoctor(find.text(_t('platform.care.doctors.employment.part_time'))),
+      find.text(_t('platform.care.doctors.employment.part_time')),
       findsWidgets,
       reason: 'the chosen site is the part-time engagement',
     );
 
+    await tester.tap(find.byKey(const Key('doctor-detail-consult')));
+    await tester.pumpAndSettle();
     await tester.enterText(
-      inDoctor(find.byType(TextField)).last,
+      find.byType(TextField).last,
       'blood-pressure follow-up',
     );
-    await tester.tap(inDoctor(find.text(_t('platform.care.doctors.consult'))));
+    await tester.tap(find.byKey(const Key('doctor-consult-submit')));
     await tester.pumpAndSettle();
 
     final VisitRecord record = harness.records.records.single;
@@ -595,6 +835,59 @@ void main() {
     expect(record.doctorEmploymentType, 'part_time');
     expect(record.doctorLabel,
         'Lin Qinghe · ${_t('platform.care.doctors.department.general_practice')}');
+  });
+
+  testWidgets('医生 cards open the detail page instead of expanding in the list',
+      (WidgetTester tester) async {
+    await pumpApp(tester);
+    await openTab(tester, 1);
+
+    expect(
+      inDoctor(find.text(_t('platform.care.doctors.detail'))),
+      findsNothing,
+      reason: 'the list carries no inline detail control',
+    );
+
+    await openDoctorDetail(tester, 'doctor-lin-qinghe');
+
+    final DoctorProfile lin = kCatalogDoctorRoster.doctors.first;
+    expect(find.widgetWithText(AppBar, _t('platform.care.doctors.detail')),
+        findsOneWidget);
+    expect(find.text(lin.displayName), findsWidgets);
+    expect(find.text(_t('platform.care.doctors.about')), findsOneWidget);
+    expect(find.text(lin.bio), findsOneWidget);
+    expect(find.byKey(const Key('doctor-detail-consult')), findsOneWidget);
+    expect(
+      find.text(_t('platform.care.doctors.hospital.sdkwork_community_clinic')),
+      findsOneWidget,
+      reason: 'every practice site is listed on the detail page',
+    );
+    expect(
+      find.textContaining(_t('platform.care.doctors.availability')),
+      findsWidgets,
+      reason: 'each site keeps its own consulting hours',
+    );
+  });
+
+  testWidgets('医生 detail selects the doctor and the list reflects it',
+      (WidgetTester tester) async {
+    final Harness harness = await pumpApp(tester);
+    await openTab(tester, 1);
+    await openDoctorDetail(tester, 'doctor-su-wanning');
+
+    await tester.tap(find.byKey(const Key('doctor-detail-select')));
+    await tester.pumpAndSettle();
+
+    expect(harness.doctors.selectedIds, <String>['doctor-su-wanning']);
+    expect(harness.doctors.primaryId, 'doctor-su-wanning');
+    expect(find.text(_t('platform.care.doctors.selected')), findsWidgets);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    expect(
+        inDoctor(find.text(_t('platform.care.doctors.primary'))), findsWidgets,
+        reason: 'the directory card shows the primary doctor after returning');
   });
 
   testWidgets('我的 owns the patient files and opens 看病记录 as a tab',
@@ -611,11 +904,23 @@ void main() {
       ),
     ];
     final VisitRecordStore records = VisitRecordStore.memory(initial);
-    await pumpApp(tester, records: records);
+    final CareSessionStore sessions = CareSessionStore.memory(<CareSession>[
+      appendCareSessionMessage(
+        createCareSession(
+          patient: kDemoSelfPatient,
+          mode: 'offline',
+          startedAt: DateTime.utc(2026, 11, 2, 13, 30),
+        ),
+        role: 'patient',
+        text: 'chest pain for 10 minutes',
+        at: DateTime.utc(2026, 11, 2, 13, 30),
+        level: TriageLevel.emergency,
+      ),
+    ]);
+    await pumpApp(tester, records: records, careSessions: sessions);
     await openTab(tester, 3);
 
     expect(inMe(find.text('Me')), findsOneWidget);
-    expect(inMe(find.text(_t('platform.care.active'))), findsOneWidget);
     expect(
       inMe(find.text(_t('platform.care.profile.completeness',
           params: <String, String>{'percent': '17'}))),
@@ -627,7 +932,19 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.tap(inMe(find.text(_t('platform.care.me.records'))));
+    await tester.tap(inMe(find.text(_t('platform.care.me.patients'))));
+    await tester.pumpAndSettle();
+    expect(find.byType(PatientFilesScreen), findsOneWidget);
+    expect(
+      find.widgetWithText(AppBar, _t('platform.care.profile.title')),
+      findsOneWidget,
+    );
+    expect(find.text(_t('platform.care.active')), findsOneWidget);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    await tester.tap(inMe(find.text(_t('platform.care.me.recordsAndMedical'))));
     await tester.pumpAndSettle();
 
     expect(find.byType(RecordsScreen), findsOneWidget);
@@ -640,33 +957,34 @@ void main() {
     );
   });
 
-  testWidgets('看病记录 clears every record after confirmation',
+  testWidgets('看病记录 clears every visit and 病历 after confirmation',
       (WidgetTester tester) async {
-    final VisitRecordStore records = VisitRecordStore.memory(<VisitRecord>[
-      createVisitRecord(
-        member: demoSelfMember,
-        symptom: 'dizzy for two days',
-        advice: 'Monitor for 24-48 hours.',
-        level: TriageLevel.routine,
-        mode: 'offline',
-        id: 'visit-1',
-        recordedAt: DateTime.utc(2026, 11, 2, 13, 30),
+    final CareSessionStore sessions = CareSessionStore.memory(<CareSession>[
+      appendCareSessionMessage(
+        createCareSession(
+          patient: kDemoSelfPatient,
+          mode: 'offline',
+          startedAt: DateTime.utc(2026, 11, 2, 13, 30),
+        ),
+        role: 'patient',
+        text: 'dizzy for two days',
+        at: DateTime.utc(2026, 11, 2, 13, 30),
       ),
     ]);
-    await pumpApp(tester, records: records);
+    final Harness harness = await pumpApp(tester, careSessions: sessions);
     await openTab(tester, 2);
     await tester.pumpAndSettle();
 
     await tester.tap(find.widgetWithText(
-        FilledButton, _t('platform.care.records.clear')));
+        FilledButton, _t('platform.care.records.clearAll')));
     await tester.pumpAndSettle();
     await tester.tap(find.descendant(
       of: find.byType(AlertDialog),
-      matching: find.text(_t('platform.care.records.clear')),
+      matching: find.text(_t('platform.care.records.clearAll')),
     ));
     await tester.pumpAndSettle();
 
-    expect(records.isEmpty, isTrue);
+    expect(harness.careSessions.isEmpty, isTrue);
     expect(find.text(_t('platform.care.records.empty')), findsOneWidget);
   });
 
@@ -674,8 +992,10 @@ void main() {
       (WidgetTester tester) async {
     final Harness harness = await pumpApp(tester);
     await openTab(tester, 3);
+    await tester.tap(inMe(find.text(_t('platform.care.me.patients'))));
+    await tester.pumpAndSettle();
 
-    await tester.tap(inMe(find.text(_t('platform.care.profile.add'))));
+    await tester.tap(find.text(_t('platform.care.profile.add')));
     await tester.pumpAndSettle();
     expect(find.byType(PatientEditorScreen), findsOneWidget);
 
@@ -693,28 +1013,33 @@ void main() {
     expect(added.relation, PatientRelation.child);
     expect(added.birthYear, 2019);
     expect(added.allergies, <String>['penicillin', 'peanut']);
-    expect(find.widgetWithText(AppBar, _t('platform.care.me.title')),
-        findsOneWidget);
-    expect(inMe(find.text('Xiaoman')), findsOneWidget);
+    expect(
+      find.widgetWithText(AppBar, _t('platform.care.profile.title')),
+      findsOneWidget,
+    );
+    expect(find.text('Xiaoman'), findsOneWidget);
   });
 
   testWidgets('the patient editor reports a missing name and a bad birth year',
       (WidgetTester tester) async {
     await pumpApp(tester);
     await openTab(tester, 3);
-    await tester.tap(inMe(find.text(_t('platform.care.profile.add'))));
+    await tester.tap(inMe(find.text(_t('platform.care.me.patients'))));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(_t('platform.care.profile.add')));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text(_t('platform.care.profile.save')));
     await tester.pumpAndSettle();
-    expect(find.text(_t('platform.care.profile.required.name')), findsOneWidget);
+    expect(
+        find.text(_t('platform.care.profile.required.name')), findsOneWidget);
 
     await tester.enterText(find.byType(TextField).at(0), 'Xiaoman');
     await tester.enterText(find.byType(TextField).at(1), '1899');
     await tester.tap(find.text(_t('platform.care.profile.save')));
     await tester.pumpAndSettle();
-    expect(
-        find.text(_t('platform.care.profile.invalid.birthYear')), findsOneWidget);
+    expect(find.text(_t('platform.care.profile.invalid.birthYear')),
+        findsOneWidget);
     expect(find.byType(PatientEditorScreen), findsOneWidget);
   });
 
@@ -722,8 +1047,10 @@ void main() {
       (WidgetTester tester) async {
     final Harness harness = await pumpApp(tester);
     await openTab(tester, 3);
+    await tester.tap(inMe(find.text(_t('platform.care.me.patients'))));
+    await tester.pumpAndSettle();
 
-    await tester.tap(inMe(find.text(_t('platform.care.profile.delete'))).first);
+    await tester.tap(find.text(_t('platform.care.profile.delete')).first);
     await tester.pumpAndSettle();
     await tester.tap(find.descendant(
       of: find.byType(AlertDialog),
@@ -733,8 +1060,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(harness.patients.profiles, isEmpty);
-    expect(inMe(find.text(_t('platform.care.profile.empty'))), findsOneWidget);
+    expect(find.text(_t('platform.care.profile.empty')), findsOneWidget);
     expect(harness.patients.active, isNull);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(inMe(find.text(_t('platform.care.profile.notCreated'))),
+        findsOneWidget);
   });
 
   testWidgets('switching the active patient from 我的 updates the household',
@@ -748,14 +1080,19 @@ void main() {
     ));
     final Harness harness = await pumpApp(tester, patients: patients);
     await openTab(tester, 3);
+    await tester.tap(inMe(find.text(_t('platform.care.me.patients'))));
+    await tester.pumpAndSettle();
 
-    await tester.tap(inMe(find.text(_t('platform.care.profile.select'))).first);
+    await tester.tap(find.text(_t('platform.care.profile.select')).first);
     await tester.pumpAndSettle();
 
     expect(harness.patients.activeId, added.id);
-    expect(inMe(find.text('Xiaoman')), findsOneWidget);
-    expect(inMe(find.text(_t('platform.care.active'))), findsOneWidget,
+    expect(find.text(_t('platform.care.active')), findsOneWidget,
         reason: 'exactly one patient file carries the active badge');
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(inMe(find.text('Xiaoman')), findsOneWidget);
   });
 
   testWidgets('the me tab reports the conversation mode and the privacy line',
@@ -763,10 +1100,12 @@ void main() {
     await pumpApp(tester);
     await openTab(tester, 3);
 
-    expect(inMe(find.text(_t('platform.care.me.mode'))), findsOneWidget);
     expect(inMe(find.text(_t('platform.care.mode.offline'))), findsOneWidget);
+    expect(inMe(find.text(_t('platform.care.me.patients'))), findsOneWidget);
     expect(inMe(find.text(_t('platform.care.privacy.local'))), findsOneWidget);
     expect(inMe(find.text(_t('platform.care.me.device'))), findsOneWidget);
+    expect(inMe(find.text(_t('platform.care.call.videoTitle'))), findsOneWidget,
+        reason: 'the video call is one cell away from 我的');
   });
 
   testWidgets('我的 switches the care catalog language',
@@ -778,17 +1117,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.widgetWithText(
-          AppBar, careText('en-US', 'platform.care.nav.me')),
+      find.widgetWithText(AppBar, careText('en-US', 'platform.care.nav.me')),
       findsOneWidget,
     );
     expect(
-      inMe(find.text(careText('en-US', 'platform.care.me.mode'))),
+      inMe(find.text(careText('en-US', 'platform.care.mode.offline'))),
       findsOneWidget,
     );
   });
 
-  testWidgets('the plus sheet starts a new consultation and keeps records',
+  testWidgets('the plus menu starts a new consultation and keeps records',
       (WidgetTester tester) async {
     final Harness harness = await pumpApp(tester);
 
@@ -799,12 +1137,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(harness.records.records, hasLength(1));
 
-    await tester
-        .tap(find.byTooltip(_t('platform.care.action.newConsultation')));
+    await tester.tap(find.byTooltip(_t('platform.care.action.more')));
     await tester.pumpAndSettle();
-    await tester.tap(find
-        .widgetWithText(
-            FilledButton, _t('platform.care.action.newConsultation')));
+    await tester.tap(menuItem('platform.care.action.newConsultation'));
     await tester.pumpAndSettle();
 
     expect(inChat(find.text('chest pain for 10 minutes')), findsNothing);
@@ -813,15 +1148,13 @@ void main() {
         reason: 'visit records survive a new consultation');
   });
 
-  testWidgets('the plus sheet opens 看病记录 as the records tab',
+  testWidgets('the plus menu opens 看病记录 as the records tab',
       (WidgetTester tester) async {
     await pumpApp(tester);
 
-    await tester
-        .tap(find.byTooltip(_t('platform.care.action.newConsultation')));
+    await tester.tap(find.byTooltip(_t('platform.care.action.more')));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(
-        FilledButton, _t('platform.care.records.title')));
+    await tester.tap(menuItem('platform.care.records.title'));
     await tester.pumpAndSettle();
 
     expect(find.byType(RecordsScreen), findsOneWidget);
@@ -833,42 +1166,138 @@ void main() {
     );
   });
 
-  testWidgets('看病记录 shows the site and engagement of a human consultation',
+  testWidgets('扫一扫 scans a QR code and shows the decoded content',
       (WidgetTester tester) async {
-    final VisitRecordStore records = VisitRecordStore.memory(<VisitRecord>[
-      createHumanVisitRecord(
-        member: demoSelfMember,
-        reason: 'blood-pressure follow-up',
-        advice: 'Human consultation requested with Lin Qinghe.',
-        doctorId: 'doctor-lin-qinghe',
-        doctorLabel: 'Lin Qinghe · Cardiology',
-        doctorOrganizationId: 'org-sdkwork-care-network',
-        doctorHospitalLabel: 'SDKWork Care Network',
-        doctorEmploymentType: 'full_time',
-        id: 'visit-human',
-        recordedAt: DateTime.utc(2026, 11, 2, 13, 30),
+    final FakeQrScanner scanner = FakeQrScanner();
+    await pumpApp(tester, scanEnvironment: FakeQrScanEnvironment(scanner));
+
+    await tester.tap(find.byTooltip(_t('platform.care.action.more')));
+    await tester.pumpAndSettle();
+    await tester.tap(menuItem('platform.care.action.scan'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.byType(CareScanScreen), findsOneWidget);
+    expect(find.text(_t('platform.care.scan.hint')), findsOneWidget);
+    expect(find.byIcon(Icons.flashlight_off), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.flashlight_off));
+    await tester.pump();
+    expect(find.byIcon(Icons.flashlight_on), findsOneWidget);
+
+    scanner.emit('SDKWORK-DOCTOR:doctor-lin-qinghe');
+    await tester.pumpAndSettle();
+
+    expect(find.text(_t('platform.care.scan.resultTitle')), findsOneWidget);
+    expect(
+      tester.widget<SelectableText>(find.byType(SelectableText)).data,
+      'SDKWORK-DOCTOR:doctor-lin-qinghe',
+    );
+
+    await tester.tap(find.text(_t('platform.care.scan.done')));
+    await tester.pumpAndSettle();
+    expect(find.byType(CareScanScreen), findsNothing);
+  });
+
+  testWidgets('扫一扫 explains a denied camera permission and retries',
+      (WidgetTester tester) async {
+    final FakeQrScanner scanner =
+        FakeQrScanner(failure: CareQrScanStatus.permissionDenied);
+    await pumpApp(tester, scanEnvironment: FakeQrScanEnvironment(scanner));
+
+    await tester.tap(find.byTooltip(_t('platform.care.action.more')));
+    await tester.pumpAndSettle();
+    await tester.tap(menuItem('platform.care.action.scan'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(
+      find.text(_t('platform.care.scan.permissionDenied')),
+      findsOneWidget,
+    );
+    expect(find.byIcon(Icons.flashlight_off), findsNothing,
+        reason: 'the torch control belongs to a running camera');
+
+    scanner.failure = null;
+    await tester.tap(find.text(_t('platform.care.scan.retry')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text(_t('platform.care.scan.hint')), findsOneWidget);
+  });
+
+  testWidgets('看病记录 opens a 4-tab detail page for one visit',
+      (WidgetTester tester) async {
+    final MedicalRecord caseRecord = MedicalRecord(
+      id: 'case-detail',
+      sessionId: 'session-detail',
+      memberId: demoSelfMember.id,
+      memberLabel: 'Me (self)',
+      mode: 'offline',
+      startedAt: '2026-11-03T11:00:00.000Z',
+      endedAt: '2026-11-03T11:18:00.000Z',
+      summary: 'Two turns about a high fever since last night.',
+      transcript: <MedicalTranscriptEntry>[
+        MedicalTranscriptEntry(
+          id: 'entry-1',
+          role: 'patient',
+          text: 'Child has had a high fever since last night',
+          at: '2026-11-03T11:01:00.000Z',
+          level: TriageLevel.urgent,
+        ),
+        MedicalTranscriptEntry(
+          id: 'entry-2',
+          role: 'assistant',
+          text: 'Contact a clinician today.',
+          at: '2026-11-03T11:02:00.000Z',
+        ),
+      ],
+      aiDiagnosis: createAiDiagnosis(
+        id: 'ai-detail',
+        impression: 'Febrile child; a same-day review is advised.',
+        conditions: <String>['Respiratory infection'],
+        recommendations: <String>['Contact a clinician today.'],
+        level: TriageLevel.urgent,
+        createdAt: DateTime.utc(2026, 11, 3, 11, 18),
       ),
-    ]);
-    await pumpApp(tester, records: records);
+      status: 'awaiting_doctor',
+      attachments: const <MedicalAttachment>[],
+    );
+    final CareSession session = buildCareSessionFromMedicalRecord(caseRecord);
+    await pumpApp(
+      tester,
+      careSessions: CareSessionStore.memory(<CareSession>[session]),
+      medicalRecords: MedicalRecordStore.memory(<MedicalRecord>[caseRecord]),
+    );
     await openTab(tester, 2);
     await tester.pumpAndSettle();
 
+    await tester.tap(find.text(session.title));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(RecordDetailScreen), findsOneWidget);
+    expect(find.text(_t('platform.care.record.tab.medical')), findsOneWidget);
+    expect(find.text(_t('platform.care.record.tab.ai')), findsOneWidget);
+    expect(find.text(_t('platform.care.record.tab.doctor')), findsOneWidget);
+    expect(find.text(_t('platform.care.record.tab.playback')), findsOneWidget);
+
+    await tester.tap(find.text(_t('platform.care.record.tab.ai')));
+    await tester.pumpAndSettle();
+    expect(find.text(caseRecord.summary), findsOneWidget);
+    expect(find.textContaining(caseRecord.aiDiagnosis.impression), findsOneWidget);
+
+    await tester.tap(find.text(_t('platform.care.record.tab.doctor')));
+    await tester.pumpAndSettle();
+    expect(find.text(_t('platform.care.medical.review')), findsOneWidget);
     expect(
-      find.textContaining(_t('platform.care.records.hospital')),
-      findsOneWidget,
-    );
-    expect(
-      find.textContaining('SDKWork Care Network'),
-      findsOneWidget,
-    );
-    expect(
-      find.textContaining(_t('platform.care.records.employment')),
-      findsOneWidget,
-    );
-    expect(
-      find.textContaining(_t('platform.care.doctors.employment.full_time')),
-      findsOneWidget,
-    );
+        find.textContaining(
+            _t('platform.care.medical.status.awaiting_doctor')),
+        findsWidgets);
+
+    await tester.tap(find.text(_t('platform.care.record.tab.playback')));
+    await tester.pumpAndSettle();
+    expect(find.text(_t('platform.care.record.playback.title')), findsWidgets);
+    expect(find.text(_t('platform.care.record.playback.hint')), findsOneWidget);
   });
 
   testWidgets('an emergency message escalates with guidance first',
@@ -891,7 +1320,8 @@ void main() {
       isTrue,
       reason: 'emergency guidance must lead the reply',
     );
-    expect(inChat(find.text(_t('platform.care.level.emergency'))), findsNWidgets(2),
+    expect(inChat(find.text(_t('platform.care.level.emergency'))),
+        findsNWidgets(2),
         reason: 'both the message and the answer carry the emergency level');
   });
 

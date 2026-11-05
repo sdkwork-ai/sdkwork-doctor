@@ -58,6 +58,68 @@ test('generated care catalogs match the authored source contract', () => {
   }
 });
 
+test('the visit detail tabs and playback copy exist in every locale', () => {
+  const required = [
+    'platform.care.record.tab.medical',
+    'platform.care.record.tab.ai',
+    'platform.care.record.tab.doctor',
+    'platform.care.record.tab.playback',
+    'platform.care.record.chiefComplaint',
+    'platform.care.record.visitTime',
+    'platform.care.record.duration',
+    'platform.care.record.status',
+    'platform.care.record.doctor',
+    'platform.care.record.doctorUnassigned',
+    'platform.care.record.recordPending',
+    'platform.care.record.recordHint',
+    'platform.care.record.transcript',
+    'platform.care.record.transcriptEmpty',
+    'platform.care.record.attachments',
+    'platform.care.record.attachmentsEmpty',
+    'platform.care.record.channel.text',
+    'platform.care.record.channel.voice',
+    'platform.care.record.channel.video',
+    'platform.care.record.aiTitle',
+    'platform.care.record.aiHint',
+    'platform.care.record.aiPending',
+    'platform.care.record.doctorHint',
+    'platform.care.record.doctorPending',
+    'platform.care.record.confirmationStatus',
+    'platform.care.record.playback.title',
+    'platform.care.record.playback.hint',
+    'platform.care.record.playback.play',
+    'platform.care.record.playback.pause',
+    'platform.care.record.playback.stop',
+    'platform.care.record.playback.replay',
+    'platform.care.record.playback.speaking',
+    'platform.care.record.playback.finished',
+    'platform.care.record.playback.unavailable',
+    'platform.care.record.playback.empty',
+    'platform.care.record.playback.callVoice',
+    'platform.care.record.playback.callVideo',
+    'platform.care.record.playback.callOpen',
+    'platform.care.record.playback.aiVoice',
+    'platform.care.record.playback.offset',
+    'platform.care.record.playback.jump',
+    'platform.care.record.playback.patient',
+    'platform.care.record.playback.doctor',
+    'platform.care.records.messages',
+    'platform.care.records.calls',
+    'platform.care.records.status.active',
+    'platform.care.records.status.ended',
+    'platform.care.records.status.awaiting_doctor',
+    'platform.care.records.status.confirmed',
+  ];
+  const byKey = new Map(source.messages.map((message) => [message.key, message]));
+  for (const key of required) {
+    const message = byKey.get(key);
+    assert.ok(message, 'the authored catalog is missing ' + key);
+    for (const locale of source.locales) {
+      assert.ok(String(message[locale] ?? '').trim().length > 0, key + ' is empty in ' + locale);
+    }
+  }
+});
+
 test('every care placeholder is preserved in both locales', () => {
   for (const locale of source.locales) {
     for (const message of source.messages) {

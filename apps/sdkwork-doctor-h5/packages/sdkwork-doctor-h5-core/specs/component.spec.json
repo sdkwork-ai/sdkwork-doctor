@@ -93,6 +93,14 @@
         "export": "./records"
       },
       {
+        "name": "doctorH5MedicalRecordStore",
+        "export": "./records"
+      },
+      {
+        "name": "doctorH5MedicalAttachmentStore",
+        "export": "./records"
+      },
+      {
         "name": "doctorH5PatientProfileStore",
         "export": "."
       },
@@ -133,6 +141,8 @@
       "createDoctorH5CareAgent",
       "createDoctorH5AgentCatalog",
       "createDoctorH5VisitRecordStore",
+      "createDoctorH5MedicalRecordStore",
+      "createDoctorH5MedicalAttachmentStore",
       "createDoctorH5PatientProfileStore",
       "createDoctorH5DoctorDirectoryPort",
       "createDoctorH5DoctorSelectionStore"

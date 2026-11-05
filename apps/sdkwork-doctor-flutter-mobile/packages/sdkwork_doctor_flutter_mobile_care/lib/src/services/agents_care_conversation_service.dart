@@ -54,7 +54,8 @@ class CareFingerprintSigner implements CarePayloadSigner {
 }
 
 /// Hosted conversation service backed by the generated Agents app SDK.
-class AgentsCareConversationService implements CareConversationService {
+class AgentsCareConversationService
+    implements CareConversationService, CareSummaryService {
   AgentsCareConversationService({
     required this.client,
     required this.agentId,
@@ -124,8 +125,8 @@ class AgentsCareConversationService implements CareConversationService {
         ),
       ),
     );
-    final CareConversationSession? session =
-        _mapSession(careResourceItem(response?.data) ?? const <String, dynamic>{});
+    final CareConversationSession? session = _mapSession(
+        careResourceItem(response?.data) ?? const <String, dynamic>{});
     if (session == null) {
       throw const CareConversationException(
         'agents API session response is missing sessionId',
@@ -199,8 +200,9 @@ class AgentsCareConversationService implements CareConversationService {
     final StringBuffer streamed = StringBuffer();
     String? completed;
     try {
-      await for (final AgentTurnStreamEvent event
-          in client.ai.agentsTurnsStream(agentId, sessionId, body, true, kCareWireProtocol)) {
+      await for (final AgentTurnStreamEvent event in client.ai
+          .agentsTurnsStream(
+              agentId, sessionId, body, true, kCareWireProtocol)) {
         switch (event.eventType) {
           case 'delta':
             final String delta = event.delta ?? '';
@@ -208,9 +210,11 @@ class AgentsCareConversationService implements CareConversationService {
               streamed.write(delta);
             }
           case 'completion':
-            completed = _answerFromCompletion(event.response?.data) ?? completed;
+            completed =
+                _answerFromCompletion(event.response?.data) ?? completed;
           case 'error':
-            throw const CareConversationException('agents turn stream reported an error');
+            throw const CareConversationException(
+                'agents turn stream reported an error');
           default:
             break;
         }
@@ -228,6 +232,60 @@ class AgentsCareConversationService implements CareConversationService {
       );
     }
     return decorate == null ? answer : decorate(answer);
+  }
+
+  @override
+  Future<CareSummaryDraft> summarize(CareSummaryInput input) async {
+    final String requestId = _createId();
+    final String content = buildCareSummaryRequest(input);
+    final CreateAgentTurnRequest body = CreateAgentTurnRequest(
+      content: content,
+      contentType: 'text/plain',
+      turnMode: turnMode,
+      systemPrompt: kCareSummarySystemPrompt,
+      wireProtocol: kCareWireProtocol,
+      idempotencyKey: requestId,
+      payloadHash: signer.turnPayloadHash(content, 'text/plain', entrySurface),
+      clientRequestId: requestId,
+      requestedAt: _now().toUtc().toIso8601String(),
+    );
+    final StringBuffer streamed = StringBuffer();
+    String? completed;
+    try {
+      await for (final AgentTurnStreamEvent event in client.ai
+          .agentsTurnsStream(
+              agentId, input.sessionId, body, true, kCareWireProtocol)) {
+        switch (event.eventType) {
+          case 'delta':
+            streamed.write(event.delta ?? '');
+          case 'completion':
+            completed =
+                _answerFromCompletion(event.response?.data) ?? completed;
+          case 'error':
+            throw const CareConversationException(
+                'agents turn stream reported an error');
+          default:
+            break;
+        }
+      }
+    } on CareConversationException {
+      rethrow;
+    } catch (error) {
+      throw _mapError(error);
+    }
+    final String answer = (completed ?? streamed.toString()).trim();
+    if (answer.isEmpty) {
+      throw const CareConversationException(
+        'summary turn produced no assistant_output content',
+      );
+    }
+    final CareSummaryDraft? draft = parseCareSummaryReply(answer);
+    if (draft == null) {
+      throw const CareConversationException(
+        'summary turn did not return the case-record JSON',
+      );
+    }
+    return draft;
   }
 
   String? _answerFromCompletion(Object? data) {
@@ -259,6 +317,9 @@ class AgentsCareConversationService implements CareConversationService {
       id: id,
       title: title,
       updatedAt: _parseTimestamp(record['updatedAt']) ?? _now(),
+      // Every hosted care session runs against the managed family-doctor agent,
+      // so the drawer states that identity instead of leaving the row blank.
+      doctor: CareConversationDoctor.ai(id: agentId),
     );
   }
 
@@ -294,7 +355,8 @@ class AgentsCareConversationService implements CareConversationService {
     }
     final String raw = error.toString();
     // The generated SDK raises `Exception('HTTP 403: {body}')` for failures.
-    final RegExpMatch? match = RegExp(r'HTTP (\d{3}):\s*(.*)', dotAll: true).firstMatch(raw);
+    final RegExpMatch? match =
+        RegExp(r'HTTP (\d{3}):\s*(.*)', dotAll: true).firstMatch(raw);
     if (match == null) {
       return CareConversationException(raw);
     }
@@ -317,7 +379,8 @@ class AgentsCareConversationService implements CareConversationService {
     } on FormatException {
       // Fall through to the status-only error.
     }
-    return CareConversationException(message, status: status, code: code, traceId: traceId);
+    return CareConversationException(message,
+        status: status, code: code, traceId: traceId);
   }
 }
 
@@ -343,6 +406,7 @@ Object? _tryDecode(String body) {
 final Random _secureRandom = Random.secure();
 
 String _secureId() {
-  final List<int> bytes = List<int>.generate(16, (_) => _secureRandom.nextInt(256));
+  final List<int> bytes =
+      List<int>.generate(16, (_) => _secureRandom.nextInt(256));
   return 'care-${bytes.map((int value) => value.toRadixString(16).padLeft(2, '0')).join()}';
 }

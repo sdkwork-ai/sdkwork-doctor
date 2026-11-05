@@ -3,13 +3,17 @@ import i18n from 'i18next';
 import type { AgentConversationPort, CareAgentCatalogPort } from '@sdkwork/doctor-common-agent';
 import { applyThemeToStyle, resolveAppBlocks, resolveAppTheme, type ResolvedAppBlock } from '@sdkwork/doctor-common-blocks';
 import { createDoctorRuntimeContext, type DoctorRuntimeContext } from '@sdkwork/doctor-common-diagnostics';
-import type { DoctorDirectoryPort, DoctorSelectionStore, PatientProfileStore, VisitRecordStore } from '@sdkwork/doctor-common-doctor';
+import type { CareSessionReadStore, CareSessionStore, DoctorDirectoryPort, DoctorSelectionStore, MedicalAttachmentStore, MedicalRecordStore, PatientProfileStore, VisitRecordStore } from '@sdkwork/doctor-common-doctor';
 import {
   createAnonymousSessionPort,
   createDoctorPcAgentCatalog,
   createDoctorPcCareAgent,
+  createDoctorPcCareSessionReadStore,
+  createDoctorPcCareSessionStore,
   createDoctorPcDoctorDirectoryPort,
   createDoctorPcDoctorSelectionStore,
+  createDoctorPcMedicalAttachmentStore,
+  createDoctorPcMedicalRecordStore,
   createDoctorPcPatientProfileStore,
   createDoctorPcVisitRecordStore,
 } from '@sdkwork/doctor-pc-core';
@@ -35,6 +39,14 @@ export interface DoctorPcRuntime {
   readonly doctorDirectory: DoctorDirectoryPort;
   /** Device-local consultation history shared by chat, landing, and records. */
   readonly records: VisitRecordStore;
+  /** 病历 produced by ending a conversation, with both diagnosis records. */
+  readonly medicalRecords: MedicalRecordStore;
+  /** One session per visit: the list behind 看病记录 and its 4-tab detail page. */
+  readonly careSessions: CareSessionStore;
+  /** Per-conversation read marks behind the unread badges in the session list. */
+  readonly careSessionReads: CareSessionReadStore;
+  /** Attachment bytes for the conversations and the medical records. */
+  readonly attachments: MedicalAttachmentStore;
   /** Blocks resolved for the PC surface, including deployment overrides. */
   readonly blocks: readonly ResolvedAppBlock[];
 }
@@ -78,6 +90,10 @@ export function bootstrapDoctorPc(): Promise<DoctorPcRuntime> {
         selection: createDoctorPcDoctorSelectionStore(),
         doctorDirectory: createDoctorPcDoctorDirectoryPort({ directoryUrl: environment.careDoctorDirectoryUrl }),
         records: createDoctorPcVisitRecordStore(),
+        medicalRecords: createDoctorPcMedicalRecordStore(),
+        careSessions: createDoctorPcCareSessionStore(),
+        careSessionReads: createDoctorPcCareSessionReadStore(),
+        attachments: createDoctorPcMedicalAttachmentStore(),
         blocks,
       };
     });

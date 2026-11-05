@@ -1,22 +1,36 @@
 <view class="card">
   <view class="row">
     <text class="h1">{{title}}</text>
+    <text class="badge">{{countLabel}}</text>
   </view>
   <view class="muted">{{subtitle}}</view>
-  <view class="muted">{{countLabel}}</view>
-  <view wx:if="{{items.length === 0}}" class="muted">{{emptyLabel}}</view>
-  <view wx:for="{{items}}" wx:key="id" class="record">
-    <view class="row">
-      <text>{{item.symptom}}</text>
-      <text class="badge {{item.warn ? 'warn' : ''}}">{{item.level}}</text>
-    </view>
-    <view class="muted">{{item.advice}}</view>
-    <view wx:if="{{item.doctor}}" class="muted">{{doctorTitle}}: {{item.doctor}}</view>
-    <view wx:if="{{item.hospital}}" class="muted">{{hospitalTitle}}: {{item.hospital}}</view>
-    <view wx:if="{{item.employment}}" class="muted">{{employmentTitle}}: {{item.employment}}</view>
-    <view class="muted">{{item.meta}}</view>
-  </view>
 </view>
+
+<!-- One card per visit session. The detail page owns the 病历 / AI总结 /
+     医生人工确认 / 通话回放 tabs, so the list stays scannable. -->
 <view class="card">
-  <button class="btn" bindtap="onClear" disabled="{{items.length === 0}}">{{clearLabel}}</button>
+  <view wx:if="{{sessions.length === 0}}" class="muted">{{empty}}</view>
+  <view
+    wx:for="{{sessions}}"
+    wx:key="id"
+    class="visit"
+    data-id="{{item.id}}"
+    bindtap="onOpen"
+  >
+    <view class="row">
+      <text class="visit-title">{{item.title}}</text>
+      <text class="badge {{item.statusTone}}">{{item.statusLabel}}</text>
+    </view>
+    <view class="muted">{{item.member}} · {{item.startedAt}}</view>
+    <view class="visit-preview">{{item.preview}}</view>
+    <view class="row">
+      <view class="chips-inline">
+        <text class="badge">{{item.messages}}</text>
+        <text wx:if="{{item.calls}}" class="badge skipped">{{item.calls}}</text>
+        <text wx:if="{{item.level}}" class="badge {{item.warn ? 'warn' : ''}}">{{item.level}}</text>
+      </view>
+      <text class="link">{{openLabel}} ›</text>
+    </view>
+  </view>
+  <button class="btn" bindtap="onClear" disabled="{{sessions.length === 0}}">{{clearLabel}}</button>
 </view>

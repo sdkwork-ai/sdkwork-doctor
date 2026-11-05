@@ -42,8 +42,7 @@ void main() {
     );
     for (final String required
         in (contract['required'] as List<dynamic>).cast<String>()) {
-      expect(profile.toJson().containsKey(required), isTrue,
-          reason: required);
+      expect(profile.toJson().containsKey(required), isTrue, reason: required);
     }
     expect(profile.displayName, 'Xiaoman');
     expect(profile.relation, PatientRelation.child);
@@ -67,12 +66,15 @@ void main() {
       throwsArgumentError,
     );
     expect(
-      () => createPatientProfile(child.copyWith(birthYear: DateTime.now().year + 1)),
+      () => createPatientProfile(
+          child.copyWith(birthYear: DateTime.now().year + 1)),
       throwsArgumentError,
     );
   });
 
-  test('list fields are trimmed and de-duplicated, and comma fields split both widths', () {
+  test(
+      'list fields are trimmed and de-duplicated, and comma fields split both widths',
+      () {
     expect(
       normalizeProfileList(<String>[' peanut ', 'Peanut', '', 'dust']),
       <String>['peanut', 'dust'],
@@ -123,13 +125,14 @@ void main() {
 
   test('the store adds, selects, updates, removes, and persists', () async {
     final MemoryPatientProfileStorage storage = MemoryPatientProfileStorage();
-    final PatientProfileStore store =
-        await PatientProfileStore.load(storage);
-    expect(store.profiles, hasLength(1), reason: 'first run seeds the household');
+    final PatientProfileStore store = await PatientProfileStore.load(storage);
+    expect(store.profiles, hasLength(1),
+        reason: 'first run seeds the household');
 
     final PatientProfile added = await store.add(child);
     expect(store.profiles, hasLength(2));
-    expect(store.activeId, 'member-self', reason: 'adding does not steal the active patient');
+    expect(store.activeId, 'member-self',
+        reason: 'adding does not steal the active patient');
 
     await store.select(added.id);
     expect(store.active?.id, added.id);
@@ -149,7 +152,8 @@ void main() {
     final PatientProfileStore reloaded =
         await PatientProfileStore.load(storage);
     expect(reloaded.profiles, hasLength(2));
-    expect(reloaded.activeId, added.id, reason: 'the active patient survives a reload');
+    expect(reloaded.activeId, added.id,
+        reason: 'the active patient survives a reload');
     expect(reloaded.active?.allergies, <String>['penicillin', 'peanut']);
 
     await reloaded.remove(added.id);
@@ -187,7 +191,8 @@ void main() {
   test('a stored document round-trips through the pinned shape', () {
     final PatientHousehold household = defaultPatientHousehold();
     final Map<String, dynamic> document =
-        jsonDecode(serializePatientHousehold(household)) as Map<String, dynamic>;
+        jsonDecode(serializePatientHousehold(household))
+            as Map<String, dynamic>;
     expect(document.keys.toSet(), <String>{'version', 'activeId', 'profiles'});
     expect(document['version'], 1);
     expect(document['activeId'], 'member-self');

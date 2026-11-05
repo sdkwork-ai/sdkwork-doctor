@@ -1,0 +1,71 @@
+/* 病人档案: patient file rows and the create/edit form. */
+.file {
+  background: #e6edf8;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 8px 0;
+}
+
+.file-head {
+  display: flex;
+  align-items: center;
+}
+
+.file-head .avatar {
+  margin-right: 10px;
+}
+
+.form {
+  margin-top: 12px;
+}
+
+.actions {
+  display: flex;
+  margin-top: 10px;
+}
+
+.actions .btn {
+  flex: 1;
+  margin-right: 8px;
+  text-align: center;
+}
+
+.btn.ghost {
+  background: #e6edf8;
+  color: #0a5cff;
+}
+
+.mini {
+  flex: 1;
+  background: #ffffff;
+  color: #0a5cff;
+  border-radius: 999px;
+  padding: 6px 10px;
+  margin-right: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.mini.warn {
+  color: #e5484d;
+}
+
+.label {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #0a1324;
+  font-weight: 600;
+}
+
+.textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: #e6edf8;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px;
+  margin-top: 6px;
+  min-height: 72px;
+  font-size: 14px;
+  color: #0a1324;
+}

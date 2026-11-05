@@ -53,6 +53,8 @@ test('every client exposes the same four care blocks', () => {
       assert.match(routes, new RegExp('path="' + segment + '"', 'u'), 'browser routes must implement ' + id);
     }
     assert.match(routes, /path="me\/records"/u, 'older records links still resolve');
+    assert.match(routes, /path="records\/:recordId"/u, 'the visit detail page is a route of its own');
+    assert.match(routes, /RecordDetailPage/u, 'the route renders the 4-tab detail page');
   }
 
   const mp = JSON.parse(read('apps/sdkwork-doctor-mini-program/src/app.json'));
@@ -60,7 +62,10 @@ test('every client exposes the same four care blocks', () => {
     'pages/conversation/index',
     'pages/doctor/index',
     'pages/records/index',
+    'pages/record-detail/index',
     'pages/profile/index',
+    'pages/patients/index',
+    'pages/device/index',
   ]);
   assert.deepEqual(mp.tabBar.list.map((tab) => tab.text), [CHAT, DOCTOR, RECORDS, ME]);
   assert.equal(mp.tabBar.list.length, required.length);
@@ -163,6 +168,29 @@ test('red-flag tokens match across the four triage implementations', () => {
       );
     }
   }
+});
+
+test('every mobile client ships the 我的 hub and its sub-screens', () => {
+  const h5Me = read('apps/sdkwork-doctor-h5/packages/sdkwork-doctor-h5-care/src/me.tsx');
+  for (const marker of ['doctor-me-identity', 'doctor-me-group', 'doctor-cell', 'PatientFilesPage', 'DevicePage']) {
+    assert.ok(h5Me.includes(marker), 'the H5 我的 hub must keep ' + marker);
+  }
+  assert.ok(exists('apps/sdkwork-doctor-flutter-mobile/lib/ui/patient_files_screen.dart'));
+  assert.ok(exists('apps/sdkwork-doctor-flutter-mobile/lib/ui/device_screen.dart'));
+  assert.match(
+    read('apps/sdkwork-doctor-flutter-mobile/lib/ui/me_tab.dart'),
+    /CareGroup/u,
+    'Flutter 我的 groups its capability cells',
+  );
+  for (const page of ['pages/patients/index', 'pages/device/index']) {
+    assert.ok(exists('apps/sdkwork-doctor-mini-program/src/' + page + '.js'), page + ' must exist');
+    assert.ok(exists('apps/sdkwork-doctor-mini-program/src/' + page + '.wxml'), page + ' must render');
+  }
+  assert.match(
+    read('apps/sdkwork-doctor-mini-program/src/pages/profile/index.wxml'),
+    /class="cell"/u,
+    'the mini program 我的 renders grouped cells',
+  );
 });
 
 test('every client ships a tab-level care package or page with specs', () => {

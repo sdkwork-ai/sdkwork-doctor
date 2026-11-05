@@ -26,7 +26,7 @@
       "order": 20,
       "surfaces": ["pc", "h5", "flutter", "mini_program"],
       "optional": false,
-      "description": "Human doctor directory: choose the family doctor and start a human consultation."
+      "description": "Human doctor directory: choose the family doctor and start a human consultation in the conversation home."
     },
     {
       "id": "records",
@@ -38,7 +38,7 @@
       "order": 30,
       "surfaces": ["pc", "h5", "flutter", "mini_program"],
       "optional": false,
-      "description": "Every visit record on this device, newest first, with the doctor and site of human consultations."
+      "description": "One card per visit session (the live AI conversation, a human consultation, or an ended visit's 病历), newest first. Each card opens the standalone detail page with four tabs: 病历 / AI总结 / 医生人工确认 / 通话回放."
     },
     {
       "id": "me",
@@ -50,7 +50,7 @@
       "order": 40,
       "surfaces": ["pc", "h5", "flutter", "mini_program"],
       "optional": false,
-      "description": "Patient files, my doctors, visit records, active mode, device checks."
+      "description": "Patient files, my doctors, visit records, medical records, active mode, device checks."
     }
   ],
   "landing": {

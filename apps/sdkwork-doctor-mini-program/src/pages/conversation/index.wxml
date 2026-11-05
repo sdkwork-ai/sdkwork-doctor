@@ -1,11 +1,33 @@
 <view class="conversation">
   <view class="card">
-    <view class="h1">{{title}}</view>
     <view class="row">
+      <view class="h1">{{title}}</view>
+      <view class="session-trigger" bindtap="onOpenSessions">
+        <text>{{openSessions}}</text>
+        <text wx:if="{{unreadTotal > 0}}" class="unread">{{unreadTotal}}</text>
+      </view>
+    </view>
+
+    <!-- A human consultation states who the family is talking to. -->
+    <view wx:if="{{activeHumanId}}" class="human-bar">
+      <view class="row">
+        <text class="badge">{{humanBadge}}</text>
+        <text class="badge {{humanWaiting ? 'warn' : ''}}">{{humanStatus}}</text>
+      </view>
+      <view class="strong">{{humanName}}</view>
+      <view class="muted">{{humanMeta}}</view>
+      <view class="row">
+        <button class="btn" bindtap="onEndHuman" disabled="{{!humanActive}}">{{humanEnd}}</button>
+        <button class="btn" bindtap="onOpenDoctorReply" disabled="{{!humanActive}}">{{replyAction}}</button>
+      </view>
+      <view wx:if="{{notice}}" class="notice">{{notice}}</view>
+    </view>
+
+    <view wx:if="{{!activeHumanId}}" class="row">
       <text>{{patientTitle}}</text>
       <text class="muted">{{switchHint}}</text>
     </view>
-    <scroll-view wx:if="{{patients.length > 0}}" class="chips" scroll-x="true">
+    <scroll-view wx:if="{{!activeHumanId && patients.length > 0}}" class="chips" scroll-x="true">
       <view
         wx:for="{{patients}}"
         wx:key="id"
@@ -14,37 +36,135 @@
         bindtap="onSelectPatient"
       >{{item.label}}</view>
     </scroll-view>
-    <view wx:if="{{!hasPatient}}" class="row">
+    <view wx:if="{{!activeHumanId && !hasPatient}}" class="row">
       <text>{{noPatient}}</text>
       <text class="badge" bindtap="onGoProfile">{{goProfile}}</text>
     </view>
-    <view class="muted">{{subtitle}}</view>
-    <view class="muted">{{modeLabel}}</view>
+    <view wx:if="{{!activeHumanId}}" class="muted">{{subtitle}}</view>
+
+    <!-- The patient ends the AI conversation here; the agent then writes the 病历. -->
+    <view wx:if="{{!activeHumanId}}" class="session-bar">
+      <view class="row">
+        <text class="badge">{{modeLabel}}</text>
+        <text class="muted">{{sessionMeta}}</text>
+      </view>
+      <view class="muted">{{sessionActive}}</view>
+      <button
+        class="btn"
+        bindtap="onEndConversation"
+        disabled="{{ending || busy || messages.length === 0}}"
+      >{{ending ? endingLabel : endLabel}}</button>
+      <view wx:if="{{notice}}" class="notice">{{notice}}</view>
+    </view>
+
     <view wx:if="{{error}}" class="error">{{error}}</view>
-    <view wx:if="{{messages.length === 0}}" class="muted">{{empty}}</view>
-    <view wx:for="{{messages}}" wx:key="id">
+    <view wx:if="{{messages.length === 0}}" class="muted">{{activeHumanId ? humanEmpty : empty}}</view>
+    <view wx:for="{{messages}}" wx:key="id" class="message">
       <view class="row">
         <text>{{item.role}}</text>
-        <text class="badge {{item.warn ? 'warn' : ''}}">{{item.level}}</text>
+        <text wx:if="{{item.level}}" class="badge {{item.warn ? 'warn' : ''}}">{{item.level}}</text>
       </view>
-      <view class="muted">{{item.text}}</view>
+      <view wx:if="{{item.text}}" class="muted">{{item.text}}</view>
+      <view wx:for="{{item.attachments}}" wx:for-item="file" wx:key="id" class="attachment">
+        <image
+          wx:if="{{file.kind === 'image' && (file.path || file.dataUrl)}}"
+          class="attachment-image"
+          mode="aspectFill"
+          src="{{file.path || file.dataUrl}}"
+        />
+        <video
+          wx:elif="{{file.kind === 'video' && file.path}}"
+          class="attachment-video"
+          controls="{{true}}"
+          src="{{file.path}}"
+        />
+        <view
+          wx:else
+          class="attachment-file"
+          data-path="{{file.path}}"
+          bindtap="onOpenAttachment"
+        >{{file.name}}</view>
+        <text class="muted">{{file.name}} · {{file.sizeLabel}}</text>
+      </view>
     </view>
+
+    <view wx:if="{{attachments.length > 0}}" class="attachment-list">
+      <view wx:for="{{attachments}}" wx:key="id" class="attachment-chip">
+        <text class="muted">{{item.name}} · {{item.sizeLabel}}</text>
+        <text class="remove" data-id="{{item.id}}" bindtap="onRemoveAttachment">{{removeLabel}}</text>
+      </view>
+    </view>
+    <view wx:if="{{!activeHumanId}}" class="muted">{{attachmentHint}}</view>
   </view>
 
   <view class="composer-dock">
     <chat-composer
-      attach-enabled="{{false}}"
+      attach-enabled="{{hasPatient && !activeHumanId}}"
       attach-label="{{attachLabel}}"
-      busy="{{busy}}"
-      disabled="{{!hasPatient}}"
+      busy="{{busy || ending}}"
+      disabled="{{!hasPatient || (activeHumanId && !humanActive)}}"
       mode-label="{{modeLabel}}"
-      placeholder="{{hasPatient ? placeholder : noPatient}}"
+      placeholder="{{!hasPatient ? noPatient : (activeHumanId ? humanPlaceholder : placeholder)}}"
       send-label="{{send}}"
       value="{{draft}}"
       voice-enabled="{{false}}"
       voice-label="{{voiceLabel}}"
+      bind:attach="onAttach"
       bind:input="onInput"
       bind:send="onSend"
     />
+  </view>
+
+  <!-- The conversation list: the AI family doctor plus every human consultation. -->
+  <view wx:if="{{sheetOpen}}" class="sheet-backdrop" bindtap="onCloseSessions">
+    <view class="sheet" catchtap="noop">
+      <view class="row">
+        <view>
+          <view class="h1">{{sessionsTitle}}</view>
+          <view class="muted">{{sessionsSubtitle}}</view>
+        </view>
+        <view class="close" bindtap="onCloseSessions">×</view>
+      </view>
+      <view class="session-row {{!activeHumanId ? 'on' : ''}}" bindtap="onSelectAi">
+        <view class="row">
+          <text class="strong">{{aiLabel}}</text>
+          <text class="muted">{{modeAiLabel}}</text>
+        </view>
+        <view class="muted">{{aiHint}}</view>
+      </view>
+      <view
+        wx:for="{{humanSessions}}"
+        wx:key="id"
+        class="session-row {{item.active ? 'on' : ''}}"
+        data-id="{{item.id}}"
+        bindtap="onSelectHuman"
+      >
+        <view class="row">
+          <text class="strong">{{item.title}}</text>
+          <text class="muted">{{item.time}}</text>
+        </view>
+        <view class="row">
+          <text class="muted">{{item.doctor}} · {{item.statusLabel}}</text>
+          <text wx:if="{{item.unread > 0}}" class="unread">{{item.unread}}</text>
+        </view>
+      </view>
+      <view wx:if="{{humanSessions.length === 0}}" class="muted">{{sessionsEmpty}}</view>
+    </view>
+  </view>
+
+  <!-- The doctor takes the device and replies inside the family app. -->
+  <view wx:if="{{doctorReplyOpen}}" class="sheet-backdrop" bindtap="onCloseDoctorReply">
+    <view class="sheet" catchtap="noop">
+      <view class="h1">{{replyTitle}}</view>
+      <view class="muted">{{replyHint}}</view>
+      <textarea
+        class="reply-input"
+        maxlength="500"
+        placeholder="{{replyPlaceholder}}"
+        value="{{doctorReplyDraft}}"
+        bindinput="onReplyInput"
+      />
+      <button class="btn" bindtap="onSubmitDoctorReply" disabled="{{!doctorReplyDraft}}">{{replyAction}}</button>
+    </view>
   </view>
 </view>

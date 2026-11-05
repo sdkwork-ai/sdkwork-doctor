@@ -68,3 +68,10 @@ abstract class CareConversationService {
     String Function(String rawReply)? decorate,
   });
 }
+
+/// Optional capability: the agent writes the 病历 when the patient ends a
+/// conversation. The hosted transport implements it; the on-device transport
+/// does not, so the application builds the deterministic offline summary.
+abstract interface class CareSummaryService {
+  Future<CareSummaryDraft> summarize(CareSummaryInput input);
+}

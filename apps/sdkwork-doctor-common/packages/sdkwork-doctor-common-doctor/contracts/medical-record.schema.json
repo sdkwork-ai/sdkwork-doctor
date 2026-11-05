@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "kind": "sdkwork.doctor.medical-record",
+  "purpose": "One 病历: the conversation the patient ended, the agent's summary and tentative AI diagnosis, the attending doctor's diagnosis, and the doctor's confirmation of the AI diagnosis. The AI and doctor diagnoses are stored side by side and neither overwrites the other. Every client reads and writes this exact shape; the TypeScript, Dart, and mini program suites assert it against this file.",
+  "storageKey": "sdkwork.doctor.medical-records.v1",
+  "limit": 100,
+  "ordering": "newest first, de-duplicated by id; a doctor review replaces the record in place",
+  "record": {
+    "fields": {
+      "id": "string",
+      "sessionId": "string (the conversation the record was generated from)",
+      "memberId": "string",
+      "memberLabel": "string",
+      "mode": "hosted | offline",
+      "startedAt": "ISO-8601 date-time string",
+      "endedAt": "ISO-8601 date-time string",
+      "summary": "string (agent summary of the conversation)",
+      "transcript": "MedicalTranscriptEntry[] (at least one)",
+      "attachments": "MedicalAttachment[]",
+      "aiDiagnosis": "MedicalDiagnosis with source=ai (always present, never final)",
+      "doctorDiagnosis": "MedicalDiagnosis with source=doctor (optional, independent of the AI one)",
+      "confirmation": "MedicalDiagnosisConfirmation (optional until a doctor confirms)",
+      "status": "awaiting_doctor | confirmed"
+    },
+    "required": [
+      "id",
+      "sessionId",
+      "memberId",
+      "memberLabel",
+      "mode",
+      "startedAt",
+      "endedAt",
+      "summary",
+      "transcript",
+      "attachments",
+      "aiDiagnosis",
+      "status"
+    ]
+  },
+  "transcriptEntry": {
+    "fields": {
+      "id": "string",
+      "role": "patient | assistant",
+      "text": "string (may be empty for an attachment-only turn)",
+      "at": "ISO-8601 date-time string",
+      "level": "emergency | urgent | routine | self-care (optional)",
+      "attachmentIds": "string[] (optional)"
+    },
+    "required": ["id", "role", "text", "at"]
+  },
+  "attachment": {
+    "fields": {
+      "id": "string",
+      "kind": "image | video | file",
+      "name": "string",
+      "mimeType": "string",
+      "sizeBytes": "integer >= 0",
+      "addedAt": "ISO-8601 date-time string",
+      "path": "string (optional, native client file path)",
+      "dataUrl": "string (optional, inline fallback)"
+    },
+    "required": ["id", "kind", "name", "mimeType", "sizeBytes", "addedAt"]
+  },
+  "diagnosis": {
+    "fields": {
+      "id": "string",
+      "source": "ai | doctor",
+      "doctorId": "string (optional, doctor diagnosis only)",
+      "doctorLabel": "string (doctor diagnosis only)",
+      "impression": "string",
+      "conditions": "string[] (trimmed, de-duplicated)",
+      "recommendations": "string[] (trimmed, de-duplicated)",
+      "level": "emergency | urgent | routine | self-care",
+      "notes": "string (optional)",
+      "createdAt": "ISO-8601 date-time string",
+      "basisDiagnosisId": "string (optional, the AI diagnosis a doctor diagnosis amended)"
+    },
+    "required": ["id", "source", "impression", "conditions", "recommendations", "level", "createdAt"]
+  },
+  "confirmation": {
+    "fields": {
+      "diagnosisId": "string (the AI diagnosis id)",
+      "decision": "confirmed | amended",
+      "doctorId": "string (optional)",
+      "doctorLabel": "string",
+      "confirmedAt": "ISO-8601 date-time string",
+      "doctorDiagnosisId": "string (optional, set when the doctor kept their own diagnosis)"
+    },
+    "required": ["diagnosisId", "decision", "doctorLabel", "confirmedAt"]
+  },
+  "example": {
+    "id": "9d1f0c4e-8a2b-4c3d-9e5f-7a6b5c4d3e2f",
+    "sessionId": "sess-20261103-190000",
+    "memberId": "member-child",
+    "memberLabel": "Xiaoman (child)",
+    "mode": "offline",
+    "startedAt": "2026-11-03T11:00:00.000Z",
+    "endedAt": "2026-11-03T11:18:00.000Z",
+    "summary": "Two turns about a 39C fever since last night.",
+    "transcript": [
+      {
+        "id": "entry-1",
+        "role": "patient",
+        "text": "Child has had a 39C fever since last night",
+        "at": "2026-11-03T11:01:00.000Z",
+        "level": "urgent"
+      }
+    ],
+    "attachments": [],
+    "aiDiagnosis": {
+      "id": "ai-9d1f0c4e",
+      "source": "ai",
+      "impression": "Febrile child; a same-day clinician review is advised.",
+      "conditions": ["Respiratory infection"],
+      "recommendations": ["Contact a clinician today."],
+      "level": "urgent",
+      "createdAt": "2026-11-03T11:18:00.000Z"
+    },
+    "status": "awaiting_doctor"
+  }
+}

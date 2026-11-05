@@ -12,6 +12,7 @@ import 'package:sdkwork_doctor_flutter_mobile/records/visit_store.dart';
 import 'package:sdkwork_doctor_flutter_mobile/triage.dart';
 import 'package:sdkwork_doctor_flutter_mobile/triage_copy.dart';
 import 'package:sdkwork_doctor_flutter_mobile/ui/care_call_screen.dart';
+import 'package:sdkwork_doctor_flutter_mobile/ui/care_shell.dart';
 import 'package:sdkwork_doctor_flutter_mobile/ui/care_widgets.dart';
 import 'package:sdkwork_doctor_flutter_mobile/ui/chat_tab.dart';
 import 'package:sdkwork_doctor_flutter_mobile_care/sdkwork_doctor_flutter_mobile_care.dart';
@@ -211,10 +212,10 @@ Future<Harness> pumpApp(
   return Harness(records: recordStore, patients: patientStore);
 }
 
-/// Taps the navbar voice action and waits out the route transition without
+/// Taps the navbar video-call action and waits out the route transition without
 /// `pumpAndSettle`, because the call orb breathes forever.
 Future<void> openCall(WidgetTester tester) async {
-  await tester.tap(find.byTooltip(_t('platform.care.call.open')));
+  await tester.tap(find.byTooltip(_t('platform.care.call.videoTitle')));
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 400));
   await tester.pump(const Duration(milliseconds: 60));
@@ -229,27 +230,52 @@ Future<void> closeCall(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('the navbar puts the voice-call action left of the plus',
+  testWidgets('the navbar puts the video-call action left of the plus',
       (WidgetTester tester) async {
     await pumpApp(tester);
 
     final AppBar appBar = tester.widget<AppBar>(find.byType(AppBar).first);
     final List<Widget> actions = appBar.actions ?? const <Widget>[];
-    final List<String?> tooltips = <String?>[
-      for (final Widget action in actions)
-        if (action is IconButton) action.tooltip,
-    ];
-
-    expect(tooltips, <String?>[
-      _t('platform.care.call.open'),
-      _t('platform.care.action.newConsultation'),
-    ]);
+    expect(actions, hasLength(2));
+    expect(actions.first, isA<IconButton>());
+    expect((actions.first as IconButton).tooltip,
+        _t('platform.care.call.videoTitle'));
     expect(
       (actions.first as IconButton).icon,
       isA<Icon>()
-          .having((Icon icon) => icon.icon, 'icon', Icons.graphic_eq_rounded),
+          .having((Icon icon) => icon.icon, 'icon', Icons.videocam_outlined),
     );
-    expect(find.byTooltip(_t('platform.care.call.open')), findsOneWidget);
+    expect(actions[1], isA<CareActionMenu>());
+    expect(find.byTooltip(_t('platform.care.call.videoTitle')), findsOneWidget);
+    expect(find.byTooltip(_t('platform.care.action.more')), findsOneWidget);
+    expect(
+      tester.getCenter(find.byTooltip(_t('platform.care.call.videoTitle'))).dx,
+      lessThan(
+          tester.getCenter(find.byTooltip(_t('platform.care.action.more'))).dx),
+      reason: 'the video-call action sits left of the plus',
+    );
+  });
+
+  testWidgets('我的 opens the video call with the camera already on',
+      (WidgetTester tester) async {
+    final FakeVoiceEnvironment voice = FakeVoiceEnvironment();
+    await pumpApp(tester, voice: voice);
+    await tester.tap(find.descendant(
+      of: find.byType(NavigationBar),
+      matching: find.text(_t('platform.care.nav.me')),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(_t('platform.care.call.videoTitle')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 120));
+
+    expect(find.byKey(careCallScreenKey), findsOneWidget);
+    expect(voice.camera.isOpen, isTrue,
+        reason: 'the 我的 video entry turns the camera on immediately');
+    expect(find.byTooltip(_t('platform.care.call.cameraOff')), findsOneWidget);
+    expect(find.text(_t('platform.care.call.videoTitle')), findsOneWidget);
   });
 
   testWidgets('the call opens on the active patient and starts listening',
@@ -260,6 +286,8 @@ void main() {
 
     expect(find.byKey(careCallScreenKey), findsOneWidget);
     expect(voice.recognizer.listening, isTrue);
+    expect(voice.camera.isOpen, isTrue,
+        reason: 'the navbar entry opens the video call, not a voice-only call');
     expect(
       find.text(carePatientLabel(_zh, harness.patients.active!)),
       findsOneWidget,
@@ -270,9 +298,12 @@ void main() {
       contains(_t('platform.care.call.greeting')),
       reason: 'the doctor opens the call with a spoken greeting',
     );
-    expect(find.byKey(careCallOrbKey), findsOneWidget);
+    expect(find.byKey(careCallVideoPreviewKey), findsOneWidget);
+    expect(find.byKey(careCallOrbKey), findsNothing,
+        reason: 'the camera feed replaces the orb in video mode');
     expect(find.byKey(careCallMicKey), findsOneWidget);
     expect(find.byKey(careCallCameraKey), findsOneWidget);
+    expect(find.byKey(careCallFlipKey), findsOneWidget);
     expect(find.byKey(careCallHangUpKey), findsOneWidget);
   });
 
@@ -317,6 +348,10 @@ void main() {
     final FakeVoiceEnvironment voice = FakeVoiceEnvironment();
     await pumpApp(tester, voice: voice);
     await openCall(tester);
+    // The orb owns the voice mode; the video entry starts with the camera on.
+    await tester.tap(find.byKey(careCallCameraKey));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
     voice.synthesizer.hold = true;
 
     voice.recognizer.hear('头晕两天', isFinal: true);
@@ -332,6 +367,30 @@ void main() {
     expect(voice.synthesizer.stops, greaterThanOrEqualTo(1));
     expect(voice.recognizer.listening, isTrue);
     expect(find.text(_t('platform.care.call.listening')), findsOneWidget);
+
+    await closeCall(tester);
+  });
+
+  testWidgets('tapping the video preview interrupts the answer',
+      (WidgetTester tester) async {
+    final FakeVoiceEnvironment voice = FakeVoiceEnvironment();
+    await pumpApp(tester, voice: voice);
+    await openCall(tester);
+    voice.synthesizer.hold = true;
+
+    voice.recognizer.hear('头晕两天', isFinal: true);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.text(_t('platform.care.call.interrupt')), findsOneWidget);
+
+    await tester.tap(find.byKey(careCallVideoPreviewKey));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(voice.synthesizer.stops, greaterThanOrEqualTo(1));
+    expect(voice.recognizer.listening, isTrue,
+        reason: 'the microphone reopens after the interruption');
 
     await closeCall(tester);
   });
@@ -355,11 +414,22 @@ void main() {
     await closeCall(tester);
   });
 
-  testWidgets('the camera switches the call into video mode',
+  testWidgets('the camera turns the video call into voice and back',
       (WidgetTester tester) async {
     final FakeVoiceEnvironment voice = FakeVoiceEnvironment();
     await pumpApp(tester, voice: voice);
     await openCall(tester);
+
+    expect(voice.camera.isOpen, isTrue);
+    expect(find.byKey(careCallVideoPreviewKey), findsOneWidget);
+
+    await tester.tap(find.byKey(careCallCameraKey));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(voice.camera.isOpen, isFalse);
+    expect(find.byKey(careCallOrbKey), findsOneWidget);
+    expect(find.byKey(careCallVideoPreviewKey), findsNothing);
 
     await tester.tap(find.byKey(careCallCameraKey));
     await tester.pump();
@@ -391,10 +461,13 @@ void main() {
     await pumpApp(tester, voice: voice);
     await openCall(tester);
 
+    // The video entry already tried the lens; a retry from the camera control
+    // must explain the denial and leave the call usable in voice mode.
     await tester.tap(find.byKey(careCallCameraKey));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
+    expect(voice.camera.isOpen, isFalse);
     expect(find.text(_t('platform.care.call.cameraDenied')), findsOneWidget);
     expect(find.byKey(careCallOrbKey), findsOneWidget);
     expect(find.byKey(careCallVideoPreviewKey), findsNothing);
@@ -415,6 +488,9 @@ void main() {
     expect(find.byKey(careCallMicKey), findsNothing,
         reason: 'a control that cannot listen must not be shown');
     expect(find.byKey(careCallCameraKey), findsNothing);
+    expect(find.byKey(careCallVideoPreviewKey), findsNothing,
+        reason: 'a call that cannot start must not hold the camera');
+    expect(voice.camera.isOpen, isFalse);
     expect(find.byKey(careCallHangUpKey), findsOneWidget);
 
     await closeCall(tester);

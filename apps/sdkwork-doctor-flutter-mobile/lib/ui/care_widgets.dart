@@ -160,6 +160,173 @@ class CareBadge extends StatelessWidget {
   }
 }
 
+/// Round monogram for a household member. Patients have no portrait in this
+/// release, so the initial is the identity mark, flat and borderless.
+class CareMemberAvatar extends StatelessWidget {
+  const CareMemberAvatar({super.key, required this.name, this.size = 44});
+
+  final String name;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration:
+          const BoxDecoration(color: kSurfaceAlt, shape: BoxShape.circle),
+      child: Text(
+        doctorInitial(name),
+        style: TextStyle(
+          fontSize: size * 0.36,
+          fontWeight: FontWeight.w700,
+          color: kTechBlueStrong,
+        ),
+      ),
+    );
+  }
+}
+
+/// One full-bleed group of linked capability rows. Groups sit on the canvas
+/// separated by gaps; inside a group the rows are separated by a one-pixel tonal
+/// inset that starts where the text starts, so no border or shadow is needed.
+class CareGroup extends StatelessWidget {
+  const CareGroup({
+    super.key,
+    this.label,
+    required this.children,
+  });
+
+  /// Accessible name of the group; the visual design carries no section title.
+  final String? label;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Widget> rows = <Widget>[];
+    for (int index = 0; index < children.length; index += 1) {
+      if (index > 0) {
+        rows.add(const Divider(
+          height: 1,
+          thickness: 1,
+          indent: 52,
+          color: kSurfaceAlt,
+        ));
+      }
+      rows.add(children[index]);
+    }
+    return Semantics(
+      container: label != null,
+      label: label,
+      child: ColoredBox(
+        color: kSurface,
+        child: Column(children: rows),
+      ),
+    );
+  }
+}
+
+/// One capability row: icon, title, optional value, chevron. The whole row is
+/// the tap target that opens the module.
+class CareCell extends StatelessWidget {
+  const CareCell({
+    super.key,
+    required this.icon,
+    required this.title,
+    this.value,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? value;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: kSurface,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+          child: Row(
+            children: <Widget>[
+              Icon(icon, size: 20, color: kTechBlueStrong),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: kInk,
+                  ),
+                ),
+              ),
+              if (value != null)
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 140),
+                  child: Text(
+                    value!,
+                    textAlign: TextAlign.right,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 13, color: kMuted),
+                  ),
+                ),
+              const SizedBox(width: 6),
+              const Icon(Icons.chevron_right, size: 20, color: kMuted),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A rounded status pill for the identity block. The optional leading dot
+/// carries a state (hosted / offline) instead of colouring the whole label.
+class CarePill extends StatelessWidget {
+  const CarePill({
+    super.key,
+    required this.label,
+    this.dotColor,
+  });
+
+  final String label;
+  final Color? dotColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: kSurface,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          if (dotColor != null) ...<Widget>[
+            Container(
+              width: 6,
+              height: 6,
+              decoration:
+                  BoxDecoration(color: dotColor, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 6),
+          ],
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, color: kMuted),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Catalog key of one triage level.
 String careLevelKey(TriageLevel level) {
   switch (level) {

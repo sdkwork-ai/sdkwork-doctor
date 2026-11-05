@@ -1,6 +1,20 @@
 export type { ChatMessage, ChatRole, AgentTurnContext, AgentConversationPort, CareAgentRuntime } from './types';
 export { createLocalCareAgent } from './offline';
 export {
+  CARE_SUMMARY_SYSTEM_PROMPT,
+  buildCareSummaryRequest,
+  careTranscriptLevel,
+  offlineCareSummary,
+  parseCareSummaryReply,
+} from './summary';
+export type {
+  CareDiagnosisDraft,
+  CareSummaryAttachment,
+  CareSummaryDraft,
+  CareSummaryInput,
+  CareSummaryTurn,
+} from './summary';
+export {
   createHostedCareAgent,
   buildFamilyDoctorSystemPrompt,
   composeSafeReply,

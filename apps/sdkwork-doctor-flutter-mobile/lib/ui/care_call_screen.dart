@@ -19,7 +19,9 @@ import '../care/voice/care_voice_call_controller.dart';
 import '../care/voice/care_voice_ports.dart';
 import '../i18n/care_i18n.dart';
 import '../patients/patient_store.dart';
+import '../records/care_session_store.dart';
 import '../records/visit_store.dart';
+import '../triage.dart';
 import 'care_widgets.dart';
 
 /// Keys the tests and the shell share.
@@ -45,6 +47,8 @@ class CareCallScreen extends StatefulWidget {
     required this.environment,
     required this.conversations,
     required this.records,
+    required this.careSessions,
+    this.initialVideo = false,
   });
 
   final String locale;
@@ -58,6 +62,11 @@ class CareCallScreen extends StatefulWidget {
 
   final CareConversationsController conversations;
   final VisitRecordStore records;
+  final CareSessionStore careSessions;
+
+  /// Opens the call with the camera on — the 我的 video-call entry — instead of
+  /// starting voice-first and letting the patient turn the camera on.
+  final bool initialVideo;
 
   @override
   State<CareCallScreen> createState() => _CareCallScreenState();
@@ -67,6 +76,12 @@ class _CareCallScreenState extends State<CareCallScreen>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late final AnimationController _breath;
   CareVoiceCallController? _controller;
+
+  /// The visit session the call belongs to; a call is one segment of a visit.
+  String? _visitId;
+  String? _callId;
+  bool _createdVisit = false;
+  String _callChannel = 'voice';
 
   @override
   void initState() {
@@ -80,8 +95,15 @@ class _CareCallScreenState extends State<CareCallScreen>
     if (patient == null) {
       return;
     }
+    _callChannel = widget.initialVideo ? 'video' : 'voice';
+    // Opening the visit session mutates a shared store, so it runs after the
+    // first frame instead of during this widget's build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_prepareCall(patient));
+    });
     final CareConversationsController conversations = widget.conversations;
     final VisitRecordStore records = widget.records;
+    final CareSessionStore careSessions = widget.careSessions;
     final String locale = widget.locale;
     final CareVoiceCallController controller = CareVoiceCallController(
       locale: locale,
@@ -98,11 +120,39 @@ class _CareCallScreenState extends State<CareCallScreen>
           text: text,
         );
         if (reply != null) {
+          final String channel = _callChannel;
+          final CareSession session = await careSessions.ensureActive(
+            patient: patient,
+            mode: conversations.mode,
+            sessionId: conversations.activeSessionId,
+          );
+          await careSessions.startCall(session.id, channel);
+          final CareSession? current = careSessions.find(session.id);
+          if (current != null) {
+            _visitId = session.id;
+            _callId = _openCall(current)?.id;
+          }
+          await careSessions.appendMessage(
+            session.id,
+            role: 'patient',
+            text: text,
+            channel: channel,
+            level: triageSymptoms(text).level,
+          );
+          await careSessions.appendMessage(
+            session.id,
+            role: 'assistant',
+            text: reply,
+            channel: channel,
+          );
           return CareCallTurnResult.reply(reply);
         }
         return CareCallTurnResult.failure(conversations.error);
       },
     );
+    controller.addListener(() {
+      _callChannel = controller.videoEnabled ? 'video' : 'voice';
+    });
     _controller = controller;
     // Let the first frame paint the connecting state before the ports start.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -110,6 +160,9 @@ class _CareCallScreenState extends State<CareCallScreen>
         return;
       }
       unawaited(controller.start());
+      if (widget.initialVideo) {
+        unawaited(controller.toggleCamera());
+      }
     });
   }
 
@@ -134,16 +187,54 @@ class _CareCallScreenState extends State<CareCallScreen>
     }
   }
 
+  CareSessionCall? _openCall(CareSession session) {
+    for (final CareSessionCall call in session.calls.reversed) {
+      if (call.endedAt == null) return call;
+    }
+    return null;
+  }
+
+  Future<void> _prepareCall(PatientProfile patient) async {
+    final CareSession? existing = widget.careSessions.findActive(patient.id);
+    _createdVisit = existing == null;
+    final CareSession session = await widget.careSessions.ensureActive(
+      patient: patient,
+      mode: widget.conversations.mode,
+      sessionId: widget.conversations.activeSessionId,
+    );
+    _visitId = session.id;
+    final CareSession? started =
+        await widget.careSessions.startCall(session.id, _callChannel);
+    _callId = started == null ? null : _openCall(started)?.id;
+  }
+
+  Future<void> _endCall() async {
+    final String? id = _visitId;
+    if (id == null) return;
+    final String? callId = _callId;
+    if (callId != null) {
+      await widget.careSessions.endCall(id, callId);
+    }
+    final CareSession? latest = widget.careSessions.find(id);
+    if (_createdVisit && latest != null && latest.transcript.isEmpty) {
+      await widget.careSessions.remove(id);
+    }
+    _visitId = null;
+    _callId = null;
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _breath.dispose();
+    unawaited(_endCall());
     _controller?.dispose();
     super.dispose();
   }
 
   Future<void> _hangUp() async {
     await _controller?.hangUp();
+    await _endCall();
     if (!mounted) {
       return;
     }
@@ -193,7 +284,20 @@ class _CareCallScreenState extends State<CareCallScreen>
             if (video)
               KeyedSubtree(
                 key: careCallVideoPreviewKey,
-                child: controller.camera.buildPreview(context),
+                // The camera feed is also the interrupt target: the status line
+                // promises "speak, or tap to interrupt" in video mode too.
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => unawaited(controller.interrupt()),
+                  child: Semantics(
+                    button: true,
+                    label: careText(
+                      widget.locale,
+                      'platform.care.call.interrupt',
+                    ),
+                    child: controller.camera.buildPreview(context),
+                  ),
+                ),
               )
             else
               Center(
@@ -214,7 +318,7 @@ class _CareCallScreenState extends State<CareCallScreen>
                   ),
                 ),
               ),
-            if (video) const _VideoScrim(),
+            if (video) const IgnorePointer(child: _VideoScrim()),
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),

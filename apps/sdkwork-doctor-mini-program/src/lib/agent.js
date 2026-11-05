@@ -8,6 +8,7 @@
 const { triageLevel } = require('./triage.js');
 const { careTurnPayloadHash, careSessionPayloadHash } = require('./fingerprint.js');
 const { composeHostedReply, offlineAnswer } = require('./triage-copy.js');
+const { SUMMARY_SYSTEM_PROMPT, buildSummaryRequest, offlineSummary, parseSummaryReply } = require('./summary.js');
 
 const FAMILY_DOCTOR_AGENT_ID = 'agent.family-doctor';
 const API_PREFIX = '/app/v3/api';
@@ -133,21 +134,37 @@ function envelopeItem(body) {
   return data.item;
 }
 
-function createOfflineAgent() {
+function createOfflineAgent(options) {
+  const settings = options || {};
   const history = [];
   return {
     mode: 'offline',
     history: () => history.slice(),
-    send(input, member) {
+    sessionId: () => null,
+    summarize(input) {
+      return Promise.resolve(offlineSummary(input, settings.translate));
+    },
+    reset() {
+      history.length = 0;
+    },
+    send(input, member, attachments) {
       const text = String(input || '').trim();
-      if (!text) return Promise.reject(careAgentError('message must not be empty'));
-      const level = triageLevel(text);
+      const files = attachments || [];
+      if (!text && files.length === 0) {
+        return Promise.reject(careAgentError('message must not be empty'));
+      }
+      const level = triageLevel(text || files.map((file) => file.name).join(' '));
       const reply = {
         role: 'assistant',
         text: offlineAnswer(level, member),
         level,
       };
-      history.push({ role: 'user', text: text, level: level });
+      history.push({
+        role: 'user',
+        text,
+        level,
+        ...(files.length > 0 ? { attachments: files.slice() } : {}),
+      });
       history.push(reply);
       return Promise.resolve(reply);
     },
@@ -163,6 +180,7 @@ function createHostedAgent(options) {
   const createRequestId = options.createId || createId;
   const history = [];
   let sessionPromise = null;
+  let resolvedSessionId = null;
 
   function token() {
     const value = String((options.getAccessToken ? options.getAccessToken() : '') || '').trim();
@@ -211,6 +229,7 @@ function createHostedAgent(options) {
           if (typeof sessionId !== 'string' || !sessionId) {
             throw careAgentError('agents API session response is missing sessionId');
           }
+          resolvedSessionId = sessionId;
           return sessionId;
         })
         .catch((error) => {
@@ -225,19 +244,56 @@ function createHostedAgent(options) {
   return {
     mode: 'hosted',
     history: () => history.slice(),
-    async send(input, member) {
+    sessionId: () => resolvedSessionId,
+    reset() {
+      history.length = 0;
+      sessionPromise = null;
+      resolvedSessionId = null;
+    },
+    summarize(input) {
+      return (async () => {
+        const accessToken = token();
+        const sessionId = await ensureSession(accessToken);
+        const summaryRequest = buildSummaryRequest(input);
+        const requestId = createRequestId();
+        const body = {
+          content: summaryRequest,
+          contentType: 'text/plain',
+          turnMode: 'interactive',
+          systemPrompt: SUMMARY_SYSTEM_PROMPT,
+          idempotencyKey: requestId,
+          payloadHash: careTurnPayloadHash(summaryRequest, 'text/plain', entrySurface),
+          clientRequestId: requestId,
+          requestedAt: now().toISOString(),
+        };
+        const path = sessionsPath + '/' + encodeURIComponent(sessionId) + '/turns?stream=false';
+        const response = await post(path, body, accessToken);
+        if (response.status < 200 || response.status >= 300) throw problem(response.status, response.body);
+        const replyText = answerText(envelopeItem(response.body));
+        if (!replyText) throw careAgentError('summary turn produced no assistant_output content');
+        const draft = parseSummaryReply(replyText, input);
+        if (!draft) throw careAgentError('summary turn did not return the case-record JSON');
+        return draft;
+      })();
+    },
+    async send(input, member, attachments) {
       const text = String(input || '').trim();
-      if (!text) throw careAgentError('message must not be empty');
+      const files = attachments || [];
+      if (!text && files.length === 0) throw careAgentError('message must not be empty');
       const accessToken = token();
       const sessionId = await ensureSession(accessToken);
+      const attachmentNote = files.length > 0
+        ? 'Attached files: ' + files.map((file) => file.name + ' (' + file.kind + ')').join(', ')
+        : '';
+      const content = attachmentNote ? (text ? text + '\n\n' + attachmentNote : attachmentNote) : text;
       const requestId = createRequestId();
       const body = {
-        content: text,
+        content: content,
         contentType: 'text/plain',
         turnMode: 'interactive',
         systemPrompt: options.systemPrompt ? options.systemPrompt(member) : buildSystemPrompt(member),
         idempotencyKey: requestId,
-        payloadHash: careTurnPayloadHash(text, 'text/plain', entrySurface),
+        payloadHash: careTurnPayloadHash(content, 'text/plain', entrySurface),
         clientRequestId: requestId,
         requestedAt: now().toISOString(),
       };
@@ -247,9 +303,14 @@ function createHostedAgent(options) {
       const item = envelopeItem(response.body);
       const replyText = answerText(item);
       if (!replyText.trim()) throw careAgentError('agent turn produced no assistant_output content');
-      const level = resolveReplyTriage(text, replyText);
+      const level = resolveReplyTriage(text || files.map((file) => file.name).join(' '), replyText);
       const reply = { role: 'assistant', text: composeReply(level, replyText, member), level: level };
-      history.push({ role: 'user', text: text, level: level });
+      history.push({
+        role: 'user',
+        text: text,
+        level: level,
+        ...(files.length > 0 ? { attachments: files.slice() } : {}),
+      });
       history.push(reply);
       return reply;
     },
@@ -263,7 +324,7 @@ function createCareAgent(options) {
     agentsApiBaseUrl: settings.agentsApiBaseUrl,
     hasAccessToken: typeof accessToken === 'string' && accessToken.trim().length > 0,
   });
-  return mode === 'hosted' ? createHostedAgent(settings) : createOfflineAgent();
+  return mode === 'hosted' ? createHostedAgent(settings) : createOfflineAgent(settings);
 }
 
 module.exports = {
@@ -277,4 +338,5 @@ module.exports = {
   resolveReplyTriage,
   composeReply,
   buildSystemPrompt,
+  SUMMARY_SYSTEM_PROMPT,
 };

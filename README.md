@@ -48,27 +48,35 @@ Keys that change product behaviour:
 
 - `agentsApiBaseUrl` — the sdkwork-agents gateway; with an IAM token it selects the hosted conversation, otherwise the offline triage adapter answers and says so.
 - `careDoctorDirectoryUrl` — the operator's human-doctor directory document; empty selects the authored fallback roster.
-- `app.blocks` / `theme` — hide, reorder, relabel, or retheme the three tabs and the palette.
+- `app.blocks` / `theme` — hide, reorder, relabel, or retheme the four tabs and the palette.
 
 
 ## Family Doctor Capability
 
-Three tabs on every client; the browser surfaces also keep a workbench landing at the surface root.
+Four tabs on every client; the browser surfaces also keep a workbench landing at the surface root.
 
 | Tab | PC / H5 | Flutter | Mini program |
 | --- | --- | --- | --- |
 | 对话 | `/doctor/chat` | chat destination | `pages/conversation` |
 | 医生 | `/doctor/doctor` | doctor destination | `pages/doctor` |
+| 记录 | `/doctor/records` | records destination | `pages/records` |
 | 我的 | `/doctor/me` | me destination | `pages/profile` |
-| 记录 (sub-screen of 我的) | `/doctor/me/records` | pushed screen | `pages/records` (not a tab) |
+| 病人档案 (sub-screen of 我的) | H5 `/doctor/me/patients`; PC keeps its inline card | pushed screen | `pages/patients` |
+| 设备环境 (sub-screen of 我的) | H5 `/doctor/me/device`; PC keeps its inline card | pushed screen | `pages/device` |
 
-The mobile 医生 tab follows the WeChat search pattern: the title stays in the navbar, a search icon on the right opens a dedicated search page with an auto-focused field and a cancel action, and the department category tabs scroll in the navbar under the title instead of taking a row inside the page. Tapping a search result returns to the tab with that doctor's card expanded, so selection and the consultation form stay in one place.
+The mobile 我的 tab is an account screen in the native idiom: a full-bleed identity block (large avatar, name, patient facts, status pills for profile completeness and the active conversation mode), then grouped capability rows — 病人档案, 我的医生, 对话, 视频通话, 记录 (visit records and 病历), and 设备环境 — each row a single line that opens its module. Groups sit on the canvas with gaps between them and no section headers, and rows are separated by a tonal inset, so the page reads like a system settings list. The patient files and the device environment keep their own screens on the mobile surfaces; PC keeps its workbench cards.
+
+The 对话 also runs as a voice/video call on H5 and Flutter: 我的 and the 对话 header open the full-screen call mode of the same session, spoken turns go through the same agent exchange and land in 看病记录, and hanging up returns to the text transcript with those turns in place. The call degrades honestly — no speech recognition shows the text fallback, a denied camera keeps voice mode with a notice, and a failed turn reopens the microphone instead of stranding the call.
+
+**发起人工问诊 is a conversation, not a channel launch.** The doctor's detail page opens a human consultation addressed to that clinician and lands on the conversation home, with the reason already sent. The attending doctor answers from the same device — H5/PC through the session's 医生回复 card in 记录, Flutter through the session row's 以医生身份回复 action, the mini program through 医生回复 in the human conversation — and every conversation row carries an unread badge for the doctor replies the family has not opened, plus a 待医生回复 / 医生已回复 state. A human consultation never uses the AI's transcript, and an AI session never accepts a doctor reply.
+
+The mobile 医生 tab follows the WeChat search pattern: the title stays in the navbar, a search icon on the right opens a dedicated search page with an auto-focused field and a cancel action, and the department category tabs scroll in the navbar under the title instead of taking a row inside the page. A directory card — and a search result — opens the doctor's detail page rather than expanding inside the list: the detail page owns the portrait and credentials, focus areas, each practice site and its consulting hours, the consultation channels, the selection state, and the consultation form.
 
 Shared contracts:
 
 - `@sdkwork/doctor-common-doctor` owns patient files, family members, health summary, emergency-first triage, and the human-doctor roster/selection rules.
 - `contracts/triage-rules.json` is the single red-flag vocabulary; a parity test fails when any client drifts.
-- `contracts/doctor-roster.json` is the authored fallback roster; an operator binds a real directory through `runtime-env.json#careDoctorDirectoryUrl` (`specs/doctor-directory.contract.json`). A doctor is a person; each practice site is an affiliation that names the Appbase `organizationId`, the `med_hospital` code, the department/rank, and the engagement (`full_time` / `part_time` / `contract` / `visiting`). `sdkwork-company` is never the clinical employer. Each entry also names its portrait (`avatarUrl`); the contract package keeps the editable SVG and the canonical PNG, every client ships the same PNG bytes, and an operator directory may publish an absolute http(s) URL instead. Re-render the portraits with `node tools/render-doctor-avatars.mjs`.
+- `contracts/doctor-roster.json` is the authored fallback roster; an operator binds a real directory through `runtime-env.json#careDoctorDirectoryUrl` (`specs/doctor-directory.contract.json`). A doctor is a person; each practice site is an affiliation that names the Appbase `organizationId`, the `med_hospital` code, the department/rank, and the engagement (`full_time` / `part_time` / `contract` / `visiting`). `sdkwork-company` is never the clinical employer. Each entry also names its portrait (`avatarUrl`); the contract package keeps the editable SVG and the canonical PNG, every client ships the same PNG bytes, and an operator directory may publish an absolute http(s) URL instead. Re-render the portraits with `node tools/render-doctor-avatars.mjs`; the mini program's 我的 row icons are rendered from their authored SVGs with `node tools/render-care-icons.mjs`.
 - `@sdkwork/doctor-common-agent` owns `AgentConversationPort`, the offline care adapter, the hosted wire adapter, the managed-agent catalogue port, and `resolveCareAgentMode()` (hosted vs offline is explicit, never a silent fallback).
 
 ### Verified

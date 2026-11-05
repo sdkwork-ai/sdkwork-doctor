@@ -85,3 +85,130 @@ page {
 .btn[disabled] { opacity: 0.55; }
 
 .error { color: #e5484d; font-size: 12px; }
+
+/* 病历: AI diagnosis and doctor diagnosis are rendered as two independent
+   blocks, plus the review form the doctor saves. */
+.notice {
+  background: #e3f7ef;
+  color: #0e9f6e;
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin: 8px 0;
+  font-size: 12px;
+}
+
+.diagnosis {
+  background: #e6edf8;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 8px 0;
+}
+
+.review {
+  margin-top: 10px;
+}
+
+.review .input {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 6px 0 10px;
+}
+
+.link {
+  color: #0a5cff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* 我的: a full-bleed account screen. The identity block (avatar, name, facts,
+   status pills) sits directly on the canvas; each capability below is one row
+   of a grouped list, separated from its siblings by a 1px tonal inset that
+   starts where the text starts. */
+.me-identity { padding: 16px 16px 0; }
+
+.me-identity-main { display: flex; align-items: center; }
+
+.me-avatar {
+  width: 64px;
+  height: 64px;
+  flex: 0 0 64px;
+  border-radius: 16px;
+  background: #e7efff;
+  color: #0747c9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.me-identity-copy { flex: 1; min-width: 0; margin-left: 16px; }
+.me-name { font-size: 22px; font-weight: 600; color: #0a1324; }
+.me-id { margin-top: 5px; font-size: 13px; line-height: 1.4; color: #5a6b85; }
+
+.me-pills { display: flex; flex-wrap: wrap; margin: 14px 0 0 80px; }
+.me-pill {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #ffffff;
+  font-size: 12px;
+  color: #5a6b85;
+}
+.pill-dot { width: 6px; height: 6px; border-radius: 50%; background: #0e9f6e; margin-right: 6px; }
+.pill-dot.muted { background: #5a6b85; }
+
+.me-groups { margin-top: 24px; }
+.me-group { display: flex; flex-direction: column; background: #ffffff; margin-bottom: 10px; }
+
+.cell { position: relative; display: flex; align-items: center; padding: 16px; background: #ffffff; }
+.cell + .cell::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 52px;
+  right: 0;
+  height: 1px;
+  background: #e6edf8;
+}
+
+.cell-icon { width: 20px; height: 20px; flex: 0 0 20px; }
+.cell-title { flex: 1; min-width: 0; margin-left: 16px; font-size: 16px; color: #0a1324; }
+.cell-value {
+  max-width: 46%;
+  margin-left: 8px;
+  font-size: 13px;
+  color: #5a6b85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chevron { margin-left: 8px; color: #5a6b85; font-size: 18px; line-height: 1; }
+.me-footnote { margin: 18px 16px 24px; text-align: center; font-size: 11px; color: #5a6b85; }
+
+.attachment {
+  display: flex;
+  flex-direction: column;
+  margin: 8px 0;
+}
+
+.attachment-image {
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 10px;
+}
+
+.attachment-video {
+  width: 100%;
+  border-radius: 10px;
+}
+
+.attachment-file {
+  background: #e6edf8;
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #0a5cff;
+  font-size: 13px;
+}

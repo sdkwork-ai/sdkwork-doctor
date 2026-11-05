@@ -155,8 +155,50 @@ On Flutter the same block ids render as a bottom tab bar, and the home surface
 adopts the sdkwork-agents chrome: a light app bar with a menu button, a centered
 page title, and one primary "+" action; a left drawer that repeats the block
 navigation, locale, and active mode; and a chat-first landing with symptom
-prompts that prefill the composer. The "+" sheet starts a new consultation
-(new agent instance, empty transcript) while visit records stay untouched.
+prompts that prefill the composer. The "+" action opens a WeChat-style dropdown
+menu anchored under it: a new consultation (new agent instance, empty transcript)
+while visit records stay untouched, 看病记录, or 扫一扫, a full-screen QR scanner
+that keeps the camera lifecycle in a typed port and shows the decoded content.
+
+### Conversation Sessions And Human Consultations
+
+The conversation home owns a session list on every client. An **AI session** is
+an agents transport session; a **human consultation** is a local session with
+`mode: 'human'` and a `doctor` attribution, opened by 发起人工问诊 from the 医生
+surface and rendered by the same transcript. The session list shows the AI
+family doctor, every human consultation, and each ended session's 病历; the rows
+carry the unread doctor-reply count, a 待医生回复 / 医生已回复 state, and the
+pin/rename/delete actions. Read marks live apart from the session document in
+the browsers (`sdkwork.doctor.care-session-reads.v1`) and on the private
+human-consultation documents in Flutter and the mini program, so opening a
+conversation never reorders the list. The doctor writes the reply on the same
+device through the surface's doctor action; an AI session rejects a doctor reply
+at the domain boundary. No human turn is ever sent to the agents transport, and
+no client claims a remote clinician is answering.
+
+### Visit Records, The Four-Tab Detail, And Playback
+
+看病记录 is session-first on every client. The list renders `CareSession` cards
+(newest first) rather than expanding 病历 in place: the live AI session, human
+consultations, and ended visits each appear once, with the patient, start time,
+status, message and call counts, and triage level. Opening a card leaves the tab
+and opens a page of its own — `/doctor/records/:recordId` on PC/H5,
+`RecordDetailScreen` on Flutter, and `pages/record-detail/index` on the mini
+program — so the page is addressable, refreshable, and linkable. The four tabs
+separate the reading jobs: **病历** (facts, chief complaint, transcript with each
+turn's channel, attachments), **AI总结** (agent summary and the draft AI
+diagnosis), **医生人工确认** (confirmation state, doctor diagnosis, and the
+accept / amend / add form), and **通话回放**.
+
+`buildCarePlayback` turns the session into one ordered timeline: every message
+and every voice/video call segment carries an `offsetMs` from the session start.
+The browser surfaces and Flutter read message text with the device speech engine
+and show call segments with their mode and duration; the mini program walks the
+same timeline visually because its host exposes no TTS. No client stores or
+claims the original audio. The session joins its 病历 by `medicalRecordId`, with
+`sessionId` as the fallback key; a 病历 that predates the session store is
+synthesized for reading. Ending the conversation in 对话 writes the 病历 and links
+it, which is what keeps the list and the detail tabs on one record.
 
 ## 2. Technology Choices
 

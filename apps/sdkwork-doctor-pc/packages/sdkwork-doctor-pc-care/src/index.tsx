@@ -1,10 +1,14 @@
+export * from './attachments';
 export * from './home';
+export * from './medical';
 export * from './patients';
+export * from './record-detail';
 export * from './roster';
+export * from './sessions';
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   FAMILY_DOCTOR_AGENT_ID,
   findCareAgent,
@@ -16,34 +20,45 @@ import {
 import type { DoctorRuntimeContext } from '@sdkwork/doctor-common-diagnostics';
 import {
   DOCTOR_SELECTION_LIMIT,
+  careSessionAwaitingDoctorReply,
+  careSessionRecord,
+  careSessionUnreadCount,
+  createMedicalRecord,
+  createMedicalTranscriptEntry,
   createVisitRecord,
   demoSelfMember,
   doctorAvatarHref,
+  mergeCareSessions,
   preferredDoctorChannel,
   primaryAffiliation,
   resolvePrimaryDoctor,
   resolveSelectedDoctors,
+  type CareSession,
+  type CareSessionReadStore,
+  type CareSessionStore,
   type DoctorAffiliation,
   type DoctorProfile,
   type DoctorRoster,
   type DoctorSelectionStore,
+  type MedicalAttachment,
+  type MedicalAttachmentStore,
+  type MedicalRecordStore,
   type PatientProfileStore,
   type VisitRecordStore,
 } from '@sdkwork/doctor-common-doctor';
 import { ActionButton, DoctorAvatar, Panel } from '@sdkwork/doctor-pc-commons';
 import { CheckList, useDiagnosticsReport } from '@sdkwork/doctor-pc-diagnostics';
 
+import { AttachmentList, AttachmentPicker } from './attachments';
+import { MedicalRecordsSection } from './medical';
 import { PatientPanel, PatientSwitcher, usePatientLabel } from './patients';
-
-/** Opens a doctor's consultation channel; `tel:` links navigate in place. */
-function openConsultationChannel(target: string): void {
-  if (typeof window === 'undefined') return;
-  if (/^tel:/u.test(target)) {
-    window.location.href = target;
-    return;
-  }
-  window.open(target, '_blank', 'noopener,noreferrer');
-}
+import { sessionLevel } from './record-detail';
+import {
+  CareSessionPanel,
+  CareUnreadBadge,
+  HumanConversationPage,
+  useCareSessionUnreadTotal,
+} from './sessions';
 
 function channelLabelKey(affiliation: DoctorAffiliation | null): string {
   const channel = preferredDoctorChannel(affiliation);
@@ -69,40 +84,202 @@ export interface ChatPageProps {
   readonly records: VisitRecordStore;
   /** Household patient files; the active one supplies the conversation facts. */
   readonly patients: PatientProfileStore;
+  /** 病历 generated when the patient ends the conversation. */
+  readonly medicalRecords: MedicalRecordStore;
+  /** One visit session per conversation; the records tab lists these. */
+  readonly careSessions: CareSessionStore;
+  /** Per-conversation read marks behind the unread badges. */
+  readonly careSessionReads: CareSessionReadStore;
+  /** Attachment bytes for the conversation and the generated medical record. */
+  readonly attachments: MedicalAttachmentStore;
+}
+
+export interface AiConversationPageProps extends ChatPageProps {
+  readonly unreadTotal: number;
+  readonly liveAiSessionId: string | null;
+  readonly onOpenSessions: () => void;
 }
 
 /**
- * 对话: the family-doctor conversation. The active patient can be switched in
- * place, and every completed exchange is recorded against that patient.
+ * The conversation home. A `?session=` naming a human consultation renders that
+ * conversation; otherwise the AI family-doctor conversation is shown. Both
+ * surfaces own the same conversation list so the family can switch session from
+ * either one.
  */
-export function ChatPage({ agent, records, patients }: ChatPageProps) {
+export function ChatPage(props: ChatPageProps) {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const sessions = useSyncExternalStore(
+    props.careSessions.subscribe,
+    props.careSessions.list,
+    props.careSessions.list,
+  );
+  const [sessionsOpen, setSessionsOpen] = useState(false);
+  const unreadTotal = useCareSessionUnreadTotal(sessions, props.careSessionReads);
+  const requested = searchParams.get('session') ?? '';
+  const humanSession = requested
+    ? sessions.find((session) => session.id === requested && session.mode === 'human') ?? null
+    : null;
+  const liveAiSessionId = sessions.find(
+    (session) => session.status === 'active' && session.mode !== 'human',
+  )?.id ?? null;
+  const openSession = (session: CareSession) => {
+    setSessionsOpen(false);
+    if (session.mode === 'human' && session.status === 'active') {
+      navigate('/doctor/chat?session=' + encodeURIComponent(session.id));
+      return;
+    }
+    navigate('/doctor/records/' + encodeURIComponent(session.id));
+  };
+
+  const panel = sessionsOpen ? (
+    <CareSessionPanel
+      activeSessionId={humanSession?.id ?? null}
+      liveAiSessionId={liveAiSessionId}
+      onClose={() => setSessionsOpen(false)}
+      onSelect={openSession}
+      reads={props.careSessionReads}
+      sessions={sessions}
+    />
+  ) : null;
+
+  if (humanSession) {
+    return (
+      <>
+        <HumanConversationPage
+          careSessions={props.careSessions}
+          onOpenSessions={() => setSessionsOpen(true)}
+          reads={props.careSessionReads}
+          session={humanSession}
+          unreadTotal={unreadTotal}
+        />
+        {panel}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <AiConversationPage
+        {...props}
+        liveAiSessionId={liveAiSessionId}
+        onOpenSessions={() => setSessionsOpen(true)}
+        unreadTotal={unreadTotal}
+      />
+      {panel}
+    </>
+  );
+}
+
+function AiConversationPage({
+  agent,
+  records,
+  patients,
+  medicalRecords,
+  careSessions,
+  careSessionReads,
+  attachments,
+  unreadTotal,
+  liveAiSessionId,
+  onOpenSessions,
+}: AiConversationPageProps) {
   const { t } = useTranslation();
   const patientLabel = usePatientLabel();
+  const sessionIdRef = useRef<string | null>(null);
   const profiles = useSyncExternalStore(patients.subscribe, patients.list, patients.list);
   const activeId = useSyncExternalStore(patients.subscribe, patients.activeId, patients.activeId);
   const active = profiles.find((profile) => profile.id === activeId) ?? profiles[0] ?? null;
   const [messages, setMessages] = useState<readonly ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
+  const [pending, setPending] = useState<readonly MedicalAttachment[]>([]);
+  const [sessionStartedAt, setSessionStartedAt] = useState(() => new Date().toISOString());
   const [busy, setBusy] = useState(false);
+  const [ending, setEnding] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (liveAiSessionId) careSessionReads.markRead(liveAiSessionId);
+  }, [careSessionReads, liveAiSessionId, messages.length]);
+
+  const sessionAttachments = useMemo(() => {
+    const seen = new Set<string>();
+    const all: MedicalAttachment[] = [];
+    for (const message of messages) {
+      for (const attachment of message.attachments ?? []) {
+        if (seen.has(attachment.id)) continue;
+        seen.add(attachment.id);
+        all.push(attachment);
+      }
+    }
+    for (const attachment of pending) {
+      if (seen.has(attachment.id)) continue;
+      seen.add(attachment.id);
+      all.push(attachment);
+    }
+    return all;
+  }, [messages, pending]);
+
+  const attach = (files: readonly File[]) => {
+    setError(null);
+    void Promise.all(files.map((file) => attachments.put({
+      file,
+      name: file.name,
+      mimeType: file.type || undefined,
+    })))
+      .then((added) => setPending((current) => [...current, ...added]))
+      .catch((reason: unknown) => {
+        const message = reason instanceof Error ? reason.message : String(reason);
+        setError(t('platform.care.chat.attachmentFailed', { name: files[0]?.name ?? '', message }));
+      });
+  };
+
+  const removePending = (id: string) => {
+    void attachments.remove(id);
+    setPending((current) => current.filter((attachment) => attachment.id !== id));
+  };
 
   const send = () => {
     const text = draft.trim();
-    if (!text || busy || !active) return;
+    if ((!text && pending.length === 0) || busy || !active) return;
     setBusy(true);
     setError(null);
+    setNotice(null);
+    const sending = pending;
     void agent
-      .send(text, { member: active })
+      .send(text, { member: active, ...(sending.length > 0 ? { attachments: sending } : {}) })
       .then((reply) => {
         setMessages([...agent.history()]);
         setDraft('');
+        setPending([]);
         records.add(createVisitRecord({
           member: active,
-          symptom: text,
+          symptom: text || sending.map((attachment) => attachment.name).join(', '),
           advice: reply.text,
           level: reply.triage?.level ?? 'routine',
           mode: agent.mode,
         }));
+        // Each visit is one session; the detail page replays it.
+        const session = careSessions.ensureActive({
+          member: active,
+          mode: agent.mode,
+          sessionId: agent.sessionId() ?? undefined,
+        });
+        sessionIdRef.current = session.id;
+        careSessions.appendMessage(session.id, {
+          role: 'patient',
+          text: text || sending.map((attachment) => attachment.name).join(', '),
+          at: new Date().toISOString(),
+          channel: 'text',
+          ...(reply.triage?.level ? { level: reply.triage.level } : {}),
+          ...(sending.length > 0 ? { attachmentIds: sending.map((attachment) => attachment.id) } : {}),
+        });
+        careSessions.appendMessage(session.id, {
+          role: 'assistant',
+          text: reply.text,
+          at: new Date().toISOString(),
+          channel: 'text',
+        });
         if (reply.triage?.escalate) {
           document.documentElement.dataset.triage = reply.triage.level;
         }
@@ -110,6 +287,78 @@ export function ChatPage({ agent, records, patients }: ChatPageProps) {
       .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : String(reason)))
       .finally(() => setBusy(false));
   };
+
+  const endConversation = () => {
+    if (!active || ending || busy || messages.length === 0) return;
+    if (typeof window !== 'undefined' && !window.confirm(t('platform.care.medical.endConfirm'))) return;
+    setEnding(true);
+    setError(null);
+    setNotice(null);
+    const endedAt = new Date().toISOString();
+    const open = careSessions.findActive(active.id)
+      ?? (sessionIdRef.current ? careSessions.find(sessionIdRef.current) : null);
+    const startedAt = open?.startedAt ?? sessionStartedAt;
+    const turns = messages.map((message) => ({
+      role: message.role === 'user' ? 'user' as const : 'assistant' as const,
+      text: message.text || (message.attachments ?? []).map((attachment) => attachment.name).join(', '),
+    }));
+    void agent
+      .summarize({
+        member: active,
+        transcript: turns,
+        attachments: sessionAttachments.map((attachment) => ({ name: attachment.name, kind: attachment.kind })),
+        startedAt,
+        endedAt,
+      })
+      .then((draftSummary) => {
+        const record = createMedicalRecord({
+          member: active,
+          mode: agent.mode,
+          sessionId: open?.id ?? agent.sessionId() ?? undefined,
+          startedAt,
+          endedAt,
+          summary: draftSummary.summary,
+          attachments: sessionAttachments,
+          transcript: messages.map((message) => createMedicalTranscriptEntry({
+            id: message.id,
+            role: message.role === 'user' ? 'patient' : 'assistant',
+            text: message.text,
+            at: message.createdAt,
+            ...(message.triage ? { level: message.triage.level } : {}),
+            ...((message.attachments ?? []).length > 0
+              ? { attachmentIds: (message.attachments ?? []).map((attachment) => attachment.id) }
+              : {}),
+          })),
+          diagnosis: {
+            impression: draftSummary.diagnosis.impression,
+            conditions: draftSummary.diagnosis.conditions,
+            recommendations: draftSummary.diagnosis.recommendations,
+            level: draftSummary.diagnosis.level,
+            ...(draftSummary.diagnosis.notes ? { notes: draftSummary.diagnosis.notes } : {}),
+          },
+        });
+        medicalRecords.add(record);
+        if (open) {
+          careSessions.end(open.id, { medicalRecordId: record.id, endedAt });
+        }
+        sessionIdRef.current = null;
+        agent.reset();
+        setMessages([]);
+        setDraft('');
+        setPending([]);
+        setSessionStartedAt(new Date().toISOString());
+        setNotice(t('platform.care.medical.generated') + ' ' + t('platform.care.medical.generatedHint'));
+      })
+      .catch((reason: unknown) => {
+        const message = reason instanceof Error ? reason.message : String(reason);
+        setError(t('platform.care.medical.failed', { message }));
+      })
+      .finally(() => setEnding(false));
+  };
+
+  const modeLabel = agent.mode === 'hosted'
+    ? t('platform.care.mode.hosted')
+    : t('platform.care.mode.offline');
 
   return (
     <div>
@@ -122,10 +371,36 @@ export function ChatPage({ agent, records, patients }: ChatPageProps) {
               : t('platform.care.chat.noPatient')}
           </p>
         </div>
+        <div className="doctor-chat-header-actions">
+          <button className="doctor-session-trigger" onClick={onOpenSessions} type="button">
+            <span>{t('platform.care.chat.openSessions')}</span>
+            <CareUnreadBadge count={unreadTotal} />
+          </button>
+        </div>
       </header>
 
       <Panel title={t('platform.care.chat.patient')} description={t('platform.care.chat.switchPatient')}>
         <PatientSwitcher patients={patients} />
+      </Panel>
+
+      <Panel title={t('platform.care.medical.session')} description={t('platform.care.medical.sessionActive')}>
+        <div className="doctor-inline-badges">
+          <span className="doctor-badge" data-status={agent.mode === 'hosted' ? 'ok' : 'skipped'}>{modeLabel}</span>
+          <span className="doctor-check-detail">
+            {t('platform.care.medical.sessionMeta', { messages: messages.length, attachments: sessionAttachments.length })}
+          </span>
+        </div>
+        {notice ? <div className="doctor-notice">{notice}</div> : null}
+        <div className="doctor-form-actions">
+          <ActionButton
+            disabled={ending || busy || messages.length === 0 || !active}
+            onClick={endConversation}
+            tone="primary"
+          >
+            {ending ? t('platform.care.medical.ending') : t('platform.care.medical.endAction')}
+          </ActionButton>
+        </div>
+        {!active ? <p className="doctor-check-detail">{t('platform.care.medical.endEmpty')}</p> : null}
       </Panel>
 
       {error ? <div className="doctor-error-banner">{t('platform.care.chat.error', { message: error })}</div> : null}
@@ -138,13 +413,23 @@ export function ChatPage({ agent, records, patients }: ChatPageProps) {
             <li className="doctor-check" key={message.id}>
               <div>
                 <h3 className="doctor-check-title">{message.role === 'user' ? t('platform.care.chat.you') : t('platform.care.chat.doctor')}</h3>
-                <p className="doctor-check-summary">{message.text}</p>
+                {message.text ? <p className="doctor-check-summary">{message.text}</p> : null}
+                <AttachmentList attachments={message.attachments ?? []} store={attachments} />
               </div>
               {message.triage ? <span className="doctor-badge" data-status={message.triage.escalate ? 'warn' : 'ok'}>{t('platform.care.level.' + message.triage.level)}</span> : <span />}
             </li>
           ))}
         </ul>
+        {pending.length > 0 ? (
+          <AttachmentList attachments={pending} onRemove={removePending} store={attachments} />
+        ) : null}
+        <p className="doctor-check-detail">{t('platform.care.chat.attachmentHint')}</p>
         <div className="doctor-chat-compose">
+          <AttachmentPicker
+            disabled={!active || busy || ending}
+            label={t('platform.care.chat.attach')}
+            onPick={attach}
+          />
           <input
             aria-label={t('platform.care.chat.inputLabel')}
             className="doctor-input"
@@ -154,7 +439,11 @@ export function ChatPage({ agent, records, patients }: ChatPageProps) {
             placeholder={active ? t('platform.care.chat.placeholder') : t('platform.care.chat.noPatient')}
             value={draft}
           />
-          <ActionButton tone="primary" onClick={send} disabled={busy || !active}>
+          <ActionButton
+            disabled={busy || ending || !active || (draft.trim() === '' && pending.length === 0)}
+            onClick={send}
+            tone="primary"
+          >
             {busy ? t('platform.care.chat.sending') : t('platform.care.chat.send')}
           </ActionButton>
         </div>
@@ -169,6 +458,8 @@ export interface DoctorPageProps {
   readonly rosterLoading: boolean;
   readonly patients: PatientProfileStore;
   readonly records: VisitRecordStore;
+  /** Human consultations are conversations: this store owns the session. */
+  readonly careSessions: CareSessionStore;
   readonly selection: DoctorSelectionStore;
   readonly agents: readonly CareAgentSummary[];
   readonly agentMode: CareAgentMode;
@@ -186,12 +477,14 @@ export function DoctorPage({
   rosterLoading,
   patients,
   records,
+  careSessions,
   selection,
   agents,
   agentMode,
 }: DoctorPageProps) {
   const { t } = useTranslation();
   const patientLabel = usePatientLabel();
+  const navigate = useNavigate();
   const profiles = useSyncExternalStore(patients.subscribe, patients.list, patients.list);
   const activeId = useSyncExternalStore(patients.subscribe, patients.activeId, patients.activeId);
   const active = profiles.find((profile) => profile.id === activeId) ?? profiles[0] ?? demoSelfMember;
@@ -235,13 +528,30 @@ export function DoctorPage({
       setError(t('platform.care.doctors.consultReasonRequired'));
       return;
     }
+    if (profiles.length === 0) {
+      setError(t('platform.care.chat.noPatient'));
+      return;
+    }
     const site = siteOf(doctor);
-    const channel = preferredDoctorChannel(site);
-    if (!site || !channel) {
+    if (!site) {
       setError(t('platform.care.doctors.noChannel'));
       return;
     }
-    openConsultationChannel(channel.target);
+    // A human consultation is a conversation: open the session addressed to
+    // this doctor and land on the conversation home.
+    const session = careSessions.startHumanConsultation({
+      member: active,
+      doctor: {
+        id: doctor.id,
+        displayName: doctor.displayName,
+        department: site.department,
+        hospitalName: site.hospitalName,
+        organizationId: site.organizationId,
+        employmentType: site.employmentType,
+        avatarUrl: doctorAvatarHref(doctor.avatarUrl),
+      },
+      reason: symptom,
+    });
     const started = t('platform.care.doctors.consultStarted', { doctor: doctor.displayName });
     records.add(createVisitRecord({
       member: active,
@@ -256,7 +566,7 @@ export function DoctorPage({
       doctorEmploymentType: site.employmentType,
     }));
     setReason('');
-    setNotice(started + ' · ' + site.hospitalName);
+    navigate('/doctor/chat?session=' + encodeURIComponent(session.id));
   };
 
   const renderSiteLine = (doctor: DoctorProfile, affiliation: DoctorAffiliation) => (
@@ -431,12 +741,8 @@ export function DoctorPage({
                         ))}
                       </ul>
                       <p className="doctor-check-detail">
-                        {channel
-                          ? t('platform.care.doctors.consultHint', {
-                            doctor: doctor.displayName,
-                            channel: t(channelLabelKey(site)),
-                          })
-                          : t('platform.care.doctors.noChannel')}
+                        {t('platform.care.doctors.consultHint', { doctor: doctor.displayName })}
+                        {channel ? ' · ' + t(channelLabelKey(site)) : ''}
                       </p>
                       <textarea
                         aria-label={t('platform.care.records.symptom')}
@@ -447,7 +753,7 @@ export function DoctorPage({
                         value={reason}
                       />
                       <div className="doctor-form-actions">
-                        <ActionButton tone="primary" disabled={!channel} onClick={() => startConsultation(doctor)}>
+                        <ActionButton tone="primary" onClick={() => startConsultation(doctor)}>
                           {t('platform.care.doctors.consult')}
                         </ActionButton>
                       </div>
@@ -465,20 +771,48 @@ export function DoctorPage({
 
 export interface RecordsPageProps {
   readonly records: VisitRecordStore;
+  /** 病历 generated by ending conversations, with both diagnosis records. */
+  readonly medicalRecords: MedicalRecordStore;
+  /** One conversation session per visit; the records list is this store. */
+  readonly careSessions: CareSessionStore;
+  /** Read marks behind the unread badges of each conversation. */
+  readonly careSessionReads: CareSessionReadStore;
+  /** Attachment bytes referenced by the medical records. */
+  readonly attachments: MedicalAttachmentStore;
+  readonly roster: DoctorRoster | null;
+  readonly selection: DoctorSelectionStore;
 }
 
 /**
- * Visit records: every completed consultation, newest first. It is a tab of its
- * own, so the page carries no way back; the rail is the navigation.
+ * 看病记录: one row per conversation session, newest first. Each row opens the
+ * dedicated 4-tab detail page (病历 / AI总结 / 医生人工确认 / 通话回放); the list
+ * never expands the full record in place. A human consultation prints its doctor
+ * and the unread doctor replies, exactly like the conversation list.
  */
-export function RecordsPage({ records }: RecordsPageProps) {
+export function RecordsPage({
+  careSessions,
+  careSessionReads,
+  medicalRecords,
+  attachments,
+  records,
+}: RecordsPageProps) {
   const { t, i18n } = useTranslation();
-  const items = useSyncExternalStore(records.subscribe, records.list, records.list);
+  const sessions = useSyncExternalStore(careSessions.subscribe, careSessions.list, careSessions.list);
+  const medicalItems = useSyncExternalStore(medicalRecords.subscribe, medicalRecords.list, medicalRecords.list);
+  const readMarks = useSyncExternalStore(
+    careSessionReads.subscribe,
+    careSessionReads.snapshot,
+    careSessionReads.snapshot,
+  );
+  const items = mergeCareSessions(sessions, medicalItems);
+  void records;
 
   const clear = () => {
     if (items.length === 0) return;
-    if (typeof window === 'undefined' || window.confirm(t('platform.care.records.clearConfirm'))) {
-      records.clear();
+    if (typeof window === 'undefined' || window.confirm(t('platform.care.records.clearAllConfirm'))) {
+      careSessions.clear();
+      medicalRecords.clear();
+      void attachments.clear();
     }
   };
 
@@ -489,51 +823,95 @@ export function RecordsPage({ records }: RecordsPageProps) {
           <h1 className="doctor-page-title">{t('platform.care.records.title')}</h1>
           <p className="doctor-page-subtitle">{t('platform.care.records.subtitle')}</p>
         </div>
+        <span className="doctor-badge" data-status="ok">
+          {t('platform.care.records.sessionCount', { count: items.length })}
+        </span>
       </header>
-      <Panel title={t('platform.care.records.count', { count: items.length })}>
+
+      <Panel>
         {items.length === 0 ? (
-          <p className="doctor-check-summary">{t('platform.care.records.empty')}</p>
+          <p className="doctor-empty">{t('platform.care.records.empty')}</p>
         ) : (
-          <ul className="doctor-check-list">
-            {items.map((record) => (
-              <li className="doctor-check" key={record.id}>
-                <div>
-                  <h3 className="doctor-check-title">{record.symptom}</h3>
-                  <p className="doctor-check-summary">{record.advice}</p>
-                  <p className="doctor-check-detail">
-                    {record.memberLabel} · {new Date(record.recordedAt).toLocaleString(i18n.language)} ·{' '}
-                    {visitModeLabel(record.mode, t)}
-                  </p>
-                  {record.doctorLabel || record.doctorHospitalLabel ? (
-                    <p className="doctor-check-detail">
-                      {record.doctorLabel ?? ''}
-                      {record.doctorHospitalLabel ? ' · ' + t('platform.care.records.hospital') + ': ' + record.doctorHospitalLabel : ''}
-                      {record.doctorEmploymentType
-                        ? ' · ' + t('platform.care.records.employment') + ': ' + t('platform.care.doctors.employment.' + record.doctorEmploymentType)
-                        : ''}
-                    </p>
-                  ) : null}
-                </div>
-                <span className="doctor-badge" data-status={record.level === 'emergency' || record.level === 'urgent' ? 'warn' : 'ok'}>
-                  {t('platform.care.level.' + record.level)}
-                </span>
-              </li>
-            ))}
+          <ul className="doctor-card-list">
+            {items.map((session) => {
+              const record = careSessionRecord(session, medicalItems);
+              const level = sessionLevel(session);
+              const status = session.status === 'active'
+                ? 'active'
+                : record
+                  ? (record.confirmation ? 'confirmed' : 'awaiting_doctor')
+                  : 'ended';
+              const unread = session.mode === 'human'
+                ? careSessionUnreadCount(session, readMarks[session.id])
+                : 0;
+              const doctor = session.doctor
+                ? [session.doctor.displayName, session.doctor.department].filter((part) => Boolean(part)).join(' · ')
+                : '';
+              return (
+                <li key={session.id}>
+                  <Link className="doctor-list-card doctor-visit-card" to={'/doctor/records/' + encodeURIComponent(session.id)}>
+                    <div className="doctor-card-head">
+                      <div className="doctor-card-copy">
+                        <h3 className="doctor-check-title">{session.title}</h3>
+                        <p className="doctor-check-detail">
+                          {session.memberLabel} · {new Date(session.startedAt).toLocaleString(i18n.language)}
+                          {doctor ? ' · ' + doctor : ''}
+                        </p>
+                        <p className="doctor-check-summary">
+                          {record ? record.aiDiagnosis.impression : t('platform.care.record.recordPending')}
+                        </p>
+                        <div className="doctor-inline-badges">
+                          <span className="doctor-badge" data-status={status === 'active' ? 'skipped' : status === 'awaiting_doctor' ? 'warn' : 'ok'}>
+                            {t('platform.care.records.status.' + status)}
+                          </span>
+                          {session.mode === 'human' ? (
+                            <span className="doctor-badge" data-status="ok">{t('platform.care.sessions.human')}</span>
+                          ) : null}
+                          {careSessionAwaitingDoctorReply(session) ? (
+                            <span className="doctor-badge" data-status="warn">{t('platform.care.sessions.waiting')}</span>
+                          ) : null}
+                          <span className="doctor-badge" data-status="ok">
+                            {t('platform.care.records.messageCount', { count: session.transcript.length })}
+                          </span>
+                          {session.calls.length > 0 ? (
+                            <span className="doctor-badge" data-status="skipped">
+                              {t('platform.care.records.callCount', { count: session.calls.length })}
+                            </span>
+                          ) : null}
+                          {level !== 'self-care' ? (
+                            <span className="doctor-badge" data-status={level === 'emergency' || level === 'urgent' ? 'warn' : 'ok'}>
+                              {t('platform.care.level.' + level)}
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="doctor-visit-actions">
+                        <CareUnreadBadge count={unread} />
+                        <span className="doctor-visit-open">{t('platform.care.records.open')} ›</span>
+                      </div>
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         )}
-        <div style={{ marginTop: 12 }}>
-          <ActionButton onClick={clear} disabled={items.length === 0}>{t('platform.care.records.clear')}</ActionButton>
+        <div className="doctor-form-actions" style={{ marginTop: 12 }}>
+          <ActionButton disabled={items.length === 0} onClick={clear}>{t('platform.care.records.clearAll')}</ActionButton>
         </div>
       </Panel>
     </div>
   );
 }
 
+
 export interface MePageProps {
   readonly context: DoctorRuntimeContext;
   readonly agent: AgentConversationPort;
   readonly patients: PatientProfileStore;
   readonly records: VisitRecordStore;
+  /** One session per visit; the records row counts visits, not exchanges. */
+  readonly careSessions: CareSessionStore;
   readonly selection: DoctorSelectionStore;
   readonly roster: DoctorRoster | null;
   readonly agents: readonly CareAgentSummary[];
@@ -544,10 +922,10 @@ export interface MePageProps {
  * edit / delete), together with the selected family doctor, the visit-record
  * entry, the active conversation mode, and the device check.
  */
-export function MePage({ context, agent, patients, records, selection, roster, agents }: MePageProps) {
+export function MePage({ context, agent, patients, records, careSessions, selection, roster, agents }: MePageProps) {
   const { t } = useTranslation();
   const state = useDiagnosticsReport(context);
-  const items = useSyncExternalStore(records.subscribe, records.list, records.list);
+  const sessions = useSyncExternalStore(careSessions.subscribe, careSessions.list, careSessions.list);
   const selectionState = useSyncExternalStore(selection.subscribe, selection.state, selection.state);
   const primary = roster ? resolvePrimaryDoctor(roster, selectionState) : null;
   const primarySite = primary ? primaryAffiliation(primary) : null;
@@ -600,7 +978,7 @@ export function MePage({ context, agent, patients, records, selection, roster, a
       </Panel>
 
       <Panel title={t('platform.care.me.records')}>
-        <p className="doctor-check-summary">{t('platform.care.me.recordsCount', { count: items.length })}</p>
+        <p className="doctor-check-summary">{t('platform.care.me.recordsCount', { count: sessions.length })}</p>
         <div className="doctor-card-actions">
           <Link className="doctor-link" to="/doctor/records">{t('platform.care.records.title')}</Link>
         </div>

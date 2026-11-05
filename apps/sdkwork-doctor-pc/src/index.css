@@ -680,6 +680,218 @@ button {
   flex: 1;
 }
 
+/* 对话 header actions: the conversation list sits on the title line. */
+.doctor-chat-header-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.doctor-session-trigger {
+  align-items: center;
+  background: var(--doctor-surface);
+  border: 0;
+  border-radius: 999px;
+  color: var(--doctor-accent-strong);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  gap: 6px;
+  padding: 8px 14px;
+}
+
+.doctor-session-trigger:hover {
+  background: var(--doctor-accent-soft);
+}
+
+.doctor-unread-badge {
+  align-items: center;
+  background: var(--doctor-error);
+  border-radius: 999px;
+  color: #fff;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 700;
+  justify-content: center;
+  min-width: 18px;
+  padding: 2px 6px;
+}
+
+/* The conversation list: a centered dialog over a dimmed workbench. */
+.doctor-session-overlay {
+  align-items: center;
+  background: color-mix(in srgb, var(--doctor-nav) 42%, transparent);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 24px;
+  position: fixed;
+  z-index: 40;
+}
+
+.doctor-session-sheet {
+  animation: doctor-sheet-in 160ms ease-out;
+  background: var(--doctor-bg);
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-block-size: min(82vh, 720px);
+  overflow-y: auto;
+  padding: 20px;
+  inline-size: min(100%, 600px);
+}
+
+@keyframes doctor-sheet-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .doctor-session-sheet { animation: none; }
+}
+
+.doctor-session-head {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.doctor-session-head .doctor-page-title { margin: 0; }
+.doctor-session-head .doctor-page-subtitle { margin: 4px 0 0; }
+
+.doctor-icon-button {
+  align-items: center;
+  background: var(--doctor-surface-alt);
+  border: 0;
+  border-radius: 50%;
+  color: var(--doctor-text);
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 18px;
+  height: 34px;
+  justify-content: center;
+  line-height: 1;
+  width: 34px;
+}
+
+.doctor-session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.doctor-session-row {
+  align-items: center;
+  background: var(--doctor-surface);
+  border: 0;
+  border-radius: var(--doctor-radius-sm);
+  color: var(--doctor-text);
+  cursor: pointer;
+  display: grid;
+  font: inherit;
+  gap: 12px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: 12px 14px;
+  text-align: start;
+  inline-size: 100%;
+}
+
+.doctor-session-row:hover { background: var(--doctor-surface-alt); }
+
+.doctor-session-row[data-active='true'] {
+  background: var(--doctor-accent-soft);
+  outline: 2px solid color-mix(in srgb, var(--doctor-accent) 40%, transparent);
+}
+
+.doctor-session-avatar {
+  align-items: center;
+  background: var(--doctor-accent-soft);
+  border-radius: 50%;
+  color: var(--doctor-accent-strong);
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  height: 38px;
+  justify-content: center;
+  width: 38px;
+}
+
+.doctor-session-avatar .doctor-avatar {
+  height: 38px;
+  width: 38px;
+}
+
+.doctor-session-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.doctor-session-row-head {
+  align-items: baseline;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.doctor-session-row-head strong {
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doctor-session-time {
+  color: var(--doctor-muted);
+  flex: 0 0 auto;
+  font-size: 11px;
+}
+
+.doctor-session-meta {
+  color: var(--doctor-muted);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doctor-session-preview {
+  color: var(--doctor-muted);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doctor-human-doctor {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.doctor-human-doctor .doctor-page-title { margin: 0; }
+.doctor-human-doctor .doctor-page-subtitle { margin: 2px 0 0; }
+.doctor-human-doctor .doctor-badge { margin-inline-start: auto; }
+
+.doctor-visit-actions {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .doctor-notice {
   background: var(--doctor-ok-bg);
   color: var(--doctor-ok);
@@ -739,3 +951,222 @@ button {
 .doctor-affiliation strong {
   color: var(--doctor-text);
 }
+
+/* Attachments and 病历: the patient's uploaded files and the two diagnosis
+   records (AI draft + doctor's own) rendered side by side. */
+.doctor-attachment-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.doctor-attachment {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--doctor-surface);
+  border-radius: var(--doctor-radius-sm);
+  padding: 8px 10px;
+  max-width: 100%;
+}
+
+.doctor-attachment-image {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.doctor-attachment-video {
+  width: 168px;
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+.doctor-attachment-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--doctor-muted);
+}
+
+.doctor-attachment-name {
+  color: var(--doctor-text);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.doctor-attachment-input {
+  display: none;
+}
+
+.doctor-diagnosis {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--doctor-surface);
+  border-radius: var(--doctor-radius-sm);
+  padding: 12px 14px;
+}
+
+.doctor-diagnosis .doctor-check-list {
+  gap: 4px;
+}
+
+.doctor-review {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--doctor-surface-alt);
+  border-radius: var(--doctor-radius-sm);
+  padding: 12px 14px;
+}
+
+.doctor-medical-card {
+  gap: 10px;
+}
+
+/* ---------------------------------------------------------------------------
+   看病记录: one card per conversation session and its 4-tab detail page.
+   --------------------------------------------------------------------------- */
+
+.doctor-visit-card {
+  color: inherit;
+  text-decoration: none;
+  min-height: 100%;
+}
+
+.doctor-visit-card:hover {
+  background: var(--doctor-accent-soft);
+}
+
+.doctor-visit-open {
+  color: var(--doctor-accent-strong);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  align-self: center;
+}
+
+.doctor-back-link {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: var(--doctor-accent-strong);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.doctor-record-header .doctor-record-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.doctor-record-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 6px;
+  padding: 6px 0 10px;
+  background: var(--doctor-bg);
+}
+
+.doctor-record-tab {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 8px;
+  background: var(--doctor-surface);
+  color: var(--doctor-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.doctor-record-tab[data-active='true'] {
+  background: var(--doctor-accent);
+  color: #fff;
+}
+
+.doctor-record-panel {
+  padding-bottom: 8px;
+}
+
+.doctor-record-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.doctor-fact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+  margin: 0;
+}
+
+.doctor-fact-grid dt {
+  color: var(--doctor-muted);
+  font-size: 11px;
+}
+
+.doctor-fact-grid dd {
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.doctor-timeline .doctor-check {
+  align-items: start;
+}
+
+.doctor-check[data-active='true'] {
+  background: var(--doctor-accent-soft);
+}
+
+.doctor-timeline-call {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: var(--doctor-radius-sm);
+  background: var(--doctor-surface);
+}
+
+.doctor-playback-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.doctor-playback-controls .doctor-button {
+  width: auto;
+}
+
+.doctor-progress {
+  margin-top: 10px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--doctor-surface-alt);
+  overflow: hidden;
+}
+
+.doctor-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--doctor-accent);
+  transition: width 200ms linear;
+}
+

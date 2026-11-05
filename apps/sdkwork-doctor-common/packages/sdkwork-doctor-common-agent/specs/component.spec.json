@@ -58,6 +58,10 @@
       {
         "name": "doctorAgentCatalog",
         "export": "."
+      },
+      {
+        "name": "doctorAgentSummary",
+        "export": "."
       }
     ],
     "requiredPorts": [
@@ -72,7 +76,9 @@
       "createHostedCareAgent",
       "createCareAgentRuntime",
       "createCareAgentCatalog",
-      "findCareAgent"
+      "findCareAgent",
+      "offlineCareSummary",
+      "parseCareSummaryReply"
     ],
     "routeManifest": null,
     "sdkClients": [],

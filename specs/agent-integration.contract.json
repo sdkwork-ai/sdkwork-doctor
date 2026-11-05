@@ -10,6 +10,17 @@
     "sdk": "@sdkwork/agents-app-sdk",
     "sdkState": "not installed; the port speaks the pinned wire contract"
   },
+  "medicalRecordSummary": {
+    "rule": "ending a conversation sends one extra non-stream turn on the same session with the case-record system prompt and parses the JSON answer; the draft is never final until a doctor confirms it",
+    "operation": "agents.turns.stream with stream=false",
+    "ports": {
+      "shared": "@sdkwork/doctor-common-agent#AgentConversationPort.summarize",
+      "flutter": "sdkwork_doctor_flutter_mobile_care#CareSummaryService",
+      "mini_program": "lib/agent.js#createHostedAgent.summarize"
+    },
+    "offline": "the deterministic on-device summary states that a doctor must assess the patient; it never invents a diagnosis",
+    "attachments": "attachment names and kinds are named in the turn text; binaries stay on the device because the pinned agents API exposes no binary-upload operation"
+  },
   "requiredInputs": {
     "agentsApiBaseUrl": "runtime-env.<deployment-profile>.<environment>.json#agentsApiBaseUrl",
     "accessToken": "IAM/appbase session token through the shared session port; never a VITE_* variable"

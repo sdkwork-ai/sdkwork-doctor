@@ -1,0 +1,14 @@
+<view class="card">
+  <view class="h1">{{title}}</view>
+  <view class="muted">{{hint}}</view>
+  <view class="row">
+    <text>{{platform || locale}}</text>
+    <text class="badge">{{status}}</text>
+  </view>
+  <view class="muted">{{modeLabel}}</view>
+  <button class="btn" bindtap="onRerunChecks" disabled="{{checking}}">{{checking ? runningLabel : rerunLabel}}</button>
+</view>
+
+<view class="card">
+  <view class="muted">{{privacy}}</view>
+</view>

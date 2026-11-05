@@ -1,0 +1,57 @@
+<view class="card">
+  <view class="h1">{{title}}</view>
+  <view class="muted">{{subtitle}}</view>
+
+  <view wx:if="{{patients.length === 0}}" class="muted">{{emptyLabel}}</view>
+  <view wx:for="{{patients}}" wx:key="id" class="file">
+    <view class="file-head">
+      <view class="avatar avatar-fallback">{{item.initial}}</view>
+      <view class="person-copy">
+        <view class="person-name">{{item.label}}</view>
+        <view class="muted">{{item.completeness}}</view>
+      </view>
+      <text wx:if="{{item.active}}" class="badge">{{activeLabel}}</text>
+    </view>
+    <view class="actions">
+      <button class="mini" data-id="{{item.id}}" bindtap="onSelectPatient" disabled="{{item.active}}">{{selectLabel}}</button>
+      <button class="mini" data-id="{{item.id}}" bindtap="onEditPatient">{{editLabel}}</button>
+      <button class="mini warn" data-id="{{item.id}}" bindtap="onDeletePatient">{{deleteLabel}}</button>
+    </view>
+  </view>
+
+  <button class="btn" bindtap="onAddPatient">{{addLabel}}</button>
+  <view class="muted">{{limitLabel}}</view>
+
+  <view wx:if="{{formOpen}}" class="form">
+    <view class="h1">{{formTitle}}</view>
+    <view wx:if="{{formError}}" class="error">{{formError}}</view>
+    <view class="label">{{fieldName}}</view>
+    <input class="input" value="{{form.displayName}}" data-field="displayName" bindinput="onFieldInput"/>
+    <view class="label">{{fieldRelation}}</view>
+    <picker mode="selector" range="{{relationLabels}}" value="{{form.relationIndex}}" bindchange="onRelationChange">
+      <view class="row"><text>{{fieldRelation}}</text><text>{{relationLabels[form.relationIndex]}}</text></view>
+    </picker>
+    <view class="label">{{fieldSex}}</view>
+    <picker mode="selector" range="{{sexLabels}}" value="{{form.sexIndex}}" bindchange="onSexChange">
+      <view class="row"><text>{{fieldSex}}</text><text>{{sexLabels[form.sexIndex]}}</text></view>
+    </picker>
+    <view class="label">{{fieldBirthYear}}</view>
+    <input class="input" type="number" value="{{form.birthYear}}" data-field="birthYear" bindinput="onFieldInput"/>
+    <view class="label">{{fieldBloodType}}</view>
+    <picker mode="selector" range="{{bloodTypeLabels}}" value="{{form.bloodTypeIndex}}" bindchange="onBloodTypeChange">
+      <view class="row"><text>{{fieldBloodType}}</text><text>{{bloodTypeLabels[form.bloodTypeIndex]}}</text></view>
+    </picker>
+    <view class="label">{{fieldAllergies}}</view>
+    <input class="input" value="{{form.allergies}}" data-field="allergies" bindinput="onFieldInput"/>
+    <view class="label">{{fieldConditions}}</view>
+    <input class="input" value="{{form.chronicConditions}}" data-field="chronicConditions" bindinput="onFieldInput"/>
+    <view class="label">{{fieldMedications}}</view>
+    <input class="input" value="{{form.medications}}" data-field="medications" bindinput="onFieldInput"/>
+    <view class="label">{{fieldNotes}}</view>
+    <textarea class="textarea" value="{{form.notes}}" data-field="notes" bindinput="onFieldInput" maxlength="500"/>
+    <view class="actions">
+      <button class="btn" bindtap="onSavePatient">{{saveLabel}}</button>
+      <button class="btn ghost" bindtap="onCancelForm">{{cancelLabel}}</button>
+    </view>
+  </view>
+</view>

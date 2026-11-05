@@ -70,6 +70,22 @@
       {
         "name": "doctorDoctorSelection",
         "export": "."
+      },
+      {
+        "name": "doctorMedicalRecords",
+        "export": "."
+      },
+      {
+        "name": "doctorMedicalAttachments",
+        "export": "."
+      },
+      {
+        "name": "doctorCareSessions",
+        "export": "."
+      },
+      {
+        "name": "doctorCareSessionReads",
+        "export": "."
       }
     ],
     "requiredPorts": [],
@@ -80,7 +96,18 @@
       "parsePatientHousehold",
       "createDoctorSelectionStore",
       "parseDoctorRoster",
-      "resolvePrimaryDoctor"
+      "resolvePrimaryDoctor",
+      "createMedicalRecord",
+      "confirmAiDiagnosis",
+      "addDoctorDiagnosis",
+      "createMedicalRecordStore",
+      "parseMedicalRecords",
+      "createBrowserMedicalAttachmentStore",
+      "createHumanConsultationSession",
+      "appendCareSessionDoctorReply",
+      "careSessionUnreadCount",
+      "createCareSessionStore",
+      "createCareSessionReadStore"
     ],
     "routeManifest": null,
     "sdkClients": [],

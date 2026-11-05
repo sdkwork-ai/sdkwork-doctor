@@ -1,1 +1,37 @@
-/* Records tab reuses the shared card, row, badge, and muted primitives. */
+/* 看病记录 list: flat visit cards. The shared card, row, badge, muted, and
+   button primitives live in app.wxss. */
+.visit {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 14px;
+  margin-top: 10px;
+  border-radius: 10px;
+  background: #e6edf8;
+}
+
+.visit-title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0a1324;
+}
+
+.visit-preview {
+  margin-top: 2px;
+  color: #5a6b85;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.chips-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.badge.skipped {
+  background: #eef1f6;
+  color: #5a6b85;
+}

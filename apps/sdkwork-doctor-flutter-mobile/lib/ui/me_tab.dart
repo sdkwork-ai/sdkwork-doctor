@@ -1,31 +1,33 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import '../doctors/doctor_directory.dart';
-import '../doctors/doctor_labels.dart';
 import '../doctors/doctor_selection.dart';
 import '../i18n/care_i18n.dart';
 import '../patients/patient_store.dart';
+import '../records/care_session_store.dart';
 import '../records/visit_store.dart';
 import '../theme/doctor_theme.dart';
 import 'care_widgets.dart';
-import 'patient_form_screen.dart';
+import 'device_screen.dart';
+import 'patient_files_screen.dart';
 
-/// 我的: the household control surface.
-///
-/// Patient files live here (create, switch, edit, delete), together with the
-/// selected family doctor, the 看病记录 entry, the conversation mode, the device
-/// environment, and the privacy line.
+/// 我的: an account screen in the native idiom. The identity block states who
+/// this household is (avatar, name, patient facts, status pills), and below it
+/// every capability is one full-bleed row of a grouped list that opens its own
+/// module — patient files, doctors, the conversation, records, and the device
+/// environment.
 class MeTab extends StatelessWidget {
   const MeTab({
     super.key,
     required this.locale,
     required this.agentMode,
     required this.records,
+    required this.careSessions,
     required this.patients,
     required this.selection,
     required this.roster,
+    required this.onOpenChat,
+    required this.onOpenVideoCall,
     required this.onOpenDoctors,
     required this.onOpenRecords,
     required this.onToggleLocale,
@@ -34,279 +36,128 @@ class MeTab extends StatelessWidget {
   final String locale;
   final String agentMode;
   final VisitRecordStore records;
+  final CareSessionStore careSessions;
   final PatientProfileStore patients;
   final DoctorSelectionStore selection;
   final DoctorRosterController roster;
+  final VoidCallback onOpenChat;
+  final VoidCallback onOpenVideoCall;
   final VoidCallback onOpenDoctors;
   final VoidCallback onOpenRecords;
 
-  /// Switches the care catalog between 中文 and English. The session drawer is a
+  /// Switches the care catalog between 中文 and English; the session drawer is a
   /// pure conversation list, so this control lives here.
   final VoidCallback onToggleLocale;
 
-  Future<void> _openEditor(BuildContext context,
-      {PatientProfile? profile}) async {
-    await Navigator.of(context).push(MaterialPageRoute<void>(
-      builder: (BuildContext _) => PatientEditorScreen(
+  Future<void> _openPatientFiles(BuildContext context) async {
+    await Navigator.of(context).push<void>(MaterialPageRoute<void>(
+      builder: (BuildContext _) => PatientFilesScreen(
         locale: locale,
         patients: patients,
-        profile: profile,
       ),
     ));
   }
 
-  Future<void> _confirmDelete(
-      BuildContext context, PatientProfile profile) async {
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(careText(locale, 'platform.care.profile.delete')),
-        content: Text(careText(locale, 'platform.care.profile.deleteConfirm')),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(careText(locale, 'platform.care.profile.cancel')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(careText(locale, 'platform.care.profile.delete')),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true) await patients.remove(profile.id);
+  Future<void> _openDevice(BuildContext context) async {
+    await Navigator.of(context).push<void>(MaterialPageRoute<void>(
+      builder: (BuildContext _) =>
+          DeviceScreen(locale: locale, mode: agentMode),
+    ));
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation:
-          Listenable.merge(<Listenable>[patients, selection, roster, records]),
+    return ListenableBuilder(
+      listenable:
+          Listenable.merge(<Listenable>[patients, selection, roster, records, careSessions]),
       builder: (BuildContext context, Widget? _) {
-        final List<PatientProfile> profiles = patients.profiles;
         final DoctorRoster? answered = roster.roster;
         final DoctorProfile? primary = answered == null
             ? null
             : resolvePrimaryDoctor(answered, selection.state);
-        final DoctorAffiliation? primarySite =
-            primary == null ? null : primaryAffiliation(primary);
         return ListView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.zero,
           children: <Widget>[
-            CarePageHeader(
-              title: careText(locale, 'platform.care.me.title'),
-              subtitle: careText(locale, 'platform.care.me.subtitle'),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: _Identity(
+                active: patients.active,
+                locale: locale,
+                modeHosted: agentMode == 'hosted',
+                modeLabel: careText(locale, careModeKey(agentMode)),
+                onTap: () => _openPatientFiles(context),
+              ),
             ),
-            const SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: Text(
-                            careText(locale, 'platform.care.me.patients'),
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(
-                                    fontWeight: FontWeight.w600, color: kInk),
-                          ),
-                        ),
-                        TextButton.icon(
-                          onPressed: profiles.length >= kPatientProfileLimit
-                              ? null
-                              : () => _openEditor(context),
-                          icon: const Icon(Icons.person_add_alt_1_outlined),
-                          label: Text(
-                              careText(locale, 'platform.care.profile.add')),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      careText(locale, 'platform.care.profile.subtitle'),
-                      style: const TextStyle(fontSize: 12, color: kMuted),
-                    ),
-                    if (profiles.length >= kPatientProfileLimit)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: Text(
-                          careText(
-                            locale,
-                            'platform.care.profile.limit',
-                            params: <String, String>{
-                              'count': '$kPatientProfileLimit',
-                            },
-                          ),
-                          style: const TextStyle(fontSize: 12, color: kMuted),
-                        ),
-                      ),
-                    const SizedBox(height: 8),
-                    if (profiles.isEmpty)
-                      Text(
-                        careText(locale, 'platform.care.profile.empty'),
-                        style: const TextStyle(color: kMuted),
-                      )
-                    else
-                      for (final PatientProfile profile in profiles)
-                        _PatientRow(
-                          locale: locale,
-                          profile: profile,
-                          active: profile.id == patients.activeId,
-                          onSelect: () => patients.select(profile.id),
-                          onEdit: () => _openEditor(context, profile: profile),
-                          onDelete: () => _confirmDelete(context, profile),
-                        ),
-                  ],
+            const SizedBox(height: 28),
+            CareGroup(
+              label: careText(locale, 'platform.care.me.group.family'),
+              children: <Widget>[
+                CareCell(
+                  icon: Icons.people_outline,
+                  title: careText(locale, 'platform.care.me.patients'),
+                  value: careText(locale, 'platform.care.me.patientsCount',
+                      params: <String, String>{
+                        'count': '${patients.profiles.length}',
+                      }),
+                  onTap: () => _openPatientFiles(context),
                 ),
-              ),
-            ),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      careText(locale, 'platform.care.me.doctors'),
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600, color: kInk),
-                    ),
-                    const SizedBox(height: 6),
-                    if (primary == null)
-                      Text(
-                        careText(locale, 'platform.care.me.noDoctor'),
-                        style: const TextStyle(color: kMuted),
-                      )
-                    else ...<Widget>[
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          CareDoctorAvatar(
-                            name: primary.displayName,
-                            avatarUrl: primary.avatarUrl,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Text(
-                                  primary.displayName,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600, color: kInk),
-                                ),
-                                if (primarySite != null) ...<Widget>[
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    careAffiliationSummary(locale, primarySite),
-                                    style: const TextStyle(
-                                        fontSize: 12, color: kMuted),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Wrap(
-                                    spacing: 6,
-                                    runSpacing: 4,
-                                    children: <Widget>[
-                                      CareBadge(
-                                        label: careText(
-                                          locale,
-                                          careEmploymentKey(
-                                              primarySite.employmentType),
-                                        ),
-                                        neutral: true,
-                                      ),
-                                      if (!primarySite.acceptingNewPatients)
-                                        CareBadge(
-                                          label: careText(
-                                            locale,
-                                            'platform.care.doctors.notAccepting',
-                                          ),
-                                          warn: true,
-                                        ),
-                                    ],
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${careText(locale, 'platform.care.doctors.primary')} · '
-                        '${careText(locale, 'platform.care.doctors.count', params: <String, String>{
-                              'count': '${selection.selectedIds.length}'
-                            })}',
-                        style: const TextStyle(fontSize: 12, color: kMuted),
-                      ),
-                    ],
-                    const SizedBox(height: 8),
-                    TextButton.icon(
-                      onPressed: onOpenDoctors,
-                      icon: const Icon(Icons.medical_information_outlined),
-                      label: Text(
-                          careText(locale, 'platform.care.doctors.choose')),
-                    ),
-                  ],
+                CareCell(
+                  icon: Icons.medical_information_outlined,
+                  title: careText(locale, 'platform.care.me.doctors'),
+                  value: primary?.displayName ??
+                      careText(locale, 'platform.care.me.notChosen'),
+                  onTap: onOpenDoctors,
                 ),
-              ),
+              ],
             ),
-            Card(
-              child: ListTile(
-                title: Text(careText(locale, 'platform.care.me.records')),
-                subtitle: Text(careText(
-                  locale,
-                  'platform.care.me.recordsCount',
-                  params: <String, String>{
-                    'count': '${records.records.length}',
-                  },
-                )),
-                trailing: Text(
-                  careText(locale, 'platform.care.home.open'),
-                  style: const TextStyle(color: kTechBlueStrong),
+            const SizedBox(height: 10),
+            CareGroup(
+              label: careText(locale, 'platform.care.me.group.care'),
+              children: <Widget>[
+                CareCell(
+                  icon: Icons.chat_bubble_outline,
+                  title: careText(locale, 'platform.care.chat.title'),
+                  onTap: onOpenChat,
                 ),
-                onTap: onOpenRecords,
-              ),
-            ),
-            Card(
-              child: ListTile(
-                title: Text(careText(locale, 'platform.care.me.mode')),
-                subtitle: Text(careText(locale, careModeKey(agentMode))),
-              ),
-            ),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.translate, color: kMuted),
-                title: Text(careText(locale, 'platform.care.language.label')),
-                trailing: Text(
-                  locale == 'zh-CN' ? '中文' : 'English',
-                  style: const TextStyle(color: kMuted, fontSize: 12),
+                CareCell(
+                  icon: Icons.videocam_outlined,
+                  title: careText(locale, 'platform.care.call.videoTitle'),
+                  onTap: onOpenVideoCall,
                 ),
-                onTap: onToggleLocale,
-              ),
-            ),
-            Card(
-              child: ListTile(
-                title: Text(careText(locale, 'platform.care.me.device')),
-                subtitle: Text(
-                  '${careText(locale, 'platform.care.me.deviceHint')}\n'
-                  '${Platform.operatingSystem} · $locale',
+                CareCell(
+                  icon: Icons.receipt_long_outlined,
+                  title: careText(locale, 'platform.care.me.recordsAndMedical'),
+                  value: careText(locale, 'platform.care.me.recordsCount',
+                      params: <String, String>{
+                        'count': '${careSessions.sessions.length}',
+                      }),
+                  onTap: onOpenRecords,
                 ),
-                isThreeLine: true,
-              ),
+              ],
             ),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.shield_outlined, color: kMuted),
-                title: Text(
+            const SizedBox(height: 10),
+            CareGroup(
+              label: careText(locale, 'platform.care.me.group.system'),
+              children: <Widget>[
+                CareCell(
+                  icon: Icons.devices_outlined,
+                  title: careText(locale, 'platform.care.me.device'),
+                  onTap: () => _openDevice(context),
+                ),
+                CareCell(
+                  icon: Icons.translate,
+                  title: careText(locale, 'platform.care.language.label'),
+                  value: locale == 'zh-CN' ? '中文' : 'English',
+                  onTap: onToggleLocale,
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
+              child: Center(
+                child: Text(
                   careText(locale, 'platform.care.privacy.local'),
-                  style: const TextStyle(fontSize: 12, color: kMuted),
+                  style: const TextStyle(fontSize: 11, color: kMuted),
                 ),
               ),
             ),
@@ -317,101 +168,114 @@ class MeTab extends StatelessWidget {
   }
 }
 
-class _PatientRow extends StatelessWidget {
-  const _PatientRow({
-    required this.locale,
-    required this.profile,
+/// The account header: a large monogram, the active patient's facts, and the
+/// status pills. Tapping it opens 病人档案.
+class _Identity extends StatelessWidget {
+  const _Identity({
     required this.active,
-    required this.onSelect,
-    required this.onEdit,
-    required this.onDelete,
+    required this.locale,
+    required this.modeHosted,
+    required this.modeLabel,
+    required this.onTap,
   });
 
+  final PatientProfile? active;
   final String locale;
-  final PatientProfile profile;
-  final bool active;
-  final VoidCallback onSelect;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
+  final bool modeHosted;
+  final String modeLabel;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: kCanvas,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  profile.displayName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                    color: kInk,
+    final PatientProfile? member = active;
+    final String initial = member == null || member.displayName.trim().isEmpty
+        ? ''
+        : member.displayName.trim().substring(0, 1).toUpperCase();
+    final String facts = member == null
+        ? careText(locale, 'platform.care.profile.subtitle')
+        : '${careText(locale, 'platform.care.profile.relation.${member.relation.name}')}'
+            ' · ${member.birthYear}'
+            ' · ${careText(locale, 'platform.care.profile.sex.${member.sex.name}')}';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              children: <Widget>[
+                Container(
+                  width: 64,
+                  height: 64,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: kTechBlueSoft,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: member == null
+                      ? const Icon(Icons.people_outline,
+                          size: 28, color: kTechBlueStrong)
+                      : Text(
+                          initial,
+                          style: const TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w700,
+                            color: kTechBlueStrong,
+                          ),
+                        ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        member?.displayName ??
+                            careText(
+                                locale, 'platform.care.profile.notCreated'),
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
+                          color: kInk,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        facts,
+                        style: const TextStyle(fontSize: 13, color: kMuted),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              if (active)
-                CareBadge(label: careText(locale, 'platform.care.active')),
-            ],
-          ),
-          const SizedBox(height: 2),
-          Text(
-            '${careText(locale, 'platform.care.profile.relation.${profile.relation.name}')}'
-            ' · ${profile.birthYear}'
-            ' · ${careText(locale, 'platform.care.profile.sex.${profile.sex.name}')}'
-            ' · ${careText(locale, 'platform.care.profile.field.bloodType')}: '
-            '${careBloodTypeLabel(locale, profile)}',
-            style: const TextStyle(fontSize: 12, color: kMuted),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            careText(
-              locale,
-              'platform.care.profile.completeness',
-              params: <String, String>{
-                'percent': '${patientProfileCompleteness(profile)}',
-              },
+                const Icon(Icons.chevron_right, size: 20, color: kMuted),
+              ],
             ),
-            style: const TextStyle(fontSize: 12, color: kTechBlueStrong),
           ),
-          const SizedBox(height: 2),
-          Text(
-            '${careText(locale, 'platform.care.profile.field.allergies')}: '
-            '${careListLabel(locale, profile.allergies)}'
-            ' · ${careText(locale, 'platform.care.profile.field.conditions')}: '
-            '${careListLabel(locale, profile.chronicConditions)}',
-            style: const TextStyle(fontSize: 12, color: kMuted),
-          ),
-          const SizedBox(height: 4),
-          Wrap(
+        ),
+        const SizedBox(height: 14),
+        Padding(
+          padding: const EdgeInsets.only(left: 80),
+          child: Wrap(
             spacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
+            runSpacing: 8,
             children: <Widget>[
-              if (!active)
-                TextButton(
-                  onPressed: onSelect,
-                  child: Text(careText(locale, 'platform.care.profile.select')),
+              if (member != null)
+                CarePill(
+                  label: careText(locale, 'platform.care.profile.completeness',
+                      params: <String, String>{
+                        'percent': '${patientProfileCompleteness(member)}',
+                      }),
                 ),
-              TextButton(
-                onPressed: onEdit,
-                child: Text(careText(locale, 'platform.care.profile.edit')),
-              ),
-              TextButton(
-                onPressed: onDelete,
-                child: Text(careText(locale, 'platform.care.profile.delete')),
+              CarePill(
+                label: modeLabel,
+                dotColor: modeHosted ? const Color(0xFF0E9F6E) : kMuted,
               ),
             ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

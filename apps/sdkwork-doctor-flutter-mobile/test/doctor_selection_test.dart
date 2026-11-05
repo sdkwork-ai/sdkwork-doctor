@@ -19,7 +19,8 @@ void main() {
 
     await store.select('b');
     expect(store.selectedIds, <String>['a', 'b']);
-    expect(store.primaryId, 'a', reason: 'a later selection does not steal primary');
+    expect(store.primaryId, 'a',
+        reason: 'a later selection does not steal primary');
 
     await store.setPrimary('b');
     expect(store.primaryId, 'b');
@@ -73,7 +74,8 @@ void main() {
     expect(store.primaryId, 'b');
   });
 
-  test('the selection persists and repairs a primary that is not selected', () async {
+  test('the selection persists and repairs a primary that is not selected',
+      () async {
     final MemoryDoctorSelectionStorage storage = MemoryDoctorSelectionStorage();
     final DoctorSelectionStore store = await DoctorSelectionStore.load(storage);
     await store.select('doctor-lin-qinghe');
@@ -103,7 +105,8 @@ void main() {
     final Map<String, dynamic> document = jsonDecode(
       serializeDoctorSelection(store.state),
     ) as Map<String, dynamic>;
-    expect(document.keys.toSet(), <String>{'version', 'selectedIds', 'primaryId'});
+    expect(
+        document.keys.toSet(), <String>{'version', 'selectedIds', 'primaryId'});
     expect(document['version'], 1);
     expect(document['selectedIds'], <String>['a']);
     expect(document['primaryId'], 'a');
@@ -134,7 +137,9 @@ void main() {
     );
   });
 
-  test('mutations notify listeners and a storage failure keeps the session copy', () async {
+  test(
+      'mutations notify listeners and a storage failure keeps the session copy',
+      () async {
     final DoctorSelectionStore store = await DoctorSelectionStore.load(
       _ThrowingSelectionStorage(),
       fallback: MemoryDoctorSelectionStorage(),
@@ -146,7 +151,8 @@ void main() {
     await store.select('a');
     expect(notifications, 1, reason: 'a no-op does not notify');
     await store.setPrimary('a');
-    expect(notifications, 1, reason: 'making the same doctor primary is a no-op');
+    expect(notifications, 1,
+        reason: 'making the same doctor primary is a no-op');
   });
 }
 

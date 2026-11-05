@@ -13,9 +13,11 @@ void main() {
     '../sdkwork-doctor-common/packages/sdkwork-doctor-common-doctor/contracts/visit-record.schema.json',
   );
 
-  Map<String, dynamic> schema() => jsonDecode(schemaFile.readAsStringSync()) as Map<String, dynamic>;
+  Map<String, dynamic> schema() =>
+      jsonDecode(schemaFile.readAsStringSync()) as Map<String, dynamic>;
 
-  VisitRecord sample({String id = 'visit-1', String symptom = 'chest pain'}) => createVisitRecord(
+  VisitRecord sample({String id = 'visit-1', String symptom = 'chest pain'}) =>
+      createVisitRecord(
         member: demoSelfMember,
         symptom: symptom,
         advice: 'Call local emergency services now.',
@@ -95,11 +97,13 @@ void main() {
 
   test('a record round-trips through JSON and drops unknown modes', () {
     final VisitRecord original = sample();
-    final VisitRecord? parsed = VisitRecord.fromJson(jsonDecode(jsonEncode(original.toJson())));
+    final VisitRecord? parsed =
+        VisitRecord.fromJson(jsonDecode(jsonEncode(original.toJson())));
     expect(parsed, isNotNull);
     expect(parsed!.toJson(), original.toJson());
 
-    final Map<String, Object?> broken = Map<String, Object?>.of(original.toJson());
+    final Map<String, Object?> broken =
+        Map<String, Object?>.of(original.toJson());
     broken['mode'] = 'pigeon';
     expect(VisitRecord.fromJson(broken), isNull);
   });
@@ -107,10 +111,12 @@ void main() {
   test('records are newest first, de-duplicated by id, and capped', () {
     final VisitRecord first = sample(id: 'a', symptom: 'first');
     final VisitRecord second = sample(id: 'b', symptom: 'second');
-    final List<VisitRecord> once = appendVisitRecord(<VisitRecord>[first], second);
+    final List<VisitRecord> once =
+        appendVisitRecord(<VisitRecord>[first], second);
     expect(once.map((VisitRecord r) => r.id).toList(), <String>['b', 'a']);
 
-    final List<VisitRecord> replaced = appendVisitRecord(once, sample(id: 'a', symptom: 'updated'));
+    final List<VisitRecord> replaced =
+        appendVisitRecord(once, sample(id: 'a', symptom: 'updated'));
     expect(replaced.length, 2);
     expect(replaced.first.id, 'a');
     expect(replaced.first.symptom, 'updated');
@@ -138,13 +144,16 @@ void main() {
     expect(afterClear.isEmpty, isTrue);
   });
 
-  test('corrupt persisted JSON degrades to an empty list instead of throwing', () async {
-    final VisitRecordStore store = await VisitRecordStore.load(MemoryVisitRecordStorage('{not json'));
+  test('corrupt persisted JSON degrades to an empty list instead of throwing',
+      () async {
+    final VisitRecordStore store =
+        await VisitRecordStore.load(MemoryVisitRecordStorage('{not json'));
     expect(store.isEmpty, isTrue);
   });
 
   test('a storage failure falls back to a session store', () async {
-    final VisitRecordStore store = await VisitRecordStore.load(_ThrowingStorage());
+    final VisitRecordStore store =
+        await VisitRecordStore.load(_ThrowingStorage());
     expect(store.isEmpty, isTrue);
     await store.add(sample());
     expect(store.records.length, 1);
@@ -156,5 +165,6 @@ class _ThrowingStorage implements VisitRecordStorage {
   Future<String?> read() async => throw StateError('storage unavailable');
 
   @override
-  Future<void> write(String value) async => throw StateError('storage unavailable');
+  Future<void> write(String value) async =>
+      throw StateError('storage unavailable');
 }
