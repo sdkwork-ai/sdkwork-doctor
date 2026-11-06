@@ -8,6 +8,9 @@
   "engines": {
     "node": ">=22"
   },
+  "dependencies": {
+    "@sdkwork/sdk-common": "workspace:*"
+  },
   "scripts": {
     "dev": "pnpm dev:standalone",
     "dev:standalone": "node scripts/dev-session.mjs start --deployment-profile standalone --environment development",

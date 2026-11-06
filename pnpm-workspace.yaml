@@ -6,6 +6,7 @@ packages:
   - "apps/sdkwork-doctor-h5/packages/*"
   # Shared SDKWork component families consumed through workspace:*.
   - "../sdkwork-appbase/packages/mobile-react/foundation/sdkwork-chat-composer-mobile-react"
+  - "../sdkwork-sdk-commons/sdkwork-sdk-common-typescript"
 
 onlyBuiltDependencies:
   - esbuild
