@@ -1,22 +1,80 @@
 {
   "schemaVersion": 1,
-  "kind": "sdkwork.deployment.config",
+  "kind": "sdkwork.deployment-index",
+  "application": "sdkwork-doctor",
   "applicationCode": "sdkwork-doctor",
   "appKey": "sdkwork-doctor",
-  "supportedDeploymentProfiles": ["standalone", "cloud"],
+  "topology": "../specs/topology.spec.json",
+  "defaultProfile": "standalone.development",
+  "supportedDeploymentProfiles": [
+    "standalone",
+    "cloud"
+  ],
   "defaultDeploymentProfile": "standalone",
-  "environments": ["development", "test", "staging", "demo", "production"],
+  "environments": {
+    "development": {
+      "cloudApiBaseUrl": "https://api-dev.sdkwork.com"
+    },
+    "test": {
+      "cloudApiBaseUrl": "https://api-test.sdkwork.com"
+    },
+    "staging": {
+      "cloudApiBaseUrl": "https://api-staging.sdkwork.com"
+    },
+    "demo": {
+      "cloudApiBaseUrl": "https://api-demo.sdkwork.com"
+    },
+    "production": {
+      "cloudApiBaseUrl": "https://api.sdkwork.com"
+    }
+  },
+  "profiles": {
+    "standalone.development": {
+      "config": "topology/standalone.development.env"
+    },
+    "standalone.test": {
+      "config": "topology/standalone.test.env"
+    },
+    "standalone.staging": {
+      "config": "topology/standalone.staging.env"
+    },
+    "standalone.demo": {
+      "config": "topology/standalone.demo.env"
+    },
+    "standalone.production": {
+      "config": "topology/standalone.production.env"
+    },
+    "cloud.development": {
+      "config": "topology/cloud.development.env"
+    },
+    "cloud.test": {
+      "config": "topology/cloud.test.env"
+    },
+    "cloud.staging": {
+      "config": "topology/cloud.staging.env"
+    },
+    "cloud.demo": {
+      "config": "topology/cloud.demo.env"
+    },
+    "cloud.production": {
+      "config": "topology/cloud.production.env"
+    }
+  },
   "surfaces": [
     {
       "architecture": "pc",
       "appRoot": "apps/sdkwork-doctor-pc",
-      "runtimeTargets": ["browser"],
+      "runtimeTargets": [
+        "browser"
+      ],
       "runtimeConfig": "apps/sdkwork-doctor-pc/config/browser/runtime-env.<deployment-profile>.<environment>.example.json"
     },
     {
       "architecture": "h5",
       "appRoot": "apps/sdkwork-doctor-h5",
-      "runtimeTargets": ["browser"],
+      "runtimeTargets": [
+        "browser"
+      ],
       "runtimeConfig": "apps/sdkwork-doctor-h5/config/browser/runtime-env.<deployment-profile>.<environment>.example.json"
     }
   ]

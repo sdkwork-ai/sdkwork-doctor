@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "kind": "sdkwork.client-env-materialization",
+  "application": "sdkwork-doctor",
+  "command": "node ../sdkwork-specs/tools/materialize-client-env.mjs --root .",
+  "deploymentConfig": "sdkwork.deployment.config.json",
+  "sourceIdentity": {
+    "deploymentProfileKeys": [
+      "SDKWORK_DEPLOYMENT_PROFILE"
+    ],
+    "environmentKeys": [
+      "SDKWORK_ENVIRONMENT"
+    ],
+    "profileIdKeys": [
+      "SDKWORK_PROFILE_ID"
+    ]
+  },
+  "surfaces": [
+    {
+      "id": "sdkwork-doctor-pc",
+      "root": "apps/sdkwork-doctor-pc",
+      "format": "vite",
+      "runtimeTarget": "browser",
+      "identityPrefixes": [
+        "VITE_SDKWORK_DOCTOR"
+      ],
+      "bindings": {},
+      "requiredOutputKeys": [
+        "VITE_SDKWORK_ENVIRONMENT",
+        "VITE_SDKWORK_DEPLOYMENT_PROFILE",
+        "VITE_SDKWORK_PROFILE_ID",
+        "VITE_SDKWORK_RUNTIME_TARGET"
+      ],
+      "accessToken": {
+        "appIdEnv": "SDKWORK_DEPLOY_APPLICATION_ID",
+        "tenantId": "100001",
+        "organizationId": "0",
+        "permissionScope": [
+          "iam:self"
+        ]
+      }
+    },
+    {
+      "id": "sdkwork-doctor-h5",
+      "root": "apps/sdkwork-doctor-h5",
+      "format": "vite",
+      "runtimeTarget": "browser",
+      "identityPrefixes": [
+        "VITE_SDKWORK_DOCTOR"
+      ],
+      "bindings": {},
+      "requiredOutputKeys": [
+        "VITE_SDKWORK_ENVIRONMENT",
+        "VITE_SDKWORK_DEPLOYMENT_PROFILE",
+        "VITE_SDKWORK_PROFILE_ID",
+        "VITE_SDKWORK_RUNTIME_TARGET"
+      ],
+      "accessToken": {
+        "appIdEnv": "SDKWORK_DEPLOY_APPLICATION_ID",
+        "tenantId": "100001",
+        "organizationId": "0",
+        "permissionScope": [
+          "iam:self"
+        ]
+      }
+    },
+    {
+      "id": "sdkwork-doctor-flutter-mobile",
+      "root": "apps/sdkwork-doctor-flutter-mobile",
+      "format": "flutter",
+      "runtimeTarget": "flutter-android",
+      "identityPrefixes": [
+        "SDKWORK_DOCTOR"
+      ],
+      "bindings": {},
+      "requiredOutputKeys": [
+        "SDKWORK_ENVIRONMENT",
+        "SDKWORK_DEPLOYMENT_PROFILE",
+        "SDKWORK_PROFILE_ID",
+        "SDKWORK_RUNTIME_TARGET"
+      ],
+      "accessToken": {
+        "appIdEnv": "SDKWORK_DEPLOY_APPLICATION_ID",
+        "tenantId": "100001",
+        "organizationId": "0",
+        "permissionScope": [
+          "iam:self"
+        ]
+      }
+    },
+    {
+      "id": "sdkwork-doctor-mini-program",
+      "root": "apps/sdkwork-doctor-mini-program",
+      "format": "mini-program",
+      "runtimeTarget": "mini-program",
+      "identityPrefixes": [
+        "SDKWORK_DOCTOR"
+      ],
+      "bindings": {},
+      "requiredOutputKeys": [
+        "SDKWORK_ENVIRONMENT",
+        "SDKWORK_DEPLOYMENT_PROFILE",
+        "SDKWORK_PROFILE_ID",
+        "SDKWORK_RUNTIME_TARGET"
+      ],
+      "accessToken": {
+        "appIdEnv": "SDKWORK_DEPLOY_APPLICATION_ID",
+        "tenantId": "100001",
+        "organizationId": "0",
+        "permissionScope": [
+          "iam:self"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 5,
+  "kind": "sdkwork.app.topology",
+  "appId": "sdkwork-doctor",
+  "applicationCode": "doctor",
+  "archetype": "application-client-root",
+  "archetypeNotes": "Client-only application root: the PC, H5, Flutter, and mini-program surfaces call the sdkwork-agents app API and own no HTTP public ingress.",
+  "cloudPublicHosts": {
+    "platform.api-gateway": {
+      "httpHost": "api.sdkwork.com"
+    }
+  },
+  "vocabulary": {
+    "deploymentProfile": {
+      "allowed": [
+        "standalone",
+        "cloud"
+      ]
+    },
+    "environment": {
+      "allowed": [
+        "development",
+        "test",
+        "staging",
+        "demo",
+        "production"
+      ]
+    }
+  },
+  "profilePattern": "{deploymentProfile}.{environment}.env",
+  "envKeys": {
+    "apiGatewayBaseUrl": "SDKWORK_DOCTOR_PLATFORM_API_GATEWAY_HTTP_URL"
+  },
+  "defaults": {
+    "productionProfileId": "cloud.production",
+    "developmentProfileId": "standalone.development",
+    "desktopBuildProfileId": "standalone.production"
+  },
+  "surfaces": {
+    "platform.api-gateway": {
+      "connectivityPlane": "platform",
+      "protocols": [
+        "http"
+      ],
+      "httpUrlEnv": "SDKWORK_DOCTOR_PLATFORM_API_GATEWAY_HTTP_URL"
+    }
+  },
+  "components": {},
+  "profileFiles": {
+    "standalone.development": "etc/topology/standalone.development.env",
+    "standalone.test": "etc/topology/standalone.test.env",
+    "standalone.staging": "etc/topology/standalone.staging.env",
+    "standalone.demo": "etc/topology/standalone.demo.env",
+    "standalone.production": "etc/topology/standalone.production.env",
+    "cloud.development": "etc/topology/cloud.development.env",
+    "cloud.test": "etc/topology/cloud.test.env",
+    "cloud.staging": "etc/topology/cloud.staging.env",
+    "cloud.demo": "etc/topology/cloud.demo.env",
+    "cloud.production": "etc/topology/cloud.production.env"
+  },
+  "orchestration": {
+    "profiles": {
+      "standalone.development": {
+        "processes": []
+      },
+      "cloud.development": {
+        "processes": [],
+        "healthSurfaces": [
+          "platform.api-gateway"
+        ]
+      }
+    }
+  }
+}
